@@ -23,7 +23,11 @@ function module.placeNpcBody(npc)
     local body : Part = newBody.Body
     body.AssemblyLinearVelocity = body.CFrame.LookVector * -50
 
-    local deathSoundList = ReplicatedStorage[npc:GetAttribute("Gender") .. "_Death"]
+    local deathSoundList = npc.DeathSounds
+    if npc:HasTag("Friendly") then
+        deathSoundList = ReplicatedStorage[npc:GetAttribute("Gender") .. "_Death"]
+    end
+    
     local deathSound = util.getRandomChild(deathSoundList)
     local bloodSound = util.getRandomChild(ReplicatedStorage.Blood)
 

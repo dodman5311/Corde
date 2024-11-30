@@ -234,7 +234,7 @@ local function setUpWeapon()
         firerate.Bar.Size = UDim2.fromScale(weaponData.RateOfFire / 1000,1)
         firerate.Value.Text = weaponData.RateOfFire
 
-        recoil.Bar.Size = UDim2.fromScale(getRecoil(weaponData) / 10,1)
+        recoil.Bar.Size = UDim2.fromScale(getRecoil(weaponData) / 50,1)
         recoil.Value.Text = math.round(getRecoil(weaponData) * 10) / 10
 
         stoppingPower.Bar.Size = UDim2.fromScale(weaponData.StoppingPower / 1,1)
@@ -300,7 +300,7 @@ local function compareWeapon(baseWeapon)
         firerate.Bar.BackgroundColor3 = Color3.new(1,1,1)
     end
 
-    recoil.Bar.Size = UDim2.fromScale(getRecoil(baseWeaponData) / 10,1)
+    recoil.Bar.Size = UDim2.fromScale(getRecoil(baseWeaponData) / 50,1)
     if getRecoil(baseWeaponData) > getRecoil(weaponData) then
         recoil.Bar.BackgroundColor3 = Color3.new(1)
     elseif getRecoil(baseWeaponData) < getRecoil(weaponData) then

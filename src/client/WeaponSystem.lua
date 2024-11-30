@@ -269,7 +269,7 @@ local function registerShot(result, health)
         health 
         and health <= 0 
         and not module.hasKilled
-        and hitModel:HasTag("NPC")
+        and hitModel:HasTag("Friendly")
     then
         module.hasKilled = true
         task.delay(0.1, function()

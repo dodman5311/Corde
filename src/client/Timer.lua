@@ -34,7 +34,6 @@ module.new = function(self, timerName, waitTime, Function, ...)
 		WaitTime = waitTime,
 		["Function"] = Function,
 		Parameters = { ... },
-		Condition = nil,
 
 		OnTimerStepped = signal.new(),
 	}
