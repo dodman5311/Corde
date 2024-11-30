@@ -71,7 +71,7 @@ local logMousePos = Vector3.zero
 
 local function updatePlayerDirection()
     local character = player.Character
-    if not character then return end
+    if not character or acts:checkAct("Paused") then return end
     local gyro = character:FindFirstChild("Gyro")
     if not gyro then return end
 
@@ -173,7 +173,7 @@ end
 
 local function updatePlayerMovement()
     local character = player.Character
-    if not character then return end
+    if not character or acts:checkAct("Paused") then return end
 
     module.moveUnit = moveDirection.Magnitude ~= 0 and moveDirection.Unit or Vector3.zero
     local moveToPoint = module.moveUnit * character:GetAttribute("Walkspeed") 
@@ -195,7 +195,9 @@ end
 
 RunService.Heartbeat:Connect(function()
     
-    if player.Character then
+
+
+    if player.Character and not acts:checkAct("Paused") then
         if player.Character:GetAttribute("Hunger") <= 0 then
             player.Character:SetAttribute("Hunger", 0)
             hungerDamageTimer:Run()

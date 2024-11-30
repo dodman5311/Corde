@@ -1,6 +1,4 @@
-local module = {
-    HungerRate = 0.35
-}
+local module = {}
 
 
 local CollectionService = game:GetService("CollectionService")
@@ -11,21 +9,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
-local moveDirection = Vector3.new()
-local logPlayerDirection = 0
 
 local Client = player.PlayerScripts.Client
 
-local uiAnimationService = require(Client.UIAnimationService)
-local inventory = require(Client.Inventory)
-local timer = require(Client.Timer)
 local util = require(Client.Util)
-local weapons = require(Client.WeaponSystem)
 local acts = require(Client.Acts)
-local lastHeartbeat = os.clock()
-
-local logHealth = 0
 
 function module.placeNpcBody(npc)
     local newBody = ReplicatedStorage.DeadNpc:Clone()
@@ -43,6 +31,44 @@ function module.placeNpcBody(npc)
     util.PlaySound(bloodSound, script, 0.15)
 end
 
+function module:pause()
+    if acts:checkAct("Paused") then
+        return
+    end
+
+    acts:createAct("Paused")
+
+    for _,object in ipairs(workspace:GetDescendants()) do
+        if object:IsA("ParticleEmitter") then
+            object.TimeScale = 0
+        end
+
+        if object:IsA("BasePart") and not object.Anchored then
+            object.Anchored = true
+            object:SetAttribute("ToBeUnanchored", true)
+        end
+    end
+end
+
+function module:resume()
+    if not acts:checkAct("Paused") then
+        return
+    end
+
+    acts:removeAct("Paused")
+
+    for _,object in ipairs(workspace:GetDescendants()) do
+        if object:IsA("ParticleEmitter") then
+            object.TimeScale = 1
+        end
+
+        if object:IsA("BasePart") and object:GetAttribute("ToBeUnanchored") then
+            object.Anchored = false
+            object:SetAttribute("ToBeUnanchored", false)
+        end
+    end
+end
+
 function  module.Init()
 
     for _,npc in ipairs(CollectionService:GetTagged("NPC")) do
@@ -58,6 +84,9 @@ function  module.Init()
 end
 
 RunService.Heartbeat:Connect(function()
+    if acts:checkAct("Paused") then
+        return
+    end
     
     for _,item in ipairs(CollectionService:GetTagged("PhysicsItem")) do -- Process Physics
 
@@ -76,8 +105,16 @@ RunService.Heartbeat:Connect(function()
             item.AssemblyAngularVelocity = Vector3.zero
         end
     end
+end)
 
-
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if input.KeyCode == Enum.KeyCode.P then
+        if acts:checkAct("Paused") then
+            module:resume()
+        else
+            module:pause()
+        end
+    end
 end)
 
 return module

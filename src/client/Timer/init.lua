@@ -4,6 +4,15 @@ local module = {
 
 local RUN_SERVICE = game:GetService("RunService")
 local signal = require(script.signal)
+local runningTimers = {}
+
+module.wait = function(sec, index)
+	local waitTimer = module:new(index or "waitAt_" .. os.clock())
+	waitTimer.WaitTime = sec or 0.01
+	waitTimer:Run()
+	waitTimer.OnEnded:Wait()
+	waitTimer:Destroy()
+end
 
 module.new = function(self, timerName, waitTime, Function, ...)
 	local queue = self
@@ -19,7 +28,7 @@ module.new = function(self, timerName, waitTime, Function, ...)
 	end
 
 	local timer = {
-		Connection = nil,
+		IsRunning = false,
 		CallTime = os.clock(),
 		WaitTime = waitTime,
 		["Function"] = Function,
@@ -31,35 +40,15 @@ module.new = function(self, timerName, waitTime, Function, ...)
 
 	timer.OnEnded = signal.new()
 
-	function timer:IsRunning()
-		return self.Connection and true or false
-	end
-
 	function timer:Run()
-		if self.Connection then
+		if self.IsRunning then
 			return
 		end
 
 		self.CallTime = os.clock()
 
-		self.Connection = RUN_SERVICE.Heartbeat:Connect(function()
-
-			self.OnTimerStepped:Fire(os.clock() - self.CallTime)
-
-			if (os.clock() - self.CallTime) < self.WaitTime then
-				return
-			end
-
-			timer.OnEnded:Fire()
-
-			self.Connection:Disconnect()
-			self.Connection = nil
-
-			if not self.Function then
-				return
-			end
-			self.Function(table.unpack(self.Parameters))
-		end)
+		self.IsRunning = true
+		table.insert(runningTimers, self)
 	end
 
 	function timer:Reset()
@@ -80,17 +69,17 @@ module.new = function(self, timerName, waitTime, Function, ...)
 	end
 
 	function timer:Cancel()
-		if not self.Connection then
+		if not self.IsRunning then
 			return
 		end
-		self.Connection:Disconnect()
-		self.Connection = nil
+		table.remove(table.find(runningTimers, self))
+		self.IsRunning = false
 	end
 
 	function timer:Destroy()
-		if self.Connection then
-			self.Connection:Disconnect()
-			self.Connection = nil
+		if self.IsRunning then
+			table.remove(table.find(runningTimers, self))
+			self.IsRunning = false
 		end
 
 		self.OnPaused:Disconnect()
@@ -148,5 +137,26 @@ end
 function module:getTimer(timerName)
 	return self.timerQueue[timerName]
 end
+
+RUN_SERVICE.Heartbeat:Connect(function()
+	for _,timer in ipairs(runningTimers) do
+		timer.OnTimerStepped:Fire(os.clock() - timer.CallTime)
+
+		if (os.clock() - timer.CallTime) < timer.WaitTime then
+			continue
+		end
+
+		table.remove(table.find(runningTimers, timer))
+		timer.IsRunning = false
+
+		timer.OnEnded:Fire()
+
+		if not timer.Function then
+			continue
+		end
+
+		task.spawn(timer.Function, table.unpack(timer.Parameters))
+	end
+end)
 
 return module

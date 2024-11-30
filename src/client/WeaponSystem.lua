@@ -1,5 +1,6 @@
 local module = {
     weaponUnequipped = true;
+    hasKilled = false;
 } -- {Name = "Weapon", Desc = {Type = 1}, Value = 1, InUse = false}
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -21,12 +22,13 @@ local util = require(Client.Util)
 local spring = require(Client.Spring)
 local actionPrompt = require(Client.ActionPrompt)
 local projectiles = require(Client.Projectiles)
+local sequences = require(Client.Sequences)
 
 local currentWeapon
 local mouse1Down = false
 local mouse = player:GetMouse()
 
-local UI = ReplicatedStorage.Crosshair
+local UI = ReplicatedStorage.HUD
 UI.Parent = player.PlayerGui
 
 local fireSound = Instance.new("Sound")
@@ -260,6 +262,22 @@ end
 
 local rp = RaycastParams.new()
 
+local function registerShot(result, health)
+    local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+
+    if 
+        health 
+        and health <= 0 
+        and not module.hasKilled
+        and hitModel:HasTag("NPC")
+    then
+        module.hasKilled = true
+        task.delay(0.1, function()
+            sequences:beginSequence("noMercy")
+        end)
+    end
+end
+
 local function fireWeapon()
     if not player.Character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering") then
         return
@@ -283,6 +301,7 @@ local function fireWeapon()
 
     local projectileSpread = weaponData.Spread + accuracyReduction.Position
     local newProjectile = projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", currentWeapon.Desc.Damage)
+    newProjectile.HitEvent:Once(registerShot)
 
     rp.FilterType = Enum.RaycastFilterType.Exclude
     rp.FilterDescendantsInstances = {character, workspace.Ignore}
@@ -376,7 +395,7 @@ function module.Init()
 end 
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent then
+    if gameProcessedEvent or acts:checkAct("Paused") then
         return
     end
 
@@ -416,7 +435,7 @@ end)
 
 RunService.Heartbeat:Connect(function()
 
-    if not currentWeapon or not mouse1Down then
+    if not currentWeapon or not mouse1Down or acts:checkAct("Paused") then
         return
     end
     local weaponData = currentWeapon.Desc

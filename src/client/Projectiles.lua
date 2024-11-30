@@ -11,11 +11,12 @@ local Players = game:GetService("Players")
 --// Modules
 local util = require(script.Parent.Util)
 local signal = require(script.Parent.signal)
+local acts = require(script.Parent.Acts)
 
 --// Values
 local Projectiles = {}
 local isPaused = false
-module.projectileHit = signal.new()
+
 
 export type Projectile = {
 	["Instance"]: Instance,
@@ -99,6 +100,7 @@ function module.createProjectile(speed, cframe, spread, dmg, LifeTime, extraInfo
 		Sender = sender,
 		Info = extraInfo or {},
 		Damage = dmg or 1,
+		HitEvent = signal.new(),
 	}
 
 	table.insert(Projectiles, newProjectile)
@@ -126,22 +128,6 @@ local function checkRaycast(projectile, raycastDistance)
 	end
 
 	return newRaycast
-end
-
-local function fireBeam(npc, damage, cframe, distance, spread)
-	local offset = CFrame.Angles(0, util.randomAngle(spread), 0)
-	cframe *= offset
-
-	local raycastParams = RaycastParams.new()
-	raycastParams.FilterDescendantsInstances = { npc }
-	raycastParams.CollisionGroup = "NpcBullet"
-
-	local raycast = workspace:Spherecast(cframe.Position, 0.35, cframe.LookVector * distance, raycastParams)
-
-	if not raycast then
-		return
-	end
-
 end
 
 --// Main //--
@@ -188,18 +174,26 @@ function module.projectileHit(raycast, projectile)
 		local health = model:GetAttribute("Health")
 
 		if health then
-			model:SetAttribute("Health", health - projectile.Damage)
+			local currentHealth = health - projectile.Damage
+			model:SetAttribute("Health", currentHealth)
+			projectile.HitEvent:Fire(raycast, currentHealth)
 		else
 			createWallHitEffect(raycast)	
+			projectile.HitEvent:Fire(raycast)
 		end
 	else
 		createWallHitEffect(raycast)
+		projectile.HitEvent:Fire(raycast)
 	end
 	
 	projectile.ToBeRemoved = true
 end
 
 RunService.Heartbeat:Connect(function()
+
+	if acts:checkAct("Paused") then
+		return
+	end
 
 	for _, projectile: Projectile in ipairs(Projectiles) do
 		if projectile.Age >= projectile.LifeTime then

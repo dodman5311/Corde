@@ -56,6 +56,14 @@ mouseTarget.Changed:Connect(function(value)
     end
 end)
 
+local function openDoor(object)
+    local doorModule = require(object.Module)
+
+    if doorModule.open() then
+        return
+    end
+end
+
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     local object = mouseTarget.Value
 
@@ -71,6 +79,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         dialogue:EnterDialogue(mouseTarget.Value)
     end
 
+    if object:HasTag("Door") then
+        openDoor(object)
+    end
 end)
 
 local function processCrosshair()
@@ -90,7 +101,7 @@ local function processCrosshair()
 end
 
 function module.Init()
-    UI = player.PlayerGui.Crosshair
+    UI = player.PlayerGui.HUD
     RunService.RenderStepped:Connect(processCrosshair)
 end
 

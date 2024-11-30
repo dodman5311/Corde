@@ -1,11 +1,7 @@
 local Players = game:GetService("Players")
-local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Dialogue = {}
-
-local inMessage = false
 
 local player = Players.LocalPlayer
 
@@ -20,6 +16,7 @@ local acts = require(client.Acts)
 
 local currentNpcModule
 local currentNpc
+local inMessage = false
 
 local function clearOptions()
     for _,option in ipairs(UI.Box.Choices:GetChildren()) do
@@ -128,16 +125,6 @@ function typeOutMessage(messageData, dialogue)
 
         for i = 1, string.len(messageData.Message) do
             messageUi.Text = string.sub(messageData.Message, 0, i)
-
-            -- local preString = string.sub(message, 0, i - 1)
-
-			-- local letter = '<font transparency="0">' .. string.sub(message, i, i)
-
-			-- local postString = '</font><font transparency="1">'
-			-- 	.. string.sub(message, i + 1, textLength)
-			-- 	.. "</font>"
-
-			-- messageUi.Text = preString .. letter .. postString
 
             if messageData.Speaker == "Player" then -- Play Voice
                 util.PlaySound(ReplicatedStorage.PlayerVoice, script, 0.01)
