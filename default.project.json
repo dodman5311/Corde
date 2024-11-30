@@ -1,0 +1,14 @@
+{
+  "name": "Simulator",
+  "tree": {
+    "$className": "DataModel",
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}
