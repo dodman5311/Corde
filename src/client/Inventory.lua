@@ -9,7 +9,7 @@ local Inventory = {
 
 local player = Players.LocalPlayer
 
-local signal = require(script.Parent.signal)
+local signal = require(ReplicatedStorage.Packages.Signal)
 local UIAnimationService = require(script.Parent.UIAnimationService)
 local util = require(script.Parent.Util)
 local acts = require(script.Parent.Acts)

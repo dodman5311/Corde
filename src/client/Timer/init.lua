@@ -2,8 +2,9 @@ local module = {
 	timerQueue = {},
 }
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RUN_SERVICE = game:GetService("RunService")
-local signal = require(script.signal)
+local signal = require(ReplicatedStorage.Packages.Signal)
 local runningTimers = {}
 
 module.wait = function(sec, index)

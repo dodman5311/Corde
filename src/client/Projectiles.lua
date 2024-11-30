@@ -10,7 +10,7 @@ local Players = game:GetService("Players")
 
 --// Modules
 local util = require(script.Parent.Util)
-local signal = require(script.Parent.signal)
+local signal = require(ReplicatedStorage.Packages.Signal)
 local acts = require(script.Parent.Acts)
 
 --// Values

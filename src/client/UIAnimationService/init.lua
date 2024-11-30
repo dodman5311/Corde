@@ -1,6 +1,7 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local module = {}
 
-local signal = require(script.signal)
+local signal = require(ReplicatedStorage.Packages.Signal)
 local RunService = game:GetService("RunService")
 
 local animations = {}

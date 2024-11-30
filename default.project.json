@@ -9,6 +9,12 @@
           "$path": "src/client"
         }
       }
+    },
+
+    "ReplicatedStorage": {
+      "Packages": {
+        "$path": "src/Packages"
+      }
     }
   }
 }
