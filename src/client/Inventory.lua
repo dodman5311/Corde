@@ -1,3 +1,12 @@
+export type item = {
+    Name : "string",
+    Desc : "string",
+    Value : any,
+    Icon : "string",
+    Use : "Eat" | "Read" | "EquipWeapon" | "Reload",
+    InUse : boolean
+}
+
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,6 +23,10 @@ local UIAnimationService = require(script.Parent.UIAnimationService)
 local util = require(script.Parent.Util)
 local acts = require(script.Parent.Acts)
 local mouseOver = require(script.Parent.MouseOver)
+local camera = require(script.Parent.Camera)
+
+local currentNoteIndex = 0
+local currentNoteItem : item
 
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
@@ -44,12 +57,12 @@ function Inventory:CheckSlot(slot)
 end
 
 function Inventory:ChangeSlot(slot, slotToChangeTo)
-    local item = self[slot]
+    local item : item = self[slot]
     if not item then
         return
     end
 
-    if slotToChangeTo == "slot_13" and typeof(item.Desc) ~= "table" then
+    if slotToChangeTo == "slot_13" and typeof(item.Value) ~= "table" then
         return "NotWeapon"
     end
 
@@ -64,21 +77,23 @@ function Inventory:ChangeSlot(slot, slotToChangeTo)
     self.ItemAddedToSlot:Fire(slotToChangeTo, item)
 end
 
-function Inventory:AddItem(item)
+function Inventory:AddItem(item : item)
+    local newItem = table.clone(item)
+
     for i = 1,12 do
         if self["slot_" .. i] then
             continue
         end
 
-        self["slot_" .. i] = item
-        self.ItemAdded:Fire(item, "slot_" .. i)
-        self.ItemAddedToSlot:Fire("slot_" .. i, item)
+        self["slot_" .. i] = newItem
+        self.ItemAdded:Fire(newItem, "slot_" .. i)
+        self.ItemAddedToSlot:Fire("slot_" .. i, newItem)
 
         return true
     end
 end
 
-function Inventory:AddWeapon(item)
+function Inventory:AddWeapon(item : item)
 
     if not item then return end
 
@@ -94,7 +109,7 @@ function Inventory:AddWeapon(item)
 end
 
 function Inventory:RemoveItem(ItemOrSlot)
-    local item, slot
+    local item : item, slot
 
     if Inventory[ItemOrSlot] then
         item = Inventory[ItemOrSlot]
@@ -119,7 +134,7 @@ function Inventory:DropItem(ItemOrSlot)
         return
     end
 
-    local item, slot = self:RemoveItem(ItemOrSlot)
+    local item : item, slot = self:RemoveItem(ItemOrSlot)
 
     if not item then
         return
@@ -162,19 +177,20 @@ function Inventory:pickupFromContainer(object)
     if object:GetAttribute("RemoveOnEmpty") and #containerData == 0 then
         object:Destroy()
     end
-end 
+end
 
 local function setUpSlots()
     for _,slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
         if not slotUi:IsA('Frame') then continue end
 
-        local item = Inventory[slotUi.Name]
+        local item : item = Inventory[slotUi.Name]
 
         if item then
             slotUi.Frame.Image.Image = item.Icon
             slotUi.ItemName.Text = item.Name
-            slotUi.Value.Text = item.Value
 
+            slotUi.Value.Text = typeof(item.Value) == "number" and item.Value or ""
+           
             if item.InUse then
                 slotUi.Value.TextColor3 = Color3.fromRGB(255, 185, 35)
             else
@@ -191,11 +207,11 @@ local function setUpSlots()
 end
 
 local function getRecoil(stats)
-    return (stats.Recoil * stats.RecoilSpeed) / (stats.RateOfFire / 60)
+    return stats.Recoil ---(stats.Recoil * stats.RecoilSpeed) / math.clamp((stats.RateOfFire / 60), stats.RecoilSpeed, 100)
 end
 
 local function setUpWeapon()
-    local weapon = Inventory['slot_13']
+    local weapon : item = Inventory['slot_13']
 
     local weaponUi = UI.Inventory.Weapon
 
@@ -223,18 +239,22 @@ local function setUpWeapon()
 
         weaponUi.ItemName.Text = "Vacant"
     else
-        local weaponData = weapon.Desc
+        local weaponData = weapon.Value
 
-        accuracy.Bar.Size = UDim2.fromScale(math.abs(weaponData.Spread - 10) / 10,1)
-        accuracy.Value.Text = math.abs(weaponData.Spread - 10)
+        accuracy.Bar.Size = UDim2.fromScale(math.abs(weaponData.Spread - 20) / 20,1)
+        accuracy.Value.Text = (math.abs(weaponData.Spread - 20) / 20) * 100
 
-        damage.Bar.Size = UDim2.fromScale(weaponData.Damage / 100,1)
+        damage.Bar.Size = UDim2.fromScale(weaponData.Damage * weaponData.BulletCount / 100,1)
         damage.Value.Text = weaponData.Damage
+
+        if weaponData.BulletCount > 1 then
+            damage.Value.Text = weaponData.Damage .. "x" .. weaponData.BulletCount
+        end
 
         firerate.Bar.Size = UDim2.fromScale(weaponData.RateOfFire / 1000,1)
         firerate.Value.Text = weaponData.RateOfFire
 
-        recoil.Bar.Size = UDim2.fromScale(getRecoil(weaponData) / 50,1)
+        recoil.Bar.Size = UDim2.fromScale(getRecoil(weaponData) / 100,1)
         recoil.Value.Text = math.round(getRecoil(weaponData) * 10) / 10
 
         stoppingPower.Bar.Size = UDim2.fromScale(weaponData.StoppingPower / 1,1)
@@ -244,8 +264,8 @@ local function setUpWeapon()
     end
 end
 
-local function compareWeapon(baseWeapon)
-    local weapon = Inventory['slot_13']
+local function compareWeapon(baseWeapon : item)
+    local weapon : item? = Inventory['slot_13']
 
     local weaponUi = UI.Inventory.WeaponCompare
 
@@ -260,6 +280,7 @@ local function compareWeapon(baseWeapon)
         RateOfFire = 1;
         ReloadTime = 100;
         Damage = 0;
+        BulletCount = 0,
         FireMode = 0;
         Spread = 0;
         StoppingPower = 0;
@@ -268,12 +289,12 @@ local function compareWeapon(baseWeapon)
     }
 
     if weapon then
-        weaponData = weapon.Desc
+        weaponData = weapon.Value
     end
 
-    local baseWeaponData = baseWeapon.Desc
+    local baseWeaponData = baseWeapon.Value
 
-    accuracy.Bar.Size = UDim2.fromScale(math.abs(baseWeaponData.Spread - 10) / 10,1)
+    accuracy.Bar.Size = UDim2.fromScale(math.abs(baseWeaponData.Spread - 20) / 20,1)
     if baseWeaponData.Spread > weaponData.Spread then
         accuracy.Bar.BackgroundColor3 = Color3.new(1)
     elseif baseWeaponData.Spread < weaponData.Spread then
@@ -282,10 +303,10 @@ local function compareWeapon(baseWeapon)
         accuracy.Bar.BackgroundColor3 = Color3.new(1,1,1)
     end
     
-    damage.Bar.Size = UDim2.fromScale(baseWeaponData.Damage / 100,1)
-    if baseWeaponData.Damage > weaponData.Damage then
+    damage.Bar.Size = UDim2.fromScale(baseWeaponData.Damage * baseWeaponData.BulletCount / 100,1)
+    if baseWeaponData.Damage * baseWeaponData.BulletCount > weaponData.Damage * weaponData.BulletCount then
         damage.Bar.BackgroundColor3 = Color3.new(0, 1)
-    elseif baseWeaponData.Damage < weaponData.Damage then
+    elseif baseWeaponData.Damage * baseWeaponData.BulletCount < weaponData.Damage * weaponData.BulletCount then
         damage.Bar.BackgroundColor3 = Color3.new(1)
     else
         damage.Bar.BackgroundColor3 = Color3.new(1,1,1)
@@ -300,7 +321,7 @@ local function compareWeapon(baseWeapon)
         firerate.Bar.BackgroundColor3 = Color3.new(1,1,1)
     end
 
-    recoil.Bar.Size = UDim2.fromScale(getRecoil(baseWeaponData) / 50,1)
+    recoil.Bar.Size = UDim2.fromScale(getRecoil(baseWeaponData) / 100,1)
     if getRecoil(baseWeaponData) > getRecoil(weaponData) then
         recoil.Bar.BackgroundColor3 = Color3.new(1)
     elseif getRecoil(baseWeaponData) < getRecoil(weaponData) then
@@ -320,6 +341,60 @@ local function compareWeapon(baseWeapon)
 
 end
 
+local function closeNote()
+    local noteUi = UI.Note
+    currentNoteItem = nil
+    util.tween( noteUi, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {GroupTransparency = 1}, false, function()
+        noteUi.Visible = false
+    end, Enum.PlaybackState.Completed)
+end
+
+local function nextNotePage(note : item, indexChange : number)
+    if not note then
+        return
+    end
+
+    local noteUi = UI.Note
+    currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
+
+    if currentNoteIndex > #note.Value.Message then
+        closeNote()
+        return
+    elseif currentNoteIndex == #note.Value.Message then
+        noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {#note.Value.Message}    `
+    elseif currentNoteIndex == 0 then
+        noteUi.Message.Page.Text = `    {currentNoteIndex} / {#note.Value.Message}  >>`
+    else
+        noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {#note.Value.Message}  >>`
+    end
+   
+
+    if currentNoteIndex == 1 then
+        util.tween(noteUi.NoteImage, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {ImageColor3 = Color3.new(0.1,0.1,0.1)})
+    elseif currentNoteIndex == 0 then
+        util.tween(noteUi.NoteImage, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {ImageColor3 = Color3.new(1, 1, 1)})
+        noteUi.Message.Text = ""
+        return
+    end
+
+    noteUi.Message.Text = note.Value.Message[currentNoteIndex]
+end
+
+local function openNote(note : item)
+    currentNoteItem = note
+
+    local noteUi = UI.Note
+    noteUi.Visible = true
+
+    noteUi.NoteImage.ImageColor3 = Color3.new(1,1,1)
+    noteUi.NoteImage.Image = note.Value.Image
+
+    currentNoteIndex = 0
+    nextNotePage(note, 0)
+
+    util.tween( UI.Note, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {GroupTransparency = 0})
+end
+
 local function refreshGui()
     setUpSlots()
     setUpWeapon()
@@ -327,17 +402,18 @@ local function refreshGui()
 end
 
 local function useItem(slotUi)
-    local item = Inventory[slotUi.Name]
+    local item : item = Inventory[slotUi.Name]
 
     if (not item) or item.InUse or acts:checkAct("Reloading") then return end
 
     if item.Use == "EquipWeapon" then
         Inventory:ChangeSlot(slotUi.Name, "slot_13")
+    elseif item.Use == "Read" then
+        openNote(item)
     else
         Inventory.ItemUsed:Fire(item.Use, item, slotUi.Name)
     end
   
-
     task.wait()
     refreshGui()
 end
@@ -350,6 +426,24 @@ local function initGui()
     UI.Parent = player.PlayerGui
     UI.Enabled = false
 
+    UI.Note.GroupTransparency = 1
+
+    local nextButton : TextButton = UI.Note.Next
+    local prevButton : TextButton = UI.Note.Prev
+    local exitButton : TextButton = UI.Note.Exit
+
+    nextButton.MouseButton1Click:Connect(function()
+        nextNotePage(currentNoteItem, 1)
+    end)
+
+    prevButton.MouseButton1Click:Connect(function()
+        nextNotePage(currentNoteItem, -1)
+    end)
+
+    exitButton.MouseButton1Click:Connect(function()
+        closeNote()
+    end)
+
     for _,slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
         if not slotUi:IsA('Frame') then continue end
 
@@ -358,15 +452,13 @@ local function initGui()
        mouseEnter:Connect(function()
             UIAnimationService.PlayAnimation(slotUi.Frame, 0.075, true)
 
-            local item = Inventory[slotUi.Name]
+            local item : item = Inventory[slotUi.Name]
 
             if not item then return end
 
-            if typeof(item.Desc) == "string" then
-                UI.Inventory.Description.Text = item.Desc
-            else
-                UI.Inventory.Description.Text = ""
+            UI.Inventory.Description.Text = item.Desc
 
+            if item.Use == "EquipWeapon" then
                 UI.Inventory.WeaponCompare.Visible = true
                 compareWeapon(item)
             end
@@ -440,6 +532,8 @@ end
 
 function Inventory.OpenInventory()
     
+    camera.followViewDistance.current = 1
+
     acts:createAct("InventoryOpen", "InventoryOpening")
 
     UI.SideBars.Image.Position = UDim2.fromScale(0,0)
@@ -462,6 +556,10 @@ function Inventory.OpenInventory()
 end
 
 function Inventory.CloseInventory()
+
+    closeNote()
+
+    camera.followViewDistance.current = camera.followViewDistance.default
     
     local ti = TweenInfo.new(0.5)
 

@@ -9,6 +9,10 @@ local module = {
 		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
 	},
 
+	OnDeath = {
+		{ Function = "PlaceNpcBody" },
+		{ Function = "Destroy" },
+	}
     -- TargetFound = {
 	-- 	{ Function = "SwitchToState", Parameters = { "Attacking" } },
 	-- 	{ Function = "MoveTowardsTarget" },

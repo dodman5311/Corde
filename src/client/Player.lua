@@ -132,10 +132,10 @@ local function updateDirection(inputState, vector)
             return
         end
 
-        uiAnimationService.PlayAnimation(frame, 0.075, true)
+        uiAnimationService.PlayAnimation(frame, 0.125, true)
 
         if weapons.weaponUnequipped then
-            uiAnimationService.PlayAnimation(arms, 0.075, true)
+            uiAnimationService.PlayAnimation(arms, 0.125, true)
         end
         
         ReplicatedStorage.Steps:Resume()
@@ -180,7 +180,7 @@ local function updatePlayerMovement()
 
     local walkVelocity = character.WalkVelocity
 
-    walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.2)     
+    walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)     
 end
 
 
@@ -194,9 +194,6 @@ function  module.Init()
 end
 
 RunService.Heartbeat:Connect(function()
-    
-
-
     if player.Character and not acts:checkAct("Paused") then
         if player.Character:GetAttribute("Hunger") <= 0 then
             player.Character:SetAttribute("Hunger", 0)

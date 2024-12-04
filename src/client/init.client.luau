@@ -14,6 +14,3 @@ for _,module in pairs(modules) do
     end
     module.Init()
 end
-
-task.wait(1)
-modules.NpcService.new("E-01"):Spawn(workspace.SpawnPoint.Position)

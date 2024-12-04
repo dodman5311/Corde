@@ -1,7 +1,7 @@
 local module = {
     weaponUnequipped = true;
     hasKilled = false;
-} -- {Name = "Weapon", Desc = {Type = 1}, Value = 1, InUse = false}
+} -- {Name = "Weapon", Value = {Type = 1}, Value = 1, InUse = false}
 
 local ContextActionService = game:GetService("ContextActionService")
 local Debris = game:GetService("Debris")
@@ -39,6 +39,9 @@ reloadSound.Parent = script
 local accuracyReduction = spring.new(0)
 accuracyReduction.Damper = 0.875
 
+accuracyReduction.Speed = 5
+accuracyReduction.Target = 0
+
 local rng = Random.new()
 
 local function showWeapon(weaponType)
@@ -74,6 +77,17 @@ local function showWeapon(weaponType)
         module.weaponUnequipped = false
 
         uiAnimationService.StopAnimation(reload)
+    elseif weaponType == 3 then
+        fire.Image.Image = "rbxassetid://17514692550"
+        reload.Image.Image = "rbxassetid://17514696043"
+        reload.Image.Size = UDim2.fromScale(16, 2)
+        reload.Image:SetAttribute("Frames", 24)
+
+        torso.Muzzle.Position = Vector3.new(-2.2, 0, -0.35)
+
+        module.weaponUnequipped = false
+
+        uiAnimationService.StopAnimation(reload)
     else
         fire.Image.Image = ""
         reload.Image.Image = "rbxassetid://17569341211"
@@ -91,7 +105,11 @@ function module.toggleHolstered()
     end
 
     if module.weaponUnequipped then
-        showWeapon(currentWeapon.Desc.Type)
+        if acts:checkAct("Interacting") then
+            return
+        end
+
+        showWeapon(currentWeapon.Value.Type)
         util.PlaySound(ReplicatedStorage.Unholster, script, 0.075)
     else
         showWeapon(0)
@@ -113,12 +131,12 @@ function module.equipWeapon(weapon)
 
     if currentWeapon then
         currentWeapon.InUse = false
-        if currentWeapon.Desc['CurrentMag'] then
-            currentWeapon.Desc.CurrentMag.InUse = false
+        if currentWeapon.Value['CurrentMag'] then
+            currentWeapon.Value.CurrentMag.InUse = false
         end
     end
 
-    local weaponData = weapon.Desc
+    local weaponData = weapon.Value
     local torso = character.Torso
     local reload = torso.UI.Reload
     local fire = torso.UI.Fire
@@ -157,7 +175,7 @@ local function processCrosshair()
 
 	local size = 1 + mouseDistance
 
-    local spread = currentWeapon and currentWeapon.Desc.Spread or 0
+    local spread = currentWeapon and currentWeapon.Value.Spread or 0
     size = (mouseDistance * (spread + accuracyReduction.Position))
 
     local crosshair = UI.Crosshair
@@ -176,7 +194,7 @@ local function useAmmo()
         return
     end
 
-    local weaponData = currentWeapon.Desc
+    local weaponData = currentWeapon.Value
 
     if not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0 then
         return
@@ -191,11 +209,14 @@ local function getNextMag()
     if not currentWeapon then
         return
     end
-    local weaponData = currentWeapon.Desc
+    local weaponData = currentWeapon.Value
 
-    local searchFor = "Rifle Mag"
-    if currentWeapon.Desc.Type == 2 then
+    if currentWeapon.Value.Type == 1 then
+        searchFor = "Rifle Mag"
+    elseif currentWeapon.Value.Type == 2 then
         searchFor = "Pistol Mag"
+    elseif currentWeapon.Value.Type == 2 then
+        searchFor = "Shotgun Mag"
     end
 
     local foundMag
@@ -222,9 +243,9 @@ local function reload(itemToUse)
         return
     end
 
-    local weaponData = currentWeapon.Desc
+    local weaponData = currentWeapon.Value
 
-    if acts:checkAct("Firing", "Reloading") then
+    if acts:checkAct("Firing", "Reloading", "Interacting") then
         return
     end
 
@@ -233,7 +254,7 @@ local function reload(itemToUse)
         return
     end
 
-    local reloadTime = currentWeapon.Desc.ReloadTime 
+    local reloadTime = currentWeapon.Value.ReloadTime 
 
     local torso = player.Character.Torso
 
@@ -278,12 +299,35 @@ local function registerShot(result, health)
     end
 end
 
+local function createBullet(weaponData)
+    local character = player.Character
+    if not player.Character then
+        return
+    end
+    
+    local torso = character.Torso
+
+    local projectileSpread = weaponData.Spread + accuracyReduction.Position
+    local newProjectile = projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", currentWeapon.Value.Damage)
+    newProjectile.HitEvent:Once(registerShot)
+
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = {character, workspace.Ignore}
+
+    local hit = workspace:Raycast((torso.Muzzle.WorldCFrame * CFrame.new(0,0,2)).Position, torso.Muzzle.WorldCFrame.LookVector * 3, rp)
+
+    if hit then
+        projectiles.projectileHit(hit, newProjectile)
+    end
+end
+
 local function fireWeapon()
-    if not player.Character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering") then
+    local character = player.Character
+    if not character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting") then
         return
     end
 
-    local weaponData = currentWeapon.Desc
+    local weaponData = currentWeapon.Value
 
     if module.weaponUnequipped then
         module.toggleHolstered()
@@ -294,22 +338,12 @@ local function fireWeapon()
         return
     end
 
-    local character = player.Character
     local torso = character.Torso
 
     acts:createAct("Firing")
 
-    local projectileSpread = weaponData.Spread + accuracyReduction.Position
-    local newProjectile = projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", currentWeapon.Desc.Damage)
-    newProjectile.HitEvent:Once(registerShot)
-
-    rp.FilterType = Enum.RaycastFilterType.Exclude
-    rp.FilterDescendantsInstances = {character, workspace.Ignore}
-
-    local hit = workspace:Raycast((torso.Muzzle.WorldCFrame * CFrame.new(0,0,2)).Position, torso.Muzzle.WorldCFrame.LookVector * 3, rp)
-
-    if hit then
-        projectiles.projectileHit(hit, newProjectile)
+    for i = 1,weaponData.BulletCount do
+        createBullet(weaponData)
     end
 
     torso.UI.Reload.Visible = false
@@ -334,13 +368,11 @@ local function fireWeapon()
     shell.AssemblyLinearVelocity = (torso.Chamber.WorldCFrame * CFrame.Angles(0,math.rad(rng:NextNumber(-20,20)),0)).LookVector * rng:NextNumber(10,20)
     shell.AssemblyAngularVelocity = Vector3.new(0,rng:NextNumber(-25,-5),0)
 
-    accuracyReduction.Speed = weaponData.RecoilSpeed
-	accuracyReduction.Target = weaponData.Recoil
+    --accuracyReduction.Speed = weaponData.RecoilSpeed
+	--accuracyReduction.Target = weaponData.Recoil
+    accuracyReduction:Impulse(weaponData.Recoil)
 
-    task.wait(60 / currentWeapon.Desc.RateOfFire)
-
-	accuracyReduction.Speed = 7
-	accuracyReduction.Target = 0
+    task.wait(60 / currentWeapon.Value.RateOfFire)
 
     acts:removeAct("Firing")
 end
@@ -360,9 +392,11 @@ inventory.ItemUsed:Connect(function(use, item, slot)
             return
         end
 
-        if currentWeapon.Desc.Type == 1 and item.Name ~= "Rifle Mag" then
+        if currentWeapon.Value.Type == 1 and item.Name ~= "Rifle Mag" then
             return
-        elseif currentWeapon.Desc.Type == 2 and item.Name ~= "Pistol Mag" then
+        elseif currentWeapon.Value.Type == 2 and item.Name ~= "Pistol Mag" then
+            return
+        elseif currentWeapon.Value.Type == 3 and item.Name ~= "Shotgun Mag" then
             return
         end
 
@@ -376,9 +410,9 @@ inventory.ItemRemoved:Connect(function(item, slot)
         return
     end
 
-    if item == currentWeapon.Desc.CurrentMag then
+    if item == currentWeapon.Value.CurrentMag then
         item.InUse = false
-        currentWeapon.Desc.CurrentMag = nil
+        currentWeapon.Value.CurrentMag = nil
     end
 end)
 
@@ -406,7 +440,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if not currentWeapon then
             return
         end
-        local weaponData = currentWeapon.Desc
+        local weaponData = currentWeapon.Value
 
         if weaponData.FireMode == 1 then
             fireWeapon()
@@ -438,7 +472,7 @@ RunService.Heartbeat:Connect(function()
     if not currentWeapon or not mouse1Down or acts:checkAct("Paused") then
         return
     end
-    local weaponData = currentWeapon.Desc
+    local weaponData = currentWeapon.Value
 
     if weaponData.FireMode ~= 2 then
         return

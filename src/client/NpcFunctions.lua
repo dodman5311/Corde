@@ -7,6 +7,7 @@ local client = script.Parent
 local acts = require(client.Acts)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local animationService = require(client.UIAnimationService)
+local util = require(client.Util)
 
 local heartbeat = signal.new()
 export type Npc = {
@@ -15,7 +16,7 @@ export type Npc = {
     Personality : {},
 	MindData : {}, -- extra data the npc might need
     MindState : string,
-    MindTarget : any?,
+    MindTarget : ObjectValue,
 
 	Timer : {new : (self : any) -> nil}?,
 	Timers : {},
@@ -23,8 +24,8 @@ export type Npc = {
 	Janitor : any,
     OnDied : any?,
 
-    Spawn : (Npc : Npc) -> Instance,
-
+    Spawn : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
+    
     IsState : (Npc : Npc, State : string) -> boolean,
     GetState : (Npc : Npc) -> string,
     GetTarget : (Npc : Npc) -> any?,
@@ -32,9 +33,10 @@ export type Npc = {
 
     Exists : (Npc : Npc) -> boolean,
 
-    Place : (Npc : Npc, Position : Vector3) -> Instance,
+    Destroy : (Npc : Npc) -> nil,
+    Place : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
     Run : (Npc : Npc) -> nil,
-    LoadBehavior : (Npc : Npc) -> nil,
+    LoadPersonality : (Npc : Npc) -> nil,
 }
 
 local module = {}
@@ -154,12 +156,48 @@ module.events = {
 	OnSpawn = function(npc : Npc, actions)
 		module.doActions(npc, actions)
 	end,
+
+	OnDeath = function(npc : Npc, actions)
+		return npc.Instance:GetAttributeChangedSignal("Health"):Connect(function()
+            if npc.Instance:GetAttribute("Health") > 0 then
+                return
+            end
+
+			module.doActions(npc, actions)
+        end)
+	end
 } 
 
 module.actions = {
 	PlayAnimation = function(npc : Npc, animaitonName :string, ...)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
 		return animationService.PlayAnimation(animationFrame, ...)
+	end,
+
+	Destroy = function(npc : Npc)
+		npc:Destroy()
+	end,
+
+	PlaceNpcBody = function(npc : Npc)
+		local newBody = ReplicatedStorage.DeadNpc:Clone()
+		newBody.Parent = workspace
+		newBody:PivotTo(npc.Instance:GetPivot())
+
+		local body : Part = newBody.Body
+		body.AssemblyLinearVelocity = body.CFrame.LookVector * -50
+
+		local deathSoundList 
+		if npc.Instance:HasTag("Friendly") then
+			deathSoundList = ReplicatedStorage[npc.Instance:GetAttribute("Gender") .. "_Death"]
+		else
+			deathSoundList = npc.Instance.DeathSounds
+		end
+		
+		local deathSound = util.getRandomChild(deathSoundList)
+		local bloodSound = util.getRandomChild(ReplicatedStorage.Blood)
+
+		util.PlaySound(deathSound, script, 0.05, 0.2)
+		util.PlaySound(bloodSound, script, 0.15)
 	end,
 
 	SearchForTarget = function(npc : Npc, maxDistance : number)

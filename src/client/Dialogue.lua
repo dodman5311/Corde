@@ -13,6 +13,7 @@ local client = script.Parent
 local inventory = require(client.Inventory)
 local util = require(client.Util)
 local acts = require(client.Acts)
+local camera = require(client.Camera)
 
 local currentNpcModule
 local currentNpc
@@ -29,7 +30,8 @@ local function clearOptions()
 end
 
 local function openGui()
-    
+    camera.followViewDistance.current = 2
+
     clearOptions()
     UI.Box.Message.Text = ""
 
@@ -37,7 +39,8 @@ local function openGui()
 end
 
 local function closeGui()
-    
+    camera.followViewDistance.current = camera.followViewDistance.default
+
     clearOptions()
     UI.Box.Message.Text = ""
 
@@ -85,8 +88,11 @@ function typeOutMessage(messageData, dialogue)
     local texting = true
     local clickCooldown = false
 
+    UI.Box.Speaker.Text = messageData.Speaker
+
     if messageData.Speaker == "Player" then
         UI.PlayerPortrait.Visible = true
+        UI.Box.Speaker.Text = "Kaia"
     else
         UI.PlayerPortrait.Visible = false
     end
@@ -112,19 +118,21 @@ function typeOutMessage(messageData, dialogue)
 
     typeThread = task.spawn(function()
         local message = messageData.Message
+        --messageUi.Visible = false
 
+        local waitTime = 0.025
         local textLength = string.len(message)
-		local loadTime = math.clamp(textLength / 400, 0.1, 0.5)
+        local textStep = math.clamp(math.round(textLength * waitTime), 1, math.huge)
+		--local loadTime = math.clamp(textLength / 400, 0.1, 0.5)
 
-		messageUi.Visible = false
-        messageUi.Text = '<font transparency="0">' .. message .. '</font>'
+        --messageUi.Text = '<font transparency="0">' .. message .. '</font>'
 
-		task.wait(loadTime)
+		--task.wait(loadTime)
 
         messageUi.Visible = true
 
-        for i = 1, string.len(messageData.Message) do
-            messageUi.Text = string.sub(messageData.Message, 0, i)
+        for i = 1, textLength, textStep do
+            messageUi.Text = string.sub(message, 0, i)
 
             if messageData.Speaker == "Player" then -- Play Voice
                 util.PlaySound(ReplicatedStorage.PlayerVoice, script, 0.01)
@@ -137,7 +145,7 @@ function typeOutMessage(messageData, dialogue)
                 messageUi.TextColor3 = Color3.fromRGB(255, 255, 255)
             end
 
-            task.wait(0.02)
+            task.wait(waitTime)
         end        
 
         texting = false

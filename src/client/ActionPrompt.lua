@@ -14,15 +14,20 @@ local Client = player.PlayerScripts.Client
 local uiAnimationService = require(Client.UIAnimationService)
 local inventory = require(script.Parent.Inventory)
 local util = require(script.Parent.Util)
+local signals = require(ReplicatedStorage.Packages.Signal)
 
-function module.showAction(showTime, actionTitle)
+module.ActionBegun = signals.new()
+
+local ti_0 = TweenInfo.new(0.075, Enum.EasingStyle.Linear)
+
+local ti_1 = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+local function showActionPrompt(actionTitle)
     if not player.Character then
         return
     end
 
-    local ti_0 = TweenInfo.new(0.075, Enum.EasingStyle.Linear)
-    local ti_1 = TweenInfo.new(showTime, Enum.EasingStyle.Linear)
-    local ti_2 = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+    module.ActionBegun:Fire(actionTitle)
 
     local character = player.Character
     local promptPart = character.ActionPrompt
@@ -40,11 +45,54 @@ function module.showAction(showTime, actionTitle)
     frame.ActionB.Text = actionTitle
 
     util.tween(frame, ti_0, {GroupTransparency = 0})
+end
 
-    util.tween(barFrame.Bar, ti_1, {Size = UDim2.fromScale(1,1)})
-    util.tween(barFrame.B, ti_1, {Size = UDim2.fromScale(1,1)})
-    util.tween(barFrame.R, ti_1, {Size = UDim2.fromScale(1,1)}, false, function()
-        util.tween(frame, ti_2, {GroupTransparency = 1})
+function module.showAction(showTime, actionTitle)
+    if not player.Character then
+        return
+    end
+
+    local character = player.Character
+    local promptPart = character.ActionPrompt
+    local prompt = promptPart.UI
+
+    local frame = prompt.Frame
+    local barFrame = frame.BarFrame
+
+    local barTi = TweenInfo.new(showTime, Enum.EasingStyle.Linear)
+
+    showActionPrompt(actionTitle)
+
+    util.tween(barFrame.Bar, barTi, {Size = UDim2.fromScale(1,1)})
+    util.tween(barFrame.B, barTi, {Size = UDim2.fromScale(1,1)})
+    util.tween(barFrame.R, barTi, {Size = UDim2.fromScale(1,1)}, false, function()
+        util.tween(frame, ti_1, {GroupTransparency = 1})
+    end)
+end
+
+function module.showActionTimer(actionTimer, actionTitle)
+    if not player.Character then
+        return
+    end
+
+    local character = player.Character
+    local promptPart = character.ActionPrompt
+    local prompt = promptPart.UI
+
+    local frame = prompt.Frame
+    local barFrame = frame.BarFrame
+
+    showActionPrompt(actionTitle)
+
+    local onStep = actionTimer.OnTimerStepped:Connect(function(currentTime)
+        barFrame.Bar.Size = UDim2.fromScale(1,currentTime / actionTimer.WaitTime)
+        barFrame.B.Size = UDim2.fromScale(1,currentTime / actionTimer.WaitTime)
+        barFrame.R.Size = UDim2.fromScale(1,currentTime / actionTimer.WaitTime)
+    end)
+
+    actionTimer.OnEnded:Once(function()
+        onStep:Disconnect()
+        util.tween(frame, ti_1, {GroupTransparency = 1})
     end)
 end
 

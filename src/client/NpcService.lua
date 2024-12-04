@@ -22,7 +22,7 @@ export type Npc = {
 	Janitor : any,
     OnDied : any?,
 
-    Spawn : (Npc : Npc, Position : Vector3) -> Instance,
+    Spawn : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
     
     IsState : (Npc : Npc, State : string) -> boolean,
     GetState : (Npc : Npc) -> string,
@@ -31,7 +31,8 @@ export type Npc = {
 
     Exists : (Npc : Npc) -> boolean,
 
-    Place : (Npc : Npc, Position : Vector3) -> Instance,
+    Destroy : (Npc : Npc) -> nil,
+    Place : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
     Run : (Npc : Npc) -> nil,
     LoadPersonality : (Npc : Npc) -> nil,
 }
@@ -47,7 +48,6 @@ local rng = Random.new()
 
 function NpcService.new(npcName : string) : Npc
    
-
     local npcModel = ReplicatedStorage.Assets.Npcs:FindFirstChild(npcName, true)
     if not npcModel then
         warn(`No NPC model by the name of {npcName} was found.`)
@@ -134,7 +134,7 @@ function NpcService.new(npcName : string) : Npc
             return self.Personality
         end,
 
-        Place = function(self : Npc, position : Vector3)
+        Place = function(self : Npc, position : Vector3 | CFrame)
             self.Instance.Parent = workspace
 
             if typeof(position) == "Vector3" then
@@ -150,12 +150,17 @@ function NpcService.new(npcName : string) : Npc
             npcFunctions.RunNpc(self)
         end,
 
-        Spawn = function(self : Npc, position : Vector3)
+        Spawn = function(self : Npc, position : Vector3 | CFrame)
             self:Place(position)
             self:Run()
 
             return self.Instance
         end,
+
+        Destroy = function(self : Npc)
+            self.Janitor:Cleanup()
+            self.Instance:Destroy()
+        end
     }
 
     return Npc

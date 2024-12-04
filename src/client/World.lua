@@ -15,26 +15,6 @@ local Client = player.PlayerScripts.Client
 local util = require(Client.Util)
 local acts = require(Client.Acts)
 
-function module.placeNpcBody(npc)
-    local newBody = ReplicatedStorage.DeadNpc:Clone()
-    newBody.Parent = workspace
-    newBody:PivotTo(npc:GetPivot())
-
-    local body : Part = newBody.Body
-    body.AssemblyLinearVelocity = body.CFrame.LookVector * -50
-
-    local deathSoundList = npc.DeathSounds
-    if npc:HasTag("Friendly") then
-        deathSoundList = ReplicatedStorage[npc:GetAttribute("Gender") .. "_Death"]
-    end
-    
-    local deathSound = util.getRandomChild(deathSoundList)
-    local bloodSound = util.getRandomChild(ReplicatedStorage.Blood)
-
-    util.PlaySound(deathSound, script, 0.05, 0.2)
-    util.PlaySound(bloodSound, script, 0.15)
-end
-
 function module:pause()
     if acts:checkAct("Paused") then
         return
@@ -74,17 +54,7 @@ function module:resume()
 end
 
 function  module.Init()
-
-    for _,npc in ipairs(CollectionService:GetTagged("NPC")) do
-        npc:GetAttributeChangedSignal("Health"):Connect(function()
-            if npc:GetAttribute("Health") > 0 then
-                return
-            end
-
-            module.placeNpcBody(npc)
-            npc:Destroy()
-        end)
-    end
+    
 end
 
 RunService.Heartbeat:Connect(function()

@@ -18,8 +18,6 @@ end
 module.new = function(self, timerName, waitTime, Function, ...)
 	local queue = self
 
-	local pausedAt = 0
-
 	if not timerName then
 		timerName = #queue + 1
 	end
@@ -36,9 +34,8 @@ module.new = function(self, timerName, waitTime, Function, ...)
 		Parameters = { ... },
 
 		OnTimerStepped = signal.new(),
+		OnEnded = signal.new(),
 	}
-
-	timer.OnEnded = signal.new()
 
 	function timer:Run()
 		if self.IsRunning then
@@ -72,18 +69,20 @@ module.new = function(self, timerName, waitTime, Function, ...)
 		if not self.IsRunning then
 			return
 		end
-		table.remove(table.find(runningTimers, self))
+		table.remove(runningTimers, table.find(runningTimers, self))
 		self.IsRunning = false
+
+		timer.OnEnded:Fire(Enum.PlaybackState.Cancelled)
 	end
 
 	function timer:Destroy()
 		if self.IsRunning then
-			table.remove(table.find(runningTimers, self))
+			table.remove(runningTimers, table.find(runningTimers, self))
 			self.IsRunning = false
 		end
 
-		self.OnPaused:Disconnect()
-		self.OnResumed:Disconnect()
+		self.OnTimerStepped:Destroy()
+		self.OnEnded:Destroy()
 
 		queue.timerQueue[timerName] = nil
 	end
@@ -146,10 +145,10 @@ RUN_SERVICE.Heartbeat:Connect(function()
 			continue
 		end
 
-		table.remove(table.find(runningTimers, timer))
+		table.remove(runningTimers, table.find(runningTimers, timer))
+		
 		timer.IsRunning = false
-
-		timer.OnEnded:Fire()
+		timer.OnEnded:Fire(Enum.PlaybackState.Completed)
 
 		if not timer.Function then
 			continue

@@ -18,6 +18,11 @@ local uiAnimationService = require(Client.UIAnimationService)
 local inventory = require(Client.Inventory)
 local dialogue = require(Client.Dialogue)
 local acts = require(Client.Acts)
+local actionPrompt = require(Client.ActionPrompt)
+local timer = require(Client.Timer)
+local weaponSystem = require(Client.WeaponSystem)
+
+local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 
 mouseTarget.Changed:Connect(function(value)
     local cursor = UI.Cursor
@@ -53,6 +58,8 @@ mouseTarget.Changed:Connect(function(value)
         cursor.ItemName.Visible = false
         cursor.ItemNameRed.Visible = false
         cursor.ItemNameBlue.Visible = false
+
+        interactTimer:Cancel()
     end
 end)
 
@@ -64,15 +71,28 @@ local function openDoor(object)
     end
 end
 
+local function runTimer(actionName : string, interactionTime : number, func, ...)
+    interactTimer.Function = func
+    interactTimer.Parameters = {...}
+    interactTimer.WaitTime = interactionTime
+
+    acts:createAct("Interacting")
+
+    interactTimer:Run()
+    actionPrompt.showActionTimer(interactTimer, actionName)
+end
+
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     local object = mouseTarget.Value
 
-    if input.KeyCode ~= Enum.KeyCode.F or gameProcessedEvent or not object  then
+    if input.KeyCode ~= Enum.KeyCode.F or gameProcessedEvent or not object or acts:checkAct("Interacting")  then
         return
     end
 
     if object:HasTag("Container") then
-        inventory:pickupFromContainer(mouseTarget.Value)
+        runTimer("Collecting", 0.5, function()
+            inventory:pickupFromContainer(mouseTarget.Value)
+        end)
     end
 
     if object:HasTag("NPC") then
@@ -80,7 +100,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     end
 
     if object:HasTag("Door") then
-        openDoor(object)
+        runTimer("Opening", 0.5, openDoor, object)
     end
 end)
 
@@ -93,7 +113,7 @@ local function processCrosshair()
 
     local distanceToMouse = (player.Character:GetPivot().Position - mouse.Hit.Position).Magnitude
     
-    if distanceToMouse > 4 then
+    if distanceToMouse > 3 then
         mouseTarget.Value = nil
     else
         mouseTarget.Value = mouse.Target:FindFirstAncestorOfClass("Model") or mouse.Target
@@ -104,5 +124,9 @@ function module.Init()
     UI = player.PlayerGui.HUD
     RunService.RenderStepped:Connect(processCrosshair)
 end
+
+interactTimer.OnEnded:Connect(function(state)
+    acts:removeAct("Interacting")
+end)
 
 return module
