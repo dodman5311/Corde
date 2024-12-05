@@ -54,14 +54,14 @@ function NpcService.new(npcName : string) : Npc
         return
     end
 
+    local newNpcModel = npcModel:Clone()
     local targetValue = Instance.new("ObjectValue")
-    targetValue.Parent = npcModel
+    targetValue.Parent = newNpcModel
     targetValue.Name = "Target"
 
-    local newNpcModel = npcModel:Clone()
     local Npc : Npc = {
         Name = npcName,
-        Instance = npcModel,
+        Instance = newNpcModel,
         Personality = require(personalities:FindFirstChild(npcName)),
         MindData = {},
         MindState = "Idle",

@@ -280,7 +280,10 @@ function util.checkForHumanoid(subject)
 	return humanoid, model
 end
 
-function util.getRandomChild(Parent)
+function util.getRandomChild(Parent : Instance)
+	if not Parent then
+		return
+	end
 	local children = Parent:GetChildren()
 	local i = rng:NextInteger(1, #children)
 	return children[i]
@@ -301,28 +304,30 @@ function util.randomAngle(angle)
 	return math.rad(math.random(-angle * 1000, angle * 1000) / 1000)
 end
 
-function util.PlaySound(S, Parent, range, StopTime)
-	local SC = S:Clone()
-	SC.Name = "SoundPlaying"
-	SC.Parent = Parent
-	if range then
-		SC.PlaybackSpeed += rng:NextNumber(-range, range)
+function util.PlaySound(sound : Sound, parent : Instance, range : number?, stopTime : number?)
+	if not sound then
+		return
 	end
 
-	SC:Play()
+	local soundClone = sound:Clone()
+	soundClone.Name = "SoundPlaying"
+	soundClone.Parent = parent
+	if range then
+		soundClone.PlaybackSpeed += rng:NextNumber(-range, range)
+	end
 
-	if StopTime then
-		task.delay(StopTime, function()
-			SC:Destroy()
+	soundClone:Play()
+
+	if stopTime then
+		task.delay(stopTime, function()
+			soundClone:Destroy()
 		end)
 	else
-		local onEnd
-		onEnd = SC.Ended:Connect(function()
-			onEnd:Disconnect()
-			SC:Destroy()
+		soundClone.Ended:Once(function()
+			soundClone:Destroy()
 		end)
 	end
-	return SC
+	return soundClone
 end
 
 function util.getClosestToViewportCenter(camera, parent)

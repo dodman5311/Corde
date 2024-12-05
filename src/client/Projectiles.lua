@@ -7,6 +7,9 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 
 --// Instances
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local models = assets.Models
 
 --// Modules
 local util = require(script.Parent.Util)
@@ -88,7 +91,7 @@ end
 function module.createProjectile(speed, cframe, spread, dmg, LifeTime, extraInfo, sender, model)
 	local offset = CFrame.Angles(0, util.randomAngle(spread), 0)
 
-	local newInstance = model and ReplicatedStorage:FindFirstChild(model):Clone() or ReplicatedStorage.Projectile:Clone()
+	local newInstance = model and ReplicatedStorage:FindFirstChild(model):Clone() or models.Projectile:Clone()
 	newInstance.Parent = workspace
 	newInstance.CFrame = cframe * offset
 
@@ -152,7 +155,7 @@ end
 
 local function createWallHitEffect(rayResult)
 	
-	local newHitEffect = util.callFromCache(ReplicatedStorage.WallHit)
+	local newHitEffect = util.callFromCache(models.WallHit)
 	util.addToCache(newHitEffect, 0.6)
 
 	newHitEffect.Parent = workspace

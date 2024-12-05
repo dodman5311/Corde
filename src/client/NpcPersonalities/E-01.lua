@@ -1,7 +1,7 @@
 local module = {
     OnStep = {
-		{ Function = "SearchForTarget", Parameters = { "Player", 200} },
-		{ Function = "LookAtTarget", Parameters = { true } },
+		{ Function = "SearchForTarget", Parameters = { "Player", 20} },
+		{ Function = "LookAtTarget", Parameters = { true, 0.5 } },
 
 	},
 

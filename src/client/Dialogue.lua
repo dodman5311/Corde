@@ -5,7 +5,11 @@ local Dialogue = {}
 
 local player = Players.LocalPlayer
 
-local UI = ReplicatedStorage.Dialogue
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local gui = assets.Gui
+
+local UI = gui.Dialogue
 UI.Parent = player.PlayerGui
 UI.Enabled = false
 
@@ -135,10 +139,10 @@ function typeOutMessage(messageData, dialogue)
             messageUi.Text = string.sub(message, 0, i)
 
             if messageData.Speaker == "Player" then -- Play Voice
-                util.PlaySound(ReplicatedStorage.PlayerVoice, script, 0.01)
+                util.PlaySound(sounds.PlayerVoice, script, 0.01)
                 messageUi.TextColor3 = Color3.fromRGB(207, 142, 141)
             elseif messageData.Speaker == "System" then
-                util.PlaySound(ReplicatedStorage.SystemVoice, script, 0.02)
+                util.PlaySound(sounds.SystemVoice, script, 0.02)
                 messageUi.TextColor3 = Color3.fromRGB(218, 133, 65)
             else
                 util.PlaySound(currentNpc.Voice, script)

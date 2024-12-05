@@ -7,13 +7,18 @@ local SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
-local sounds = ReplicatedStorage.SequenceSounds
+local assets = ReplicatedStorage.Assets
+local gui = assets.Gui
+local soundsFolder = assets.Sounds
+local models = assets.Models
+
+local sounds = soundsFolder.SequenceSounds
 
 local mouseTarget = Instance.new("ObjectValue")
 mouseTarget.Parent = player
 mouseTarget.Name = "MouseTarget"
 
-local UI = ReplicatedStorage.Sequences
+local UI = gui.Sequences
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
@@ -27,8 +32,6 @@ function module.Init()
 end
 
 function module:beginSequence(sequenceName)
-    world:pause()
-
     if not module[sequenceName] then
         warn(sequenceName .. " is not a valid sequence.")
         return
@@ -39,8 +42,6 @@ function module:beginSequence(sequenceName)
     acts:createTempAct("InSequence", module[sequenceName])
 
     util.tween({SoundService.WorldSounds, SoundService.Music}, TweenInfo.new(1), {Volume = 0.5})
-
-    world:resume()
 end
 
 local function loadSequence(sequence)
@@ -99,6 +100,8 @@ function module.noMercy()
     sounds.Ambience_0:Play()
     
     sequenceFrame.Visible = true
+
+    world:pause()
 
     util.tween(sounds.Ambience_0, ti_1, {Volume = 1})
 
@@ -161,6 +164,8 @@ function module.noMercy()
     sounds.Ambience_0:Stop()
 
     SoundService.WorldSounds.Volume = 0.5
+
+    world:resume()
 end
 
 return module

@@ -12,13 +12,16 @@ local mouse = player:GetMouse()
 local moveDirection = Vector3.new()
 local logPlayerDirection = 0
 
+local assets = ReplicatedStorage.Assets
+local models = assets.Models
+
 local Client = player.PlayerScripts.Client
 
 local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 
 function module.dropItem(item)
-    local newObject = ReplicatedStorage.DroppedItem:Clone()
+    local newObject = models.DroppedItem:Clone()
 
     newObject.Parent = workspace
 end

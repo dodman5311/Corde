@@ -23,12 +23,19 @@ local spring = require(Client.Spring)
 local actionPrompt = require(Client.ActionPrompt)
 local projectiles = require(Client.Projectiles)
 local sequences = require(Client.Sequences)
+local cameraService = require(Client.Camera)
+local cameraShaker = require(Client.CameraShaker)
 
 local currentWeapon
 local mouse1Down = false
 local mouse = player:GetMouse()
 
-local UI = ReplicatedStorage.HUD
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local gui = assets.Gui
+local models = assets.Models
+
+local UI = gui.HUD
 UI.Parent = player.PlayerGui
 
 local fireSound = Instance.new("Sound")
@@ -110,10 +117,10 @@ function module.toggleHolstered()
         end
 
         showWeapon(currentWeapon.Value.Type)
-        util.PlaySound(ReplicatedStorage.Unholster, script, 0.075)
+        util.PlaySound(sounds.Unholster, script, 0.075)
     else
         showWeapon(0)
-        util.PlaySound(ReplicatedStorage.Holster, script, 0.075)
+        util.PlaySound(sounds.Holster, script, 0.075)
     end
 
     acts:createTempAct("Holstering", function()
@@ -163,7 +170,7 @@ function module.equipWeapon(weapon)
         weaponData.CurrentMag.InUse = true
     end
 
-    util.PlaySound(ReplicatedStorage.GunEquip, script, 0.15)
+    util.PlaySound(sounds.GunEquip, script, 0.15)
 end
 
 local function processCrosshair()
@@ -215,7 +222,7 @@ local function getNextMag()
         searchFor = "Rifle Mag"
     elseif currentWeapon.Value.Type == 2 then
         searchFor = "Pistol Mag"
-    elseif currentWeapon.Value.Type == 2 then
+    elseif currentWeapon.Value.Type == 3 then
         searchFor = "Shotgun Mag"
     end
 
@@ -258,7 +265,7 @@ local function reload(itemToUse)
 
     local torso = player.Character.Torso
 
-    acts:createAct("Reloading")
+    acts:createAct("Reloading", "Interacting")
     reloadSound:Play()
 
     torso.UI.Fire.Visible = false
@@ -278,7 +285,7 @@ local function reload(itemToUse)
     
     weaponData.CurrentMag = foundMag
 
-    acts:removeAct("Reloading")
+    acts:removeAct("Reloading", "Interacting")
 end
 
 local rp = RaycastParams.new()
@@ -358,7 +365,7 @@ local function fireWeapon()
         torso.Muzzle.Flash.Enabled = false
     end)
 
-    local shell:Part = ReplicatedStorage.Shell:Clone()
+    local shell:Part = models.Shell:Clone()
     Debris:AddItem(shell, 5)
 
     shell.CanCollide = true
@@ -371,6 +378,13 @@ local function fireWeapon()
     --accuracyReduction.Speed = weaponData.RecoilSpeed
 	--accuracyReduction.Target = weaponData.Recoil
     accuracyReduction:Impulse(weaponData.Recoil)
+
+    local cameraRecoil = (weaponData.Recoil / 100) * 5
+    local cameraRecoilInstance = cameraShaker.CameraShakeInstance.new(cameraRecoil, 6.5, 0, cameraRecoil / 10)
+    cameraRecoilInstance.PositionInfluence = Vector3.one * 0.2
+    cameraRecoilInstance.RotationInfluence = Vector3.new(0,0,3)
+
+    cameraService.shaker:Shake(cameraRecoilInstance)
 
     task.wait(60 / currentWeapon.Value.RateOfFire)
 
@@ -447,7 +461,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         end
 
         if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
-            ReplicatedStorage.GunClick:Play()
+            sounds.GunClick:Play()
         end
     end
     

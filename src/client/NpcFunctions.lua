@@ -9,6 +9,10 @@ local signal = require(ReplicatedStorage.Packages.Signal)
 local animationService = require(client.UIAnimationService)
 local util = require(client.Util)
 
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local models = assets.Models
+
 local heartbeat = signal.new()
 export type Npc = {
     Name : string,
@@ -74,13 +78,11 @@ local function getObject(class, parent)
 	return foundInstance
 end
 
-local function lookAtPostition(npc, position: Vector3, includeY: boolean, doLerp: boolean, lerpAlpha: number)
+local function lookAtPostition(npc, position: Vector3, doLerp: boolean, lerpAlpha: number)
 	local subject = npc.Instance
 	local subjectPos = subject:GetPivot().Position
 	local newVector = Vector3.new(position.X, subjectPos.Y, position.Z)
-	if includeY then
-		newVector = position
-	end
+
 	local goal = CFrame.lookAt(subjectPos, newVector)
 
 	local Align = getObject("AlignOrientation", subject.PrimaryPart)
@@ -179,7 +181,7 @@ module.actions = {
 	end,
 
 	PlaceNpcBody = function(npc : Npc)
-		local newBody = ReplicatedStorage.DeadNpc:Clone()
+		local newBody = models.DeadNpc:Clone()
 		newBody.Parent = workspace
 		newBody:PivotTo(npc.Instance:GetPivot())
 
@@ -188,13 +190,13 @@ module.actions = {
 
 		local deathSoundList 
 		if npc.Instance:HasTag("Friendly") then
-			deathSoundList = ReplicatedStorage[npc.Instance:GetAttribute("Gender") .. "_Death"]
-		else
+			deathSoundList = sounds[npc.Instance:GetAttribute("Gender") .. "_Death"]
+		elseif npc.Instance:FindFirstChild("DeathSounds") then
 			deathSoundList = npc.Instance.DeathSounds
 		end
 		
 		local deathSound = util.getRandomChild(deathSoundList)
-		local bloodSound = util.getRandomChild(ReplicatedStorage.Blood)
+		local bloodSound = util.getRandomChild(sounds.Blood)
 
 		util.PlaySound(deathSound, script, 0.05, 0.2)
 		util.PlaySound(bloodSound, script, 0.15)
@@ -216,15 +218,16 @@ module.actions = {
 		return target, distance
 	end,
 
-	LookAtTarget = function(npc : Npc, includeY, doLerp, lerpAlpha)
+	LookAtTarget = function(npc : Npc, doLerp, lerpAlpha)
 		local target = npc.MindTarget.Value
+
 		if not target then
 			return
 		end
 	
 		local position = target:GetPivot().Position
 	
-		lookAtPostition(npc, position, includeY, doLerp, lerpAlpha)
+		lookAtPostition(npc, position, doLerp, lerpAlpha)
 	end,
 
 	Custom = function(npc : Npc, func, ...)

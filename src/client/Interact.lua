@@ -1,6 +1,7 @@
 local module = {}
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
@@ -10,6 +11,10 @@ local mouse = player:GetMouse()
 local mouseTarget = Instance.new("ObjectValue")
 mouseTarget.Parent = player
 mouseTarget.Name = "MouseTarget"
+
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local models = assets.Models
 
 local UI
 
@@ -21,6 +26,7 @@ local acts = require(Client.Acts)
 local actionPrompt = require(Client.ActionPrompt)
 local timer = require(Client.Timer)
 local weaponSystem = require(Client.WeaponSystem)
+local util = require(Client.Util)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 
@@ -90,6 +96,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     end
 
     if object:HasTag("Container") then
+        util.PlaySound(sounds.Collecting, script, 0.05, 0.5)
         runTimer("Collecting", 0.5, function()
             inventory:pickupFromContainer(mouseTarget.Value)
         end)
@@ -100,6 +107,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     end
 
     if object:HasTag("Door") then
+        util.PlaySound(sounds.Opening, script, 0.05, 0.5)
         runTimer("Opening", 0.5, openDoor, object)
     end
 end)

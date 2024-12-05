@@ -25,6 +25,11 @@ local acts = require(script.Parent.Acts)
 local mouseOver = require(script.Parent.MouseOver)
 local camera = require(script.Parent.Camera)
 
+local assets = ReplicatedStorage.Assets
+local models = assets.Models
+local gui = assets.Gui
+local sounds = assets.Sounds
+
 local currentNoteIndex = 0
 local currentNoteItem : item
 
@@ -35,7 +40,7 @@ Inventory.ItemUsed = signal.new()
 
 local rng = Random.new()
 
-local UITemplate = ReplicatedStorage.Inventory
+local UITemplate = gui.Inventory
 local UI
 
 function Inventory:SearchForItem(itemName)
@@ -140,7 +145,7 @@ function Inventory:DropItem(ItemOrSlot)
         return
     end
 
-    local droppedItem = ReplicatedStorage.DroppedItem:Clone()
+    local droppedItem = models.DroppedItem:Clone()
     local character = player.Character
 
     local data = require(droppedItem.Container)
@@ -157,6 +162,8 @@ function Inventory:pickupFromContainer(object)
     if not object or not object:FindFirstChild("Container") then
         return
     end
+
+    util.PlaySound(sounds.ItemAdded, script, 0.05)
 
     local containerData = require(object.Container)
 

@@ -25,6 +25,10 @@ local weapons = require(Client.WeaponSystem)
 local acts = require(Client.Acts)
 local lastHeartbeat = os.clock()
 
+local assets = ReplicatedStorage.Assets
+local sounds = assets.Sounds
+local models = assets.Models
+
 local logHealth = 0
 
 local hungerDamageTimer = timer:new("HungerDamage", 2, function()
@@ -36,7 +40,7 @@ local hungerDamageTimer = timer:new("HungerDamage", 2, function()
 end)
 
 local function spawnCharacter()
-    local presetCharacter = ReplicatedStorage.Character
+    local presetCharacter = models.Character
     local character:Model = presetCharacter:Clone()
 
     player.Character = character
@@ -59,7 +63,7 @@ local function spawnCharacter()
         end
 
         if logHealth > character:GetAttribute("Health") then
-            util.getRandomChild(ReplicatedStorage.Pain):Play()
+            util.getRandomChild(sounds.Pain):Play()
         end
 
         logHealth = character:GetAttribute("Health")
@@ -96,8 +100,8 @@ local function updatePlayerDirection()
     
 
     local difference = (logLv - character:GetPivot().LookVector).Magnitude
-    if difference >= 0.26 then
-        util.PlaySound(util.getRandomChild(ReplicatedStorage.Movement), script, 0.1)
+    if difference >= 0.2 then
+        util.PlaySound(util.getRandomChild(sounds.Movement), script, 0.1)
     end
 
     logPlayerDirection = yOrientation
@@ -138,9 +142,9 @@ local function updateDirection(inputState, vector)
             uiAnimationService.PlayAnimation(arms, 0.125, true)
         end
         
-        ReplicatedStorage.Steps:Resume()
+        sounds.Steps:Resume()
     else
-        ReplicatedStorage.Steps:Pause()
+        sounds.Steps:Pause()
         uiAnimationService.StopAnimation(frame)
 
         if weapons.weaponUnequipped then
@@ -149,8 +153,8 @@ local function updateDirection(inputState, vector)
     end
 end
 
-ReplicatedStorage.Steps.DidLoop:Connect(function()
-    ReplicatedStorage.Steps.PlaybackSpeed = Random.new():NextNumber(1.95, 2.05)
+sounds.Steps.DidLoop:Connect(function()
+    sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.45, 1.55)
 end)
 
 local function movePlayer(_, state, key)
