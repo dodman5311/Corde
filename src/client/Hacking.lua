@@ -13,7 +13,7 @@ mouseTarget.Parent = player
 mouseTarget.Name = "MouseTarget"
 
 local assets = ReplicatedStorage.Assets
-local sounds = assets.Sounds
+local sounds = assets.Sounds.NET
 local models = assets.Models
 local gui = assets.Gui
 
@@ -47,7 +47,25 @@ local function getKeyCodeFromNumber(number : number | string)
     end
 end
 
+local function completePoint(point : BillboardGui)
+    local hackUi = point.HackPrompt
+    local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
+
+    point:RemoveTag("ActiveNetPoint")
+    hackUi.Visible = true
+
+    util.tween(hackUi, ti, {Size = UDim2.fromScale(1.2,1.2), GroupTransparency = 1}, false, function()
+        point:Destroy()
+    end)
+end
+
 local function showPointPromt(point : BillboardGui)
+    if not point:HasTag("ActiveNetPoint") then
+        return
+    end
+
+    util.PlaySound(sounds.Select, script, 0.025)
+
     local hackUi = point.HackPrompt
     local ti = TweenInfo.new(0.25)
 
@@ -58,20 +76,16 @@ local function showPointPromt(point : BillboardGui)
     hackUi.ActionName.Text = `Action: <font color="rgb(255,145,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
     hackUi.ItemName.Text = point.Adornee.Name
 
-    hackUi.Keystroke_1.TextTransparency = 1
-    hackUi.Keystroke_2.TextTransparency = 1
-    hackUi.Keystroke_3.TextTransparency = 1
-    hackUi.Keystroke_4.TextTransparency = 1
+    for _,v in ipairs(hackUi:GetChildren()) do
+        if string.match(v.Name, "Keystroke_") then
+            v.TextTransparency = 1
+            v.Text = math.random(1,4)
+            v.Size = UDim2.fromScale(0.1, 0.075)
+            v.TextColor3 = Color3.new(1,1,1)
+        end
+    end
 
-    hackUi.Keystroke_1.Text = math.random(1,4)
-    hackUi.Keystroke_2.Text = math.random(1,4)
-    hackUi.Keystroke_3.Text = math.random(1,4)
-    hackUi.Keystroke_4.Text = math.random(1,4)
-
-    hackUi.Keystroke_1.Size = UDim2.fromScale(0.1, 0.075)
-    hackUi.Keystroke_2.Size = UDim2.fromScale(0.1, 0.075)
-    hackUi.Keystroke_3.Size = UDim2.fromScale(0.1, 0.075)
-    hackUi.Keystroke_4.Size = UDim2.fromScale(0.1, 0.075)
+    hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255,145,0)
 
     hackUi.Image.Position = UDim2.fromScale(0,0)
 
@@ -104,6 +118,10 @@ local function hidePointPromt(point : BillboardGui?)
         return
     end
 
+    if not point:HasTag("ActiveNetPoint") then
+        return
+    end
+
     point.HackPrompt.Visible = false
     point.Point.Visible = true
 end
@@ -130,6 +148,11 @@ local function clearNetPoints()
     for _,object in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
         object:Destroy()
     end
+end
+
+local function refreshNetPoints()
+    clearNetPoints()
+    placeNetPoints()
 end
 
 local function getValidNetPoints()
@@ -234,16 +257,19 @@ local function processNet()
     actionPrompt.updateActionValue(player.Character:GetAttribute("RAM"))
 end
 
-local function doHackAction(object, point)
+local function doHackAction(object, point : BillboardGui)
     player.Character:SetAttribute("RAM", 0)
 
     local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
 
-    if not hackFunction then
-        return
+    util.PlaySound(sounds.HackSuccess, script)
+    completePoint(point)
+
+    if hackFunction then
+        task.spawn(hackFunction, object, point)
     end
 
-    return hackFunction(object, point)
+    refreshNetPoints()
 end
 
 local function checkHackGate(point : BillboardGui)
@@ -254,12 +280,12 @@ local function checkHackGate(point : BillboardGui)
         return
     end
 
-   return doHackAction(object, point)
+   doHackAction(object, point)
 end
 
 local function checkKeystrokeInput(input)
     local character = player.Character
-    if not character or character:GetAttribute("RAM") < 1 then
+    if not character then
         return
     end
 
@@ -271,30 +297,37 @@ local function checkKeystrokeInput(input)
     local hackUi = currentActivePoint.Value.HackPrompt
     local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
 
-    if not keystrokeLabel then
+    if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel.Text) then
         return
     end
 
-    if input.KeyCode == getKeyCodeFromNumber(keystrokeLabel.Text) then
-        keystrokeLabel.TextColor3 = Color3.new(1,1,1)
-
-        util.tween(keystrokeLabel, TweenInfo.new(0.25), {Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1})
-
-        currentInputIndex += 1
-
-        keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
-        if not keystrokeLabel then
-            checkHackGate(currentActivePoint.Value)
-            return
-        end
-        keystrokeLabel.TextColor3 = Color3.fromRGB(255,145,0)
+    if character:GetAttribute("RAM") < 1 then
+        util.PlaySound(sounds.LowRam, script, 0.025)
+        return
     end
+
+    util.PlaySound(sounds.HackInput, script, 0.05)
+
+    keystrokeLabel.TextColor3 = Color3.new(1,1,1)
+
+    util.tween(keystrokeLabel, TweenInfo.new(0.25), {Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1})
+
+    currentInputIndex += 1
+
+    keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
+    if not keystrokeLabel then
+        checkHackGate(currentActivePoint.Value)
+        return
+    end
+    keystrokeLabel.TextColor3 = Color3.fromRGB(255,145,0)
 end
 
 function module:EnterNetMode()
     acts:createAct("InNet")
-    actionPrompt.showActionPrompt("N.E.T™ - RAM")
+    actionPrompt.showActionPrompt("RAM")
     placeNetPoints()
+
+    util.PlaySound(sounds.NetOpen, script)
 
     util.tween(Lighting.NETColor, ti, {
         TintColor = Color3.fromRGB(185, 255, 250),
@@ -309,6 +342,8 @@ function module:ExitNetMode()
     actionPrompt.hideActionPrompt()
     clearNetPoints()
     clearNetLines()
+
+    util.PlaySound(sounds.NetClose, script, 0, 0.25)
 
     util.tween(Lighting.NETColor, ti, {
         TintColor = Color3.new(1,1,1),

@@ -1,6 +1,6 @@
 local module = {
     HungerRate = 0.35,
-    RamRecoveryRate = 0.05
+    RamRecoveryRate = 1--0.05
 }
 
 
