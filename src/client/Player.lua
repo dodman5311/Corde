@@ -1,5 +1,6 @@
 local module = {
-    HungerRate = 0.35
+    HungerRate = 0.35,
+    RamRecoveryRate = 0.05
 }
 
 
@@ -213,7 +214,15 @@ RunService.Heartbeat:Connect(function()
             player.Character:SetAttribute("Hunger", 100)
         else
             player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") - ((os.clock() - lastHeartbeat) * module.HungerRate))
-        end        
+        end     
+        
+        if player.Character:GetAttribute("RAM") < 0 then
+            player.Character:SetAttribute("RAM", 0)
+        elseif player.Character:GetAttribute("RAM") >= 1 then
+            player.Character:SetAttribute("RAM", 1)
+        else
+            player.Character:SetAttribute("RAM", player.Character:GetAttribute("RAM") + ((os.clock() - lastHeartbeat) * module.RamRecoveryRate))
+        end
     end
 
     lastHeartbeat = os.clock()

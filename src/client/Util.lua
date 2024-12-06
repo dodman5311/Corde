@@ -8,6 +8,10 @@ local rng = Random.new()
 
 local function flicker(frame, speed, amnt)
 	for _ = 0, amnt do
+		if not frame.Parent then
+			return
+		end
+
 		task.wait(speed)
 		frame.Visible = not frame.Visible
 	end
@@ -97,7 +101,7 @@ function util.circleCurve(t)
 	return math.sqrt(1 - (2 * t - 1) ^ 2)
 end
 
-function util.tween(instance, tweenInfo, propertyTable, yield, endingFunction, endingState : Enum.PlaybackState)
+function util.tween(instance : Instance | {}, tweenInfo : TweenInfo, propertyTable : {}, yield : boolean?, endingFunction, endingState : Enum.PlaybackState)
 	local createdTween
 
 	if typeof(instance) == "table" then

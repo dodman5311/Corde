@@ -30,42 +30,49 @@ local util = require(Client.Util)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 
+local function showInteract(object, cursor)
+    cursor.Image.Position = UDim2.fromScale(0,0)
+    cursor.CursorBlue.Image.Position = UDim2.fromScale(0,0)
+    cursor.CursorRed.Image.Position = UDim2.fromScale(0,0)
+    cursor.Visible = true
+
+    cursor.ItemName.Text = object.Name
+    cursor.ItemNameRed.Text = object.Name
+    cursor.ItemNameBlue.Text = object.Name
+
+    uiAnimationService.PlayAnimation(cursor, 0.025, false, true)
+    uiAnimationService.PlayAnimation(cursor.CursorBlue, 0.025, false, true)
+    uiAnimationService.PlayAnimation(cursor.CursorRed, 0.025, false, true).OnEnded:Once(function()
+        cursor.ItemName.Visible = true
+        cursor.ItemNameRed.Visible = true
+        cursor.ItemNameBlue.Visible = true
+    end)
+end
+
+local function hideInteract(object, cursor)
+    cursor.Visible = false
+    cursor.Image.Position = UDim2.fromScale(0,0)
+    cursor.CursorBlue.Image.Position = UDim2.fromScale(0,0)
+    cursor.CursorRed.Image.Position = UDim2.fromScale(0,0)
+
+    cursor.ItemName.Visible = false
+    cursor.ItemNameRed.Visible = false
+    cursor.ItemNameBlue.Visible = false
+
+    interactTimer:Cancel()
+end
+
 mouseTarget.Changed:Connect(function(value)
-    local cursor = UI.Cursor
     if not UI then
         return
     end
 
+    local interactUi = UI.Cursor.Interact
+
     if value and value:HasTag("Interactable") then
-
-        cursor.Image.Position = UDim2.fromScale(0,0)
-        cursor.CursorBlue.Image.Position = UDim2.fromScale(0,0)
-        cursor.CursorRed.Image.Position = UDim2.fromScale(0,0)
-        cursor.Visible = true
-
-        cursor.ItemName.Text = value.Name
-        cursor.ItemNameRed.Text = value.Name
-        cursor.ItemNameBlue.Text = value.Name
-
-        uiAnimationService.PlayAnimation(cursor, 0.025, false, true)
-        uiAnimationService.PlayAnimation(cursor.CursorBlue, 0.025, false, true)
-        uiAnimationService.PlayAnimation(cursor.CursorRed, 0.025, false, true).OnEnded:Once(function()
-            cursor.ItemName.Visible = true
-            cursor.ItemNameRed.Visible = true
-            cursor.ItemNameBlue.Visible = true
-        end)
-
+        showInteract(value, interactUi)
     else
-        cursor.Visible = false
-        cursor.Image.Position = UDim2.fromScale(0,0)
-        cursor.CursorBlue.Image.Position = UDim2.fromScale(0,0)
-        cursor.CursorRed.Image.Position = UDim2.fromScale(0,0)
-
-        cursor.ItemName.Visible = false
-        cursor.ItemNameRed.Visible = false
-        cursor.ItemNameBlue.Visible = false
-
-        interactTimer:Cancel()
+        hideInteract(value, interactUi)
     end
 end)
 
@@ -82,19 +89,11 @@ local function runTimer(actionName : string, interactionTime : number, func, ...
     interactTimer.Parameters = {...}
     interactTimer.WaitTime = interactionTime
 
-    acts:createAct("Interacting")
-
     interactTimer:Run()
     actionPrompt.showActionTimer(interactTimer, actionName)
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    local object = mouseTarget.Value
-
-    if input.KeyCode ~= Enum.KeyCode.F or gameProcessedEvent or not object or acts:checkAct("Interacting")  then
-        return
-    end
-
+local function InteractiWithObject(object : Instance)
     if object:HasTag("Container") then
         util.PlaySound(sounds.Collecting, script, 0.05, 0.5)
         runTimer("Collecting", 0.5, function()
@@ -106,10 +105,25 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         dialogue:EnterDialogue(mouseTarget.Value)
     end
 
-    if object:HasTag("Door") then
+    if object:HasTag("Door") and not object:GetAttribute("Locked") then
         util.PlaySound(sounds.Opening, script, 0.05, 0.5)
         runTimer("Opening", 0.5, openDoor, object)
     end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    local object = mouseTarget.Value
+
+    if 
+        input.KeyCode ~= Enum.KeyCode.F 
+        or gameProcessedEvent 
+        or not object 
+        or acts:checkAct("Interacting")  
+    then
+        return
+    end
+
+    InteractiWithObject(object)
 end)
 
 local function processCrosshair()
