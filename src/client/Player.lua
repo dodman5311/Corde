@@ -30,14 +30,9 @@ local sounds = assets.Sounds
 local models = assets.Models
 
 local logHealth = 0
-
-local hungerDamageTimer = timer:new("HungerDamage", 2, function()
-    if not player.Character then
-        return
-    end
-
-    player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - 10)
-end)
+local logLv = Vector3.zero
+local logMousePos = Vector3.zero
+local hungerDamageTimer = timer:new("HungerDamage", 2)
 
 local function spawnCharacter()
     local presetCharacter = models.Character
@@ -70,8 +65,18 @@ local function spawnCharacter()
     end)
 end
 
-local logLv = Vector3.zero
-local logMousePos = Vector3.zero
+function module:DamagePlayer(damage : number, damageType : string)
+    player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - damage)
+    player.Character:SetAttribute("LastDamageType", damageType)
+end
+
+hungerDamageTimer.Function = function()
+    if not player.Character then
+        return
+    end
+
+    module:DamagePlayer(10, "Hunger")
+end
 
 local function updatePlayerDirection()
     local character = player.Character
@@ -196,6 +201,8 @@ function  module.Init()
     RunService:BindToRenderStep("updatePlayerMovement", Enum.RenderPriority.Character.Value, updatePlayerMovement)
     RunService:BindToRenderStep("updatePlayerDirection", Enum.RenderPriority.Character.Value + 1, updatePlayerDirection)
 end
+
+
 
 RunService.Heartbeat:Connect(function()
     if player.Character and not acts:checkAct("Paused") then

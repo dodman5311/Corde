@@ -3,6 +3,7 @@ local module = {}
 
 local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
+local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -54,7 +55,7 @@ function module:resume()
 end
 
 function  module.Init()
-    
+    Lighting.Ambient = Color3.new()
 end
 
 RunService.Heartbeat:Connect(function()
@@ -63,6 +64,8 @@ RunService.Heartbeat:Connect(function()
     end
     
     for _,item in ipairs(CollectionService:GetTagged("PhysicsItem")) do -- Process Physics
+
+        item.Orientation = Vector3.new(0,item.Orientation.Y,0)
 
         if item.AssemblyLinearVelocity == Vector3.new(0,0,0) and item.AssemblyAngularVelocity == Vector3.new(0,0,0) then
             continue
