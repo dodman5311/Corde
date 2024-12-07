@@ -28,7 +28,6 @@ local cameraShaker = require(Client.CameraShaker)
 
 local currentWeapon
 local mouse1Down = false
-local mouse = player:GetMouse()
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds

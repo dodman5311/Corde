@@ -1,6 +1,6 @@
 local module = {
     HungerRate = 0.35,
-    RamRecoveryRate = 1--0.05
+    RamRecoveryRate = 0.035
 }
 
 
@@ -12,10 +12,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local mouse = player:GetMouse()
 local moveDirection = Vector3.new()
 local logPlayerDirection = 0
 
+local camera = workspace.CurrentCamera
 local Client = player.PlayerScripts.Client
 
 local uiAnimationService = require(Client.UIAnimationService)
@@ -25,6 +25,9 @@ local util = require(Client.Util)
 local weapons = require(Client.WeaponSystem)
 local acts = require(Client.Acts)
 local lastHeartbeat = os.clock()
+local inputType = require(Client.GlobalInputType)
+
+local mouse = player:GetMouse()
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -34,6 +37,11 @@ local logHealth = 0
 local logLv = Vector3.zero
 local logMousePos = Vector3.zero
 local hungerDamageTimer = timer:new("HungerDamage", 2)
+local cursorLocation = Vector2.zero
+
+local thumbstick1Pos = Vector3.zero
+local thumbstick2Pos = Vector3.zero
+local thumbstickLookPos = Vector3.new(0,0,1)
 
 local function spawnCharacter()
     local presetCharacter = models.Character
@@ -80,12 +88,19 @@ hungerDamageTimer.Function = function()
 end
 
 local function updatePlayerDirection()
+    if cursorLocation.Magnitude <= 0.1 then
+        cursorLocation = Vector2.new(moveDirection.X, moveDirection.Z)
+    end
+    
+    player:SetAttribute("CursorPosition", cursorLocation)
+
     local character = player.Character
     if not character or acts:checkAct("Paused") then return end
     local gyro = character:FindFirstChild("Gyro")
     if not gyro then return end
 
     local characterPosition = character:GetPivot().Position
+
     local mousePosition = mouse.Hit.Position
 
     if acts:checkAct("InDialogue") then
@@ -95,7 +110,12 @@ local function updatePlayerDirection()
     end
 
     local lookPoint = Vector3.new(mousePosition.X, characterPosition.Y, mousePosition.Z)
-    gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint)
+    
+    if inputType.inputType == "Gamepad" then
+        gyro.CFrame = CFrame.lookAt(characterPosition, characterPosition + thumbstickLookPos)
+    else
+        gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint)
+    end
 
     local yOrientation = character.PrimaryPart.Orientation.Y
     local sway = logPlayerDirection - yOrientation
@@ -125,8 +145,10 @@ end
 local function updateDirection(inputState, vector)
     if inputState == Enum.UserInputState.Begin then
         moveDirection += vector
-    else
+    elseif inputState == Enum.UserInputState.End then
         moveDirection -= vector
+    else
+        moveDirection = vector
 	end
 	
 	moveDirection = Vector3.new(math.clamp(moveDirection.X,-1,1),math.clamp(moveDirection.Y,-1,1),math.clamp(moveDirection.Z,-1,1))
@@ -163,7 +185,38 @@ sounds.Steps.DidLoop:Connect(function()
     sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.45, 1.55)
 end)
 
-local function movePlayer(_, state, key)
+local function updateCursorData(action, state, key)
+    
+
+    if key.KeyCode == Enum.KeyCode.Thumbstick2 then
+        cursorLocation = Vector2.new(key.Position.X, -key.Position.Y) * camera.ViewportSize
+
+        thumbstick2Pos = key.Position
+    elseif key.KeyCode == Enum.KeyCode.Thumbstick1 then
+        thumbstick1Pos = key.Position
+        
+    elseif key.UserInputType == Enum.UserInputType.MouseMovement then
+        cursorLocation = UserInputService:GetMouseLocation()
+    end
+
+    if key.KeyCode == Enum.KeyCode.Thumbstick2 or key.KeyCode == Enum.KeyCode.Thumbstick1 then
+        local thumbPos
+        if thumbstick2Pos.Magnitude <= .125 then
+            thumbPos = Vector3.new(thumbstick1Pos.X, 0, -thumbstick1Pos.Y)
+        else
+            thumbPos = Vector3.new(thumbstick2Pos.X, 0, -thumbstick2Pos.Y)
+            cursorLocation = thumbPos * camera.ViewportSize
+        end
+
+        if thumbPos.Magnitude > 0 then
+            thumbstickLookPos = thumbPos
+        end
+    end
+
+end
+
+
+local function movePlayer(action, state, key)
     if acts:checkAct("InDialogue") then
         moveDirection = Vector3.new(0,0,0)
         updateDirection(state, Vector3.new(0,0,0))
@@ -178,6 +231,15 @@ local function movePlayer(_, state, key)
         updateDirection(state, Vector3.new(-1,0,0))
     elseif key.KeyCode == Enum.KeyCode.D then
         updateDirection(state, Vector3.new(1,0,0))
+    elseif key.KeyCode == Enum.KeyCode.Thumbstick1 then
+        local position = Vector3.new(key.Position.X, 0, -key.Position.Y)
+
+        if position.Magnitude <= 0.125 then
+            position = Vector3.zero
+        end
+
+        updateDirection(state, position)
+        updateCursorData(action, state, key)
     end
 end
 
@@ -193,17 +255,15 @@ local function updatePlayerMovement()
     walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)     
 end
 
-
 function  module.Init()
     spawnCharacter()
 
-    ContextActionService:BindAction("Walk", movePlayer, false, Enum.KeyCode.W, Enum.KeyCode.S, Enum.KeyCode.A, Enum.KeyCode.D)
+    ContextActionService:BindAction("Walk", movePlayer, false, Enum.KeyCode.W, Enum.KeyCode.S, Enum.KeyCode.A, Enum.KeyCode.D, Enum.KeyCode.Thumbstick1)
+    ContextActionService:BindAction("updateCursorData", updateCursorData, false, Enum.UserInputType.MouseMovement, Enum.KeyCode.Thumbstick2)
 
     RunService:BindToRenderStep("updatePlayerMovement", Enum.RenderPriority.Character.Value, updatePlayerMovement)
     RunService:BindToRenderStep("updatePlayerDirection", Enum.RenderPriority.Character.Value + 1, updatePlayerDirection)
 end
-
-
 
 RunService.Heartbeat:Connect(function()
     if player.Character and not acts:checkAct("Paused") then
@@ -237,5 +297,8 @@ inventory.ItemUsed:Connect(function(use, item, slot)
 
     inventory[slot] = nil
 end)
+
+player:SetAttribute("CursorPosition", Vector2.zero)
+player:SetAttribute("CursorHit", Vector2.zero)
 
 return module
