@@ -23,7 +23,7 @@ module.new = function(self, timerName, waitTime, Function, ...)
 	end
 
 	if queue.timerQueue[timerName] then
-		return
+		return queue.timerQueue[timerName]
 	end
 
 	local timer = {

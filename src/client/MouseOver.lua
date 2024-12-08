@@ -1,3 +1,4 @@
+local GuiService = game:GetService("GuiService")
 local Player = game.Players.LocalPlayer or game.Players:GetPropertyChangedSignal("LocalPlayer")
 
 local Mouse = Player:GetMouse()
@@ -5,15 +6,56 @@ local Mouse = Player:GetMouse()
 local CurrentItems = {}
 
 --Private functions
+
+local function hasProperty(object, prop)
+	local t = object[prop]
+end
+
+local function checkAncestorVisible(v: GuiObject)
+	local lastObject = v
+
+	while true do
+		local nextObject = lastObject.Parent
+
+		if nextObject == game then
+			return true
+		end
+
+		if nextObject:IsA("GuiObject") then
+			local success = pcall(function()
+				hasProperty(nextObject, "Visible")
+			end)
+
+			if success and not nextObject.Visible then
+				return false
+			end
+
+			success = pcall(function()
+				hasProperty(nextObject, "Enabled")
+			end)
+
+			if success and not nextObject.Enabled then
+				return false
+			end
+		end
+
+		lastObject = nextObject
+	end
+end
+
 local function IsInFrame(v)
 	local X = Mouse.X
 	local Y = Mouse.Y
 
 	if
-		X > v.AbsolutePosition.X
-		and Y > v.AbsolutePosition.Y
-		and X < v.AbsolutePosition.X + v.AbsoluteSize.X
-		and Y < v.AbsolutePosition.Y + v.AbsoluteSize.Y
+		(
+			(
+				X > v.AbsolutePosition.X
+				and Y > v.AbsolutePosition.Y
+				and X < v.AbsolutePosition.X + v.AbsoluteSize.X
+				and Y < v.AbsolutePosition.Y + v.AbsoluteSize.Y
+			) or GuiService.SelectedObject == v
+		) and checkAncestorVisible(v)
 	then
 		return true
 	else

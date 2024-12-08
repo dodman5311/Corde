@@ -5,6 +5,7 @@ local module = {
 
 local ContextActionService = game:GetService("ContextActionService")
 local Debris = game:GetService("Debris")
+local HapticService = game:GetService("HapticService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -25,9 +26,11 @@ local projectiles = require(Client.Projectiles)
 local sequences = require(Client.Sequences)
 local cameraService = require(Client.Camera)
 local cameraShaker = require(Client.CameraShaker)
+local haptics = require(Client.Haptics)
 
 local currentWeapon
-local mouse1Down = false
+local fireKeyDown = false
+local readyKeyDown = false
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -104,27 +107,31 @@ local function showWeapon(weaponType)
     end
 end
 
-function module.toggleHolstered()
+function module.toggleHolstered(value)
     local character = player.Character
     if not character or not currentWeapon or acts:checkAct("Reloading", "Firing") then
         return 
     end
 
-    if module.weaponUnequipped then
+    if value and module.weaponUnequipped then
         if acts:checkAct("Interacting") then
             return
         end
 
         showWeapon(currentWeapon.Value.Type)
         util.PlaySound(sounds.Unholster, script, 0.075)
-    else
+        
+        acts:createTempAct("Holstering", function()
+            task.wait(0.2)
+        end)
+    elseif not readyKeyDown and not module.weaponUnequipped then
         showWeapon(0)
         util.PlaySound(sounds.Holster, script, 0.075)
-    end
 
-    acts:createTempAct("Holstering", function()
-        task.wait(0.15)
-    end)
+        acts:createTempAct("Holstering", function()
+            task.wait(0.1)
+        end)
+    end
 end
 
 function module.equipWeapon(weapon)
@@ -149,7 +156,7 @@ function module.equipWeapon(weapon)
 
     uiAnimationService.StopAnimation(reload)
 
-    showWeapon(weaponData.Type)
+    showWeapon(0)
 
     fireSound.SoundId = weaponData.FireSound
     fireSound.Volume = weaponData.Volume
@@ -173,7 +180,7 @@ function module.equipWeapon(weapon)
 end
 
 local function processCrosshair()
-    local mousePosition = UserInputService:GetMouseLocation()
+    local mousePosition = player:GetAttribute("CursorLocation")
 
 	--local mousePosition = Vector2.new(mousePosition.X, mousePosition.Y)
 	local mouseUnit = mousePosition / camera.ViewportSize
@@ -181,7 +188,7 @@ local function processCrosshair()
 
 	local size = 1 + mouseDistance
 
-    local spread = currentWeapon and currentWeapon.Value.Spread or 0
+    local spread = (currentWeapon and not module.weaponUnequipped) and currentWeapon.Value.Spread or 0
     size = (mouseDistance * (spread + accuracyReduction.Position))
 
     local crosshair = UI.Crosshair
@@ -244,11 +251,6 @@ local function reload(itemToUse)
         return
     end
 
-    if module.weaponUnequipped then
-        module.toggleHolstered()
-        return
-    end
-
     local weaponData = currentWeapon.Value
 
     if acts:checkAct("Firing", "Reloading", "Interacting") then
@@ -258,6 +260,11 @@ local function reload(itemToUse)
     local foundMag = itemToUse or getNextMag()
     if not foundMag then
         return
+    end
+
+    if module.weaponUnequipped then
+        module.toggleHolstered(true)
+        acts:waitForAct("Holstering")
     end
 
     local reloadTime = currentWeapon.Value.ReloadTime 
@@ -281,9 +288,9 @@ local function reload(itemToUse)
     foundMag.InUse = true
 
     task.wait(reloadTime)
-    
-    weaponData.CurrentMag = foundMag
+    task.delay(0.1, module.toggleHolstered, false)
 
+    weaponData.CurrentMag = foundMag
     acts:removeAct("Reloading", "Interacting")
 end
 
@@ -327,7 +334,7 @@ local function createBullet(weaponData)
     end
 end
 
-local function fireWeapon()
+local function fireWeapon(input)
     local character = player.Character
     if not character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting") then
         return
@@ -336,7 +343,7 @@ local function fireWeapon()
     local weaponData = currentWeapon.Value
 
     if module.weaponUnequipped then
-        module.toggleHolstered()
+        --module.toggleHolstered()
         return
     end
 
@@ -378,12 +385,16 @@ local function fireWeapon()
 	--accuracyReduction.Target = weaponData.Recoil
     accuracyReduction:Impulse(weaponData.Recoil)
 
-    local cameraRecoil = (weaponData.Recoil / 100) * 5
-    local cameraRecoilInstance = cameraShaker.CameraShakeInstance.new(cameraRecoil, 6.5, 0, cameraRecoil / 10)
+    local cameraRecoilMagnitude = (weaponData.Recoil / 100) * 5
+    local cameraRecoil = cameraRecoilMagnitude / 10
+
+    local cameraRecoilInstance = cameraShaker.CameraShakeInstance.new(cameraRecoilMagnitude, 6.5, 0, cameraRecoil)
     cameraRecoilInstance.PositionInfluence = Vector3.one * 0.2
     cameraRecoilInstance.RotationInfluence = Vector3.new(0,0,3)
 
     cameraService.shaker:Shake(cameraRecoilInstance)
+
+    haptics.hapticPulse(input, Enum.VibrationMotor.Large, cameraRecoil, cameraRecoil / 1.5, "GunFire")
 
     task.wait(60 / currentWeapon.Value.RateOfFire)
 
@@ -433,21 +444,19 @@ function module.Init()
     task.delay(0.01, function()
         module.equipWeapon(inventory:CheckSlot("slot_13"))
     end)
-  
-    
     
     UserInputService.MouseIconEnabled = false
 
     RunService.RenderStepped:Connect(processCrosshair)
-end 
+end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent or acts:checkAct("Paused") then
         return
     end
 
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        mouse1Down = true
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2 then
+        fireKeyDown = input
         
 
         if not currentWeapon then
@@ -456,7 +465,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         local weaponData = currentWeapon.Value
 
         if weaponData.FireMode == 1 then
-            fireWeapon()
+            fireWeapon(input)
         end
 
         if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
@@ -464,25 +473,30 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         end
     end
     
-    if input.KeyCode == Enum.KeyCode.R then
+    if input.KeyCode == Enum.KeyCode.R or input.KeyCode == Enum.KeyCode.ButtonR1 then
         reload()
     end
     
-    if input.KeyCode == Enum.KeyCode.T then
-        module.toggleHolstered()
+    if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.ButtonL2 then
+        readyKeyDown = input
+        module.toggleHolstered(true)
     end
-
 end)
 
 UserInputService.InputEnded:Connect(function(input, gameProcessedEvent)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        mouse1Down = false
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2 then
+        fireKeyDown = false
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.ButtonL2 then
+        readyKeyDown = false
+        module.toggleHolstered(readyKeyDown)
     end
 end)
 
 RunService.Heartbeat:Connect(function()
 
-    if not currentWeapon or not mouse1Down or acts:checkAct("Paused") then
+    if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then
         return
     end
     local weaponData = currentWeapon.Value
@@ -491,7 +505,7 @@ RunService.Heartbeat:Connect(function()
         return
     end
 
-    fireWeapon()
+    fireWeapon(fireKeyDown)
 end)
 
 return module

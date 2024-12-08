@@ -1,15 +1,58 @@
+local CollectionService = game:GetService("CollectionService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local Player = Players.LocalPlayer
+
+local selectionUi = ReplicatedStorage.Assets.Gui.GamepadSelectionUi
+local selectionImage = selectionUi.SelectionImage
+
+local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
+
 local module = {
     inputType = "Keyboard",
-    gamepadType = "Xbox"
-}
+    gamepadType = "Xbox",
 
-local UserInputService = game:GetService("UserInputService")
+	inputIcons = {
+		Ps4 = {
+			ButtonX = "rbxassetid://122062730815411",
+			ButtonA = "rbxassetid://99222140491626",
+			ButtonB = "rbxassetid://139151046418306",
+		},
+		Xbox = {
+			ButtonX = "rbxassetid://122267119998385",
+			ButtonA = "rbxassetid://121295530666976",
+			ButtonB = "rbxassetid://97330447691033",
+		},
+		Misc = {
+			Dpad = "rbxassetid://104088083610808",
+			Left = "rbxassetid://102626010372615",
+			Right = "rbxassetid://128897927978505",
+			Horizontal = "rbxassetid://134923880414479",
+			Up = "rbxassetid://112547970720772",
+			Down = "rbxassetid://136246329210868",
+			Vertical = "rbxassetid://81470201795928",
+		}
+	}
+}
 
 local ps4Keys = {
 	"ButtonCross",
 	"ButtonCircle",
 	"ButtonTriangle",
 	"ButtonSquare",
+
+	"ButtonR1",
+	"ButtonR2",
+	"ButtonR3",
+	"ButtonL1",
+	"ButtonL2",
+	"ButtonL3",
+	"ButtonOptions",
+	"ButtonShare",
 }
 
 local xboxKeys = {
@@ -17,48 +60,79 @@ local xboxKeys = {
 	"ButtonB",
 	"ButtonX",
 	"ButtonY",
+
+	"ButtonLB",
+	"ButtonRB",
+	"ButtonLT",
+	"ButtonRT",
+	"ButtonLS",
+	"ButtonRS",
+	"ButtonStart",
+	"ButtonSelect",
 }
 
-local lastInput
+local function setGamepadType(lastInput)
+	local inputName = UserInputService:GetStringForKeyCode(lastInput.KeyCode)
 
-local function setInputType()
-	
-	if lastInput == Enum.UserInputType.Touch then
-         module.inputType = "Mobile"
-		return
-	end
-	
-	if not UserInputService.GamepadEnabled then
-         module.inputType = "Keyboard"
-		return
-	end
-
-	if not lastInput then
-        module.inputType = "Gamepad"
-		return
-	end
-	
-	local input = UserInputService:GetStringForKeyCode(lastInput)
-
-	if table.find(ps4Keys, input) then
-        module.inputType = "Gamepad"
-        module.gamepadType = "Ps4"
-	else
-        module.inputType = "Gamepad"
-        module.gamepadType = "Xbox"
+	if table.find(ps4Keys, inputName) then
+		module.gamepadType = "Ps4"
+	elseif table.find(xboxKeys, inputName) then
+		module.gamepadType = "Xbox"
 	end
 end
 
-UserInputService.InputBegan:Connect(function(i)
-	local input = UserInputService:GetStringForKeyCode(i.KeyCode)
+local function setInputType(lastInput)
 	
-	if table.find(ps4Keys, input) or table.find(xboxKeys, input) then
-		lastInput = i.KeyCode
-	elseif i.UserInputType == Enum.UserInputType.Touch then
-		lastInput = Enum.UserInputType.Touch
+	if lastInput.KeyCode == Enum.UserInputType.Touch then
+        module.inputType = "Mobile"
+		return
 	end
 	
-	setInputType()
-end)
+	if lastInput.UserInputType.Name:find("Gamepad") then
+		module.inputType = "Gamepad"
+		setGamepadType(lastInput)
+	else
+		module.inputType = "Keyboard"
+   	end
+
+	for _,image : ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
+		local iconKey = image:GetAttribute("Key")
+
+		if module.inputIcons.Misc[iconKey] then
+			image.Image = module.inputIcons.Misc[iconKey]
+			continue
+		end
+
+		image.Image = module.inputIcons[module.gamepadType][iconKey]
+	end
+end
+
+local function handleGamepadSelection(changedProperty)
+	if changedProperty ~= "SelectedObject" then	return end
+	
+	local object = GuiService.SelectedObject
+	
+	task.defer(function()
+		if object then
+			if selectionImage.Visible then
+				TweenService:Create(selectionImage, ti, {Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y), Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)}):Play()
+			else
+				selectionImage.Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y)
+				selectionImage.Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)
+			end
+
+			selectionImage.Visible = true
+		else
+			selectionImage.Visible = false
+		end
+	end)
+end
+
+UserInputService.InputBegan:Connect(setInputType)
+UserInputService.InputChanged:Connect(setInputType)
+GuiService.Changed:Connect(handleGamepadSelection)
+
+Player:WaitForChild("PlayerGui").SelectionImageObject = selectionUi.HideSelection
+selectionUi.Parent = Player.PlayerGui
 
 return module

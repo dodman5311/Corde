@@ -37,11 +37,11 @@ function module:beginSequence(sequenceName)
         return
     end
 
-    util.tween({SoundService.WorldSounds, SoundService.Music}, TweenInfo.new(1), {Volume = 0})
+    util.tween(SoundService.Music, TweenInfo.new(1), {Volume = 0})
 
     acts:createTempAct("InSequence", module[sequenceName])
 
-    util.tween({SoundService.WorldSounds, SoundService.Music}, TweenInfo.new(1), {Volume = 0.5})
+    util.tween(SoundService.Music, TweenInfo.new(1), {Volume = 0.5})
 end
 
 local function loadSequence(sequence)
@@ -62,8 +62,6 @@ function module.noMercy()
     sounds.Distortion_0.Volume = 1.5
 
     task.wait(3)
-
-    print(SoundService.Music.Volume)
 
     util.PlaySound(sounds.Distortion_0, script, 0, 0.1)
     sequenceFrame.Visible = true
@@ -92,7 +90,6 @@ function module.noMercy()
     task.wait(0.25)
 
     sounds.Distortion_0.Volume = 0.5
-    SoundService.WorldSounds.Volume = 0
 
     sounds.Distortion_0:Play()
 
@@ -163,7 +160,7 @@ function module.noMercy()
     sounds.Distortion_0:Stop()
     sounds.Ambience_0:Stop()
 
-    SoundService.WorldSounds.Volume = 0.5
+    SoundService.SoundEffects.Volume = 0.5
 
     world:resume()
 end

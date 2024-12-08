@@ -7,6 +7,7 @@ export type item = {
     InUse : boolean
 }
 
+local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,6 +25,7 @@ local util = require(script.Parent.Util)
 local acts = require(script.Parent.Acts)
 local mouseOver = require(script.Parent.MouseOver)
 local camera = require(script.Parent.Camera)
+local globalInputType = require(script.Parent.GlobalInputType)
 
 local assets = ReplicatedStorage.Assets
 local models = assets.Models
@@ -350,10 +352,18 @@ end
 
 local function closeNote()
     local noteUi = UI.Note
+    if not noteUi.Visible then
+        return
+    end
+
     currentNoteItem = nil
     util.tween( noteUi, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {GroupTransparency = 1}, false, function()
         noteUi.Visible = false
     end, Enum.PlaybackState.Completed)
+
+    if globalInputType.inputType == "Gamepad" then
+        GuiService:Select(UI.Inventory.Slots)
+    end
 end
 
 local function nextNotePage(note : item, indexChange : number)
@@ -400,6 +410,10 @@ local function openNote(note : item)
     nextNotePage(note, 0)
 
     util.tween( UI.Note, TweenInfo.new(0.5, Enum.EasingStyle.Linear), {GroupTransparency = 0})
+
+    if globalInputType.inputType == "Gamepad" then
+        GuiService.SelectedObject = nil
+    end
 end
 
 local function refreshGui()
@@ -423,6 +437,16 @@ local function useItem(slotUi)
   
     task.wait()
     refreshGui()
+end
+
+local function updatePrompts()
+
+    local inventoryUi = UI.Inventory
+    local note = UI.Note
+
+    inventoryUi.ActionPrompt.Visible = globalInputType.inputType == "Keyboard"
+    inventoryUi.ActionPromptGamepad.Visible = globalInputType.inputType == "Gamepad"
+    note.ActionPromptGamepad.Visible = globalInputType.inputType == "Gamepad"
 end
 
 local function initGui()
@@ -454,7 +478,7 @@ local function initGui()
     for _,slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
         if not slotUi:IsA('Frame') then continue end
 
-       local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi)
+       local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi.Button)
 
        mouseEnter:Connect(function()
             UIAnimationService.PlayAnimation(slotUi.Frame, 0.075, true)
@@ -528,29 +552,26 @@ local function initGui()
                 return
             end
 
-           if input.KeyCode == Enum.KeyCode.Q then
-                Inventory:DropItem(slotUi.Name)
-           end
-
-           refreshGui()
+            
+            
+            refreshGui()
        end)
     end
 end
 
+
 function Inventory.OpenInventory()
-    
+
     camera.followViewDistance.current = 1
-
     acts:createAct("InventoryOpen", "InventoryOpening")
-
-    UI.SideBars.Image.Position = UDim2.fromScale(0,0)
-    UI.Inventory.Visible = false
-    UI.SideBars.Visible = true
 
     local ti = TweenInfo.new(0.25)
 
     refreshGui()
 
+    UI.SideBars.Image.Position = UDim2.fromScale(0,0)
+    UI.Inventory.Visible = false
+    UI.SideBars.Visible = true
     UI.Enabled = true
 
     util.tween(Lighting.InventoryBlur, ti, {Size = 18})
@@ -558,8 +579,11 @@ function Inventory.OpenInventory()
 
     task.wait(0.2)
     util.flickerUi(UI.Inventory, 0.01, 6)
-
     acts:removeAct("InventoryOpening")
+
+    if globalInputType.inputType == "Gamepad" then
+        GuiService:Select(UI.Inventory.Slots)
+    end
 end
 
 function Inventory.CloseInventory()
@@ -585,11 +609,35 @@ function Inventory.Init()
 end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    updatePrompts()
+
+    if input.KeyCode == Enum.KeyCode.DPadRight then
+        nextNotePage(currentNoteItem, 1)
+    end
+
+    if input.KeyCode == Enum.KeyCode.DPadLeft then
+        nextNotePage(currentNoteItem, -1)
+    end
+
+    if input.KeyCode == Enum.KeyCode.DPadUp or input.KeyCode == Enum.KeyCode.DPadDown then
+        closeNote()
+    end
+
+    if GuiService.SelectedObject then
+        if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonB then
+            Inventory:DropItem(GuiService.SelectedObject.Parent.Name)
+        end
+
+        if input.KeyCode == Enum.KeyCode.ButtonX then
+            useItem(GuiService.SelectedObject.Parent)
+        end
+    end
+
     if gameProcessedEvent or acts:checkAct("InventoryOpening") then
         return
     end
 
-    if input.KeyCode == Enum.KeyCode.E then
+    if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.ButtonY then
         if acts:checkAct("InventoryOpen") then
             Inventory.CloseInventory()
         else

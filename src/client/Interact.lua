@@ -1,4 +1,6 @@
-local module = {}
+local module = {
+    INTERACT_DISTANCE = 4
+}
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +18,8 @@ local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
 
+local camera = workspace.CurrentCamera
+
 local UI
 
 local Client = player.PlayerScripts.Client
@@ -27,8 +31,26 @@ local actionPrompt = require(Client.ActionPrompt)
 local timer = require(Client.Timer)
 local weaponSystem = require(Client.WeaponSystem)
 local util = require(Client.Util)
+local globalInputType = require(Client.GlobalInputType)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
+
+local function getMouseHit()
+    local cursorLocation = player:GetAttribute("CursorLocation")
+
+    local ray = camera:ViewportPointToRay(cursorLocation.X, cursorLocation.Y)
+    local direction = ray.Direction * 600
+    local endPoint = ray.Origin + direction
+    local hit = CFrame.new(endPoint)
+
+    local raycast = workspace:Raycast(ray.Origin, direction)
+    
+    if not raycast then
+        return hit
+    end
+
+    return CFrame.new(raycast.Position), raycast.Instance
+end
 
 local function showInteract(object, cursor)
     cursor.Image.Position = UDim2.fromScale(0,0)
@@ -47,6 +69,9 @@ local function showInteract(object, cursor)
         cursor.ItemNameRed.Visible = true
         cursor.ItemNameBlue.Visible = true
     end)
+
+    cursor.KeyPrompt.Visible = globalInputType.inputType == "Gamepad"
+    cursor.KeyPrompt.Image = globalInputType.inputIcons[globalInputType.gamepadType].ButtonA
 end
 
 local function hideInteract(object, cursor)
@@ -115,7 +140,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     local object = mouseTarget.Value
 
     if 
-        input.KeyCode ~= Enum.KeyCode.F 
+        (input.KeyCode ~= Enum.KeyCode.F and input.KeyCode ~= Enum.KeyCode.ButtonA)
         or gameProcessedEvent 
         or not object 
         or acts:checkAct("Interacting")  
@@ -133,12 +158,14 @@ local function processCrosshair()
         return
     end
 
-    local distanceToMouse = (player.Character:GetPivot().Position - mouse.Hit.Position).Magnitude
+    local hit, target = getMouseHit()
+
+    local distanceToMouse = (player.Character:GetPivot().Position - hit.Position).Magnitude
     
-    if distanceToMouse > 3 then
+    if distanceToMouse > module.INTERACT_DISTANCE then
         mouseTarget.Value = nil
     else
-        mouseTarget.Value = mouse.Target:FindFirstAncestorOfClass("Model") or mouse.Target
+        mouseTarget.Value = target and (target:FindFirstAncestorOfClass("Model") or target)
     end
 end
 

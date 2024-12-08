@@ -50,7 +50,7 @@ RunService:BindToRenderStep("RunCamera", Enum.RenderPriority.Camera.Value, funct
     local characterPosition = character:GetPivot().Position
 
     if module.mode == CameraMode.Follow then
-        local mouseLocation = UserInputService:GetMouseLocation()
+        local mouseLocation = player:GetAttribute("CursorLocation")
         local locationScale = mouseLocation / camera.ViewportSize
         local viewLocation = (locationScale - Vector2.new(.5,.5)) * module.followViewDistance.current
         mouseView = mouseView:Lerp(viewLocation, 0.1)

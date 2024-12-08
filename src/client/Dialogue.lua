@@ -1,3 +1,4 @@
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
@@ -18,6 +19,7 @@ local inventory = require(client.Inventory)
 local util = require(client.Util)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
+local globalInputType = require(client.GlobalInputType)
 
 local currentNpcModule
 local currentNpc
@@ -57,6 +59,7 @@ local function showDialogueOptions(options)
         local button:TextButton = dialogueOption.ButtonFrame.Button
 
         dialogueOption.Visible = true
+        
         button.Text = option
         dialogueOption.Parent = UI.Box.Choices
 
@@ -64,6 +67,10 @@ local function showDialogueOptions(options)
             clearOptions()
             startDialogue(currentNpcModule.Dialogue[option])
         end)
+    end
+
+    if globalInputType.inputType == "Gamepad" then
+        GuiService:Select(UI.Box.Choices)
     end
 end
 
@@ -102,7 +109,7 @@ function typeOutMessage(messageData, dialogue)
     end
 
     inputEvent = UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-        if input.UserInputType ~= Enum.UserInputType.MouseButton1 or clickCooldown then return end
+        if ( input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.KeyCode ~= Enum.KeyCode.ButtonA and input.KeyCode ~= Enum.KeyCode.ButtonX ) or clickCooldown then return end
 
         clickCooldown = true
         task.delay(0.1, function()

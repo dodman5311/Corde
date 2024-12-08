@@ -30,6 +30,7 @@ local acts = require(Client.Acts)
 local actionPrompt = require(Client.ActionPrompt)
 local util = require(Client.Util)
 local hackingFunctions = require(Client.HackingFunctions)
+local globalInputType = require(Client.GlobalInputType)
 
 local ti = TweenInfo.new(0.25)
 
@@ -37,13 +38,13 @@ local currentInputIndex = 1
 
 local function getKeyCodeFromNumber(number : number | string)
     if tonumber(number) == 1 then
-        return Enum.KeyCode.One
+        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.One or Enum.KeyCode.DPadUp
     elseif tonumber(number) == 2 then
-        return Enum.KeyCode.Two
+        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Two or Enum.KeyCode.DPadLeft
     elseif tonumber(number) == 3 then
-        return Enum.KeyCode.Three
+        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Three or Enum.KeyCode.DPadDown
     elseif tonumber(number) == 4 then
-        return Enum.KeyCode.Four
+        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Four or Enum.KeyCode.DPadRight
     end
 end
 
@@ -78,14 +79,32 @@ local function showPointPromt(point : BillboardGui)
 
     for _,v in ipairs(hackUi:GetChildren()) do
         if string.match(v.Name, "Keystroke_") then
+            local key = math.random(1,4)
+            v:SetAttribute("Key", key)
             v.TextTransparency = 1
-            v.Text = math.random(1,4)
+            
+            v.Text = globalInputType.inputType == "Gamepad" and "" or key
+
             v.Size = UDim2.fromScale(0.1, 0.075)
             v.TextColor3 = Color3.new(1,1,1)
+
+            v.Prompt.ImageTransparency = 0.75
+            v.Prompt.Visible = globalInputType.inputType == "Gamepad"
+
+            if key == 1 then
+                v.Prompt.Image = globalInputType.inputIcons.Misc.Up
+            elseif key == 2 then
+                v.Prompt.Image = globalInputType.inputIcons.Misc.Left
+            elseif key == 3 then
+                v.Prompt.Image = globalInputType.inputIcons.Misc.Down
+            elseif key == 4 then
+                v.Prompt.Image = globalInputType.inputIcons.Misc.Right
+            end
         end
     end
 
     hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255,145,0)
+    hackUi.Keystroke_1.Prompt.ImageTransparency = 0
 
     hackUi.Image.Position = UDim2.fromScale(0,0)
 
@@ -97,6 +116,8 @@ local function showPointPromt(point : BillboardGui)
         end
 
         util.tween({hackUi.Keystroke_1, hackUi.Keystroke_2, hackUi.Keystroke_3, hackUi.Keystroke_4}, ti, {TextTransparency = 0})
+        util.tween({hackUi.Keystroke_2.Prompt, hackUi.Keystroke_3.Prompt, hackUi.Keystroke_4.Prompt}, ti, {ImageTransparency = 0.75})
+        util.tween({hackUi.Keystroke_1.Prompt}, ti, {ImageTransparency = 0})
 
         util.flickerUi(hackUi.ItemName, 0.035, 5, true)
         util.flickerUi(hackUi.ActionName, 0.035, 5)
@@ -173,7 +194,7 @@ local function getValidNetPoints()
         end
         table.insert(validPoints, netPoint)
 
-        local distanceToCursor = (Vector2.new(vector.X, vector.Y) - UserInputService:GetMouseLocation()).Magnitude
+        local distanceToCursor = (Vector2.new(vector.X, vector.Y) - player:GetAttribute("CursorLocation")).Magnitude
 
         if distanceToCursor < closest then
             closest = distanceToCursor
@@ -297,7 +318,7 @@ local function checkKeystrokeInput(input)
     local hackUi = currentActivePoint.Value.HackPrompt
     local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
 
-    if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel.Text) then
+    if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Key")) then
         return
     end
 
@@ -311,6 +332,7 @@ local function checkKeystrokeInput(input)
     keystrokeLabel.TextColor3 = Color3.new(1,1,1)
 
     util.tween(keystrokeLabel, TweenInfo.new(0.25), {Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1})
+    util.tween(keystrokeLabel.Prompt, TweenInfo.new(0.25), {ImageTransparency = 1})
 
     currentInputIndex += 1
 
@@ -320,6 +342,7 @@ local function checkKeystrokeInput(input)
         return
     end
     keystrokeLabel.TextColor3 = Color3.fromRGB(255,145,0)
+    keystrokeLabel.Prompt.ImageTransparency = 0
 end
 
 function module:EnterNetMode()
@@ -334,6 +357,7 @@ function module:EnterNetMode()
         Brightness = 0.25,
         Contrast = 1,
         Saturation = -1,
+
     })
 end
 
@@ -358,11 +382,11 @@ function module.Init()
 end
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent then
+    if gameProcessedEvent or acts:checkAct("Paused") then
         return
     end
 
-    if input.KeyCode == Enum.KeyCode.Tab then
+    if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.ButtonL1 then
         if acts:checkAct("InNet") then
             module:ExitNetMode()
         elseif not acts:checkAct("Interacting") then
