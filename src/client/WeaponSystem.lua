@@ -27,6 +27,7 @@ local sequences = require(Client.Sequences)
 local cameraService = require(Client.Camera)
 local cameraShaker = require(Client.CameraShaker)
 local haptics = require(Client.Haptics)
+local signal = require(ReplicatedStorage.Packages.Signal)
 
 local currentWeapon
 local fireKeyDown = false
@@ -52,6 +53,8 @@ accuracyReduction.Speed = 5
 accuracyReduction.Target = 0
 
 local rng = Random.new()
+
+module.onWeaponUnequipped = signal.new()
 
 local function showWeapon(weaponType)
     local character = player.Character
@@ -104,6 +107,7 @@ local function showWeapon(weaponType)
         reload.Image:SetAttribute("Frames", 8)
 
         module.weaponUnequipped = true
+        module.onWeaponUnequipped:Fire()
     end
 end
 

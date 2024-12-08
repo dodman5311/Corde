@@ -33,7 +33,6 @@ local function onAreaEntered(part:Part)
 	if not part then return end
 
     for attributeName, value in pairs(part:GetAttributes()) do
-        print(attributeName, value)
         local effect = attributeEffects[attributeName]
 
         if not effect then

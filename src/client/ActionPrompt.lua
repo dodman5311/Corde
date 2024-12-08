@@ -42,6 +42,37 @@ function module.showActionPrompt(actionTitle : string)
     util.tween(frame, ti_0, {GroupTransparency = 0})
 end
 
+function module.showEnergyUsage(amount)
+    if not player.Character then
+        return
+    end
+
+    local character = player.Character
+    local promptPart = character.ActionPrompt
+    local prompt = promptPart.UI
+
+    local frame = prompt.Frame
+    local barFrame = frame.BarFrame
+
+    barFrame.UsageBar.Size = UDim2.fromScale(1,amount)
+    barFrame.UsageBar.Visible = true
+end
+
+function module.hideEnergyUsage()
+    if not player.Character then
+        return
+    end
+
+    local character = player.Character
+    local promptPart = character.ActionPrompt
+    local prompt = promptPart.UI
+
+    local frame = prompt.Frame
+    local barFrame = frame.BarFrame
+
+    barFrame.UsageBar.Visible = false
+end
+
 function module.hideActionPrompt()
     if not player.Character then
         return
@@ -103,5 +134,25 @@ function module.showActionTimer(actionTimer, actionTitle)
         module.hideActionPrompt()
     end)
 end
+
+local function characterSpawned(character)
+    local character = player.Character
+    local promptPart = character.ActionPrompt
+    local prompt = promptPart.UI
+
+    local frame = prompt.Frame
+    local barFrame = frame.BarFrame
+
+    local ti = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
+    util.tween(barFrame.UsageBar, ti, {BackgroundTransparency = 0.5, BackgroundColor3 = Color3.fromRGB(255, 20, 90)})
+end
+
+function module.Init()
+    if player.Character then
+        characterSpawned(player.Character)
+    end
+end
+
+player.CharacterAdded:Connect(characterSpawned)
 
 return module

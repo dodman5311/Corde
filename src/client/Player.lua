@@ -220,7 +220,7 @@ local function updateDirection(inputState, vector)
         moveDirection += vector
     elseif inputState == Enum.UserInputState.End then
         moveDirection -= vector
-    else
+    elseif vector then
         moveDirection = vector
 	end
 	
@@ -366,5 +366,12 @@ end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)
 player:SetAttribute("CursorHit", Vector2.zero)
+weapons.onWeaponUnequipped:Connect(function()
+    local character = player.Character
+    if not character then return end
+    uiAnimationService.StopAnimation(character.Legs.UI.Frame)
+
+    updateDirection()
+end)
 
 return module

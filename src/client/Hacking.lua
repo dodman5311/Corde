@@ -132,6 +132,8 @@ local function showPointPromt(point : BillboardGui)
 
     point.HackPrompt.Visible = true
     point.Point.Visible = false
+
+    actionPrompt.showEnergyUsage(point.Adornee:GetAttribute("RamUsage"))
 end
 
 local function hidePointPromt(point : BillboardGui?)
@@ -145,6 +147,7 @@ local function hidePointPromt(point : BillboardGui?)
 
     point.HackPrompt.Visible = false
     point.Point.Visible = true
+    actionPrompt.hideEnergyUsage()
 end
 
 local function placeNetPoint(object : Instance)
@@ -279,7 +282,9 @@ local function processNet()
 end
 
 local function doHackAction(object, point : BillboardGui)
-    player.Character:SetAttribute("RAM", 0)
+    local character = player.Character
+
+    character:SetAttribute("RAM", character:GetAttribute("RAM") - object:GetAttribute("RamUsage"))
 
     local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
 
@@ -315,6 +320,7 @@ local function checkKeystrokeInput(input)
         return
     end
 
+    local object = point.Adornee
     local hackUi = currentActivePoint.Value.HackPrompt
     local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
 
@@ -322,7 +328,7 @@ local function checkKeystrokeInput(input)
         return
     end
 
-    if character:GetAttribute("RAM") < 1 then
+    if character:GetAttribute("RAM") < object:GetAttribute("RamUsage") then
         util.PlaySound(sounds.LowRam, script, 0.025)
         return
     end
@@ -364,6 +370,7 @@ end
 function module:ExitNetMode()
     acts:removeAct("InNet")
     actionPrompt.hideActionPrompt()
+    actionPrompt.hideEnergyUsage()
     clearNetPoints()
     clearNetLines()
 
