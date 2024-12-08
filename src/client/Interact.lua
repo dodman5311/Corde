@@ -34,6 +34,7 @@ local util = require(Client.Util)
 local globalInputType = require(Client.GlobalInputType)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
+local rng = Random.new()
 
 local function getMouseHit()
     local cursorLocation = player:GetAttribute("CursorLocation")
@@ -72,6 +73,19 @@ local function showInteract(object, cursor)
 
     cursor.KeyPrompt.Visible = globalInputType.inputType == "Gamepad"
     cursor.KeyPrompt.Image = globalInputType.inputIcons[globalInputType.gamepadType].ButtonA
+
+    cursor.Locked.Visible = object:GetAttribute("Locked")
+end
+
+local function showLocked(cursor : Frame)
+    task.spawn(function()
+        for i = 1,10 do
+            cursor.Position = UDim2.fromScale(rng:NextNumber(-0.025, 0.025), rng:NextNumber(-0.025, 0.025))
+            task.wait(0.025)
+        end
+    
+        cursor.Position = UDim2.fromScale(0,0)
+    end)
 end
 
 local function hideInteract(object, cursor)
@@ -118,21 +132,34 @@ local function runTimer(actionName : string, interactionTime : number, func, ...
     actionPrompt.showActionTimer(interactTimer, actionName)
 end
 
+local function attemptOpenDoor(object : Instance)
+    if object:GetAttribute("Locked") then
+        util.PlaySound(sounds.Locked, script)
+        showLocked(UI.Cursor.Interact)
+    else
+        util.PlaySound(sounds.Opening, script, 0.05, 0.5)
+        runTimer("Opening", 0.5, openDoor, object)
+    end
+end
+
+local function pickupContainer(object : Instance)
+    util.PlaySound(sounds.Collecting, script, 0.05, 0.5)
+    runTimer("Collecting", 0.5, function()
+        inventory:pickupFromContainer(mouseTarget.Value)
+    end)
+end
+
 local function InteractiWithObject(object : Instance)
     if object:HasTag("Container") then
-        util.PlaySound(sounds.Collecting, script, 0.05, 0.5)
-        runTimer("Collecting", 0.5, function()
-            inventory:pickupFromContainer(mouseTarget.Value)
-        end)
+        pickupContainer(object)
     end
 
     if object:HasTag("NPC") then
         dialogue:EnterDialogue(mouseTarget.Value)
     end
 
-    if object:HasTag("Door") and not object:GetAttribute("Locked") then
-        util.PlaySound(sounds.Opening, script, 0.05, 0.5)
-        runTimer("Opening", 0.5, openDoor, object)
+    if object:HasTag("Door") then
+        attemptOpenDoor(object)
     end
 end
 

@@ -204,11 +204,16 @@ module.actions = {
 
 	SearchForTarget = function(npc : Npc, maxDistance : number)
 		local target = Players.LocalPlayer.Character
-		local distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
-		if not target or not checkSightLine(npc, target) then
+		local distance = 0
+
+		if target then
+			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
+		end
+
+		if not target or not checkSightLine(npc, target) or distance > maxDistance then
 			target = nil
 		end
-	
+
 		npc.MindTarget.Value = target
 	
 		if target ~= nil then
