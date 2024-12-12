@@ -13,24 +13,30 @@ local function setLightEnabled(object:Instance, value)
 end
 
 local module = {
-    Unlock = function(object : Instance, point)
+    Unlock = function(object : Instance)
         object:SetAttribute("Locked", false)
         object:RemoveTag("Hackable")
     end,
 
-    Disable = function(object : Instance, point)
+    Disable = function(object : Instance)
         if object:FindFirstChild("LightPart") then
             setLightEnabled(object, false)
             object:SetAttribute("HackAction", "Enable")
         end
     end,
 
-    Enable = function(object : Instance, point)
+    Enable = function(object : Instance)
         if object:FindFirstChild("LightPart") then
             setLightEnabled(object, true)
             object:SetAttribute("HackAction", "Disable")
         end
     end,
+
+    Memory_Wipe = function(object : Model)
+        local data = require(object.Data)
+
+        data.Dialogue.Start = data.Start
+    end
 }
 
 

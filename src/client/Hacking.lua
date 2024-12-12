@@ -88,7 +88,7 @@ local function showPointPromt(point : BillboardGui)
             v.Size = UDim2.fromScale(0.1, 0.075)
             v.TextColor3 = Color3.new(1,1,1)
 
-            v.Prompt.ImageTransparency = 0.75
+            v.Prompt.ImageTransparency = 1
             v.Prompt.Visible = globalInputType.inputType == "Gamepad"
 
             if key == 1 then
@@ -104,7 +104,7 @@ local function showPointPromt(point : BillboardGui)
     end
 
     hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255,145,0)
-    hackUi.Keystroke_1.Prompt.ImageTransparency = 0
+    hackUi.Keystroke_1.Prompt.ImageTransparency = 1
 
     hackUi.Image.Position = UDim2.fromScale(0,0)
 

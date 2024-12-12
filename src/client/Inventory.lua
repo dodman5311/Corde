@@ -45,6 +45,10 @@ local rng = Random.new()
 local UITemplate = gui.Inventory
 local UI
 
+function Inventory:ShowItemAdded(itemName)
+    
+end
+
 function Inventory:SearchForItem(itemName)
     for slot,item in pairs(self) do
         if not string.match(slot, "slot_") then
@@ -91,6 +95,8 @@ function Inventory:AddItem(item : item)
         if self["slot_" .. i] then
             continue
         end
+
+        self:ShowItemAdded(item.Name)
 
         self["slot_" .. i] = newItem
         self.ItemAdded:Fire(newItem, "slot_" .. i)
@@ -158,6 +164,8 @@ function Inventory:DropItem(ItemOrSlot)
     droppedItem.Name = item.Name
     droppedItem.CFrame = character:GetPivot()
     droppedItem.AssemblyLinearVelocity = (character:GetPivot() * CFrame.Angles(0,math.rad(rng:NextNumber(-20,20)),0)).LookVector * rng:NextNumber(10,20)
+
+    
 end
 
 function Inventory:pickupFromContainer(object)
@@ -291,7 +299,7 @@ local function compareWeapon(baseWeapon : item)
         Damage = 0;
         BulletCount = 0,
         FireMode = 0;
-        Spread = 0;
+        Spread = 20;
         StoppingPower = 0;
         Recoil = 0;
         RecoilSpeed = 0;
@@ -481,7 +489,7 @@ local function initGui()
        local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi.Button)
 
        mouseEnter:Connect(function()
-            UIAnimationService.PlayAnimation(slotUi.Frame, 0.075, true)
+            UIAnimationService.PlayAnimation(slotUi.Frame, 0.1, true)
 
             local item : item = Inventory[slotUi.Name]
 

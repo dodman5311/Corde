@@ -76,8 +76,23 @@ end
 
 local function doActions(actions)
     for _,action in ipairs(actions) do
+        print(action, actions)
+
         if action == "GiveObject" then
             inventory:AddItem(currentNpcModule.ObjectToGive)
+        end
+
+        if string.match(action, "SetStart_") then
+            local str = string.split(string.sub(action, 10), ".")
+            local container, index = str[1], str[2]
+
+            if container == "Module" then
+                container = currentNpcModule
+            else
+                container = currentNpcModule[container]
+            end
+
+            currentNpcModule.Dialogue.Start = container[index]
         end
     end
 end

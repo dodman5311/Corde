@@ -1,5 +1,5 @@
 local module = {
-    HungerRate = 0.35,
+    HungerRate = 0.1,
     RamRecoveryRate = 0.035
 }
 
@@ -199,7 +199,7 @@ local function updatePlayerDirection()
     
 
     local difference = (logLv - character:GetPivot().LookVector).Magnitude
-    if difference >= 0.2 then
+    if difference >= 0.3 then
         util.PlaySound(util.getRandomChild(sounds.Movement), script, 0.1)
     end
 
