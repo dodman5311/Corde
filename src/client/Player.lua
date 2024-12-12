@@ -27,8 +27,7 @@ local acts = require(Client.Acts)
 local lastHeartbeat = os.clock()
 local inputType = require(Client.GlobalInputType)
 local interact = require(Client.Interact)
-
-local mouse = player:GetMouse()
+local cameraService = require(Client.Camera)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -316,7 +315,11 @@ local function updatePlayerMovement()
 
     local walkVelocity = character.WalkVelocity
 
-    walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)     
+    if cameraService.mode == "FirstPerson" then
+        walkVelocity.VectorVelocity = Vector3.zero
+    else
+        walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)     
+    end
 end
 
 function  module.Init()

@@ -48,7 +48,13 @@ function module:EnterFirstPerson(rootCFrame : CFrame, viewRange : number?, field
         FieldOfView = fieldOfView or 60,
     } :: FirstPersonData
 
+    camera.FieldOfView = module.firstPersonData.FieldOfView
     module.mode = "FirstPerson" :: CameraMode
+end
+
+function module:EnterFollow()
+    camera.FieldOfView = module.fieldOfView
+    module.mode = "Follow" :: CameraMode
 end
 
 function module.Init()
@@ -72,6 +78,15 @@ RunService:BindToRenderStep("RunCamera", Enum.RenderPriority.Camera.Value, funct
         mouseView = mouseView:Lerp(viewLocation, 0.1)
 
         local goal = CFrame.new(characterPosition + Vector3.new(mouseView.X,500,mouseView.Y)) * CFrame.Angles(math.rad(-90),0,0)
+        camera.CFrame = goal * shakeOffset
+    elseif module.mode == "FirstPerson" then
+        local mouseLocation = player:GetAttribute("CursorLocation")
+        local locationScale = (mouseLocation / camera.ViewportSize)- Vector2.new(.5,.5)
+
+        local yRot = math.rad(-locationScale.Y * module.firstPersonData.ViewRange)
+        local xRot = math.rad(-locationScale.X * module.firstPersonData.ViewRange)
+
+        local goal = (module.firstPersonData.RootCFrame * CFrame.Angles(0, xRot, 0)) * CFrame.Angles(yRot, 0, 0)
         camera.CFrame = goal * shakeOffset
     end
 end)

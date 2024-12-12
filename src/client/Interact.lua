@@ -32,6 +32,7 @@ local timer = require(Client.Timer)
 local weaponSystem = require(Client.WeaponSystem)
 local util = require(Client.Util)
 local globalInputType = require(Client.GlobalInputType)
+local safesNLocks = require(Client.SafesAndLocks)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
@@ -150,6 +151,10 @@ local function pickupContainer(object : Instance)
 end
 
 local function InteractiWithObject(object : Instance)
+    if safesNLocks:EnterLock(object) then
+        return
+    end
+
     if object:HasTag("Container") then
         pickupContainer(object)
     end
