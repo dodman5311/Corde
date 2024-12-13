@@ -110,7 +110,7 @@ end
 
 function module.toggleHolstered(value)
 	local character = player.Character
-	if not character or not currentWeapon or acts:checkAct("Reloading", "Firing") then
+	if not character or not currentWeapon or acts:checkAct("Reloading") then
 		return
 	end
 
@@ -495,11 +495,12 @@ local function readyKeyToggle(state, input)
 end
 
 inventory.InvetoryToggled:Connect(function(value)
-	if value then
+	if not value then
 		return
 	end
-	readyKeyToggle(Enum.UserInputState.End)
+
 	fireKeyToggle(Enum.UserInputState.End)
+	readyKeyToggle(Enum.UserInputState.End)
 end)
 
 local function reloadInput(state)

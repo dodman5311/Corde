@@ -580,6 +580,8 @@ local function initGui()
 end
 
 function Inventory.OpenInventory()
+	Inventory.InvetoryToggled:Fire(true)
+
 	hacking:ExitNetMode()
 	hacking.ToggleNetInput:Disable()
 	globalInputService.inputs.ToggleFire:Disable()
@@ -609,10 +611,11 @@ function Inventory.OpenInventory()
 	if globalInputService.inputType == "Gamepad" then
 		GuiService:Select(UI.Inventory.Slots)
 	end
-	Inventory.InvetoryToggled:Fire(true)
 end
 
 function Inventory.CloseInventory()
+	Inventory.InvetoryToggled:Fire(false)
+
 	hacking.ToggleNetInput:Enable()
 	globalInputService.inputs.ToggleFire:Enable()
 	globalInputService.inputs.ToggleReady:Enable()
@@ -632,7 +635,6 @@ function Inventory.CloseInventory()
 	UI.Enabled = false
 
 	acts:removeAct("InventoryOpen")
-	Inventory.InvetoryToggled:Fire(false)
 end
 
 local function noteNavigationInput(state, input)
