@@ -7,11 +7,11 @@ local player = Players.LocalPlayer
 
 local Client = player.PlayerScripts.Client
 
-local globalInputType = require(Client.GlobalInputType)
+local globalInputService = require(Client.GlobalInputService)
 local timer = require(Client.Timer)
 
 function module.hapticPulse(input, motor: Enum.VibrationMotor, value, runTime, timerIndex)
-    if globalInputType.inputType ~= "Gamepad" then
+    if globalInputService.inputType ~= "Gamepad" then
         return
     end
 

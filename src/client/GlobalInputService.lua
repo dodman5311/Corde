@@ -1,4 +1,5 @@
 local CollectionService = game:GetService("CollectionService")
+local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,8 +14,8 @@ local selectionImage = selectionUi.SelectionImage
 local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
 
 local module = {
-    inputType = "Keyboard",
-    gamepadType = "Xbox",
+	inputType = "Keyboard",
+	gamepadType = "Xbox",
 
 	inputIcons = {
 		Ps4 = {
@@ -35,8 +36,10 @@ local module = {
 			Up = "rbxassetid://112547970720772",
 			Down = "rbxassetid://136246329210868",
 			Vertical = "rbxassetid://81470201795928",
-		}
-	}
+		},
+	},
+
+	inputs = {},
 }
 
 local ps4Keys = {
@@ -82,20 +85,19 @@ local function setGamepadType(lastInput)
 end
 
 local function setInputType(lastInput)
-	
 	if lastInput.KeyCode == Enum.UserInputType.Touch then
-        module.inputType = "Mobile"
+		module.inputType = "Mobile"
 		return
 	end
-	
+
 	if lastInput.UserInputType.Name:find("Gamepad") then
 		module.inputType = "Gamepad"
 		setGamepadType(lastInput)
 	else
 		module.inputType = "Keyboard"
-   	end
+	end
 
-	for _,image : ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
+	for _, image: ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
 		local iconKey = image:GetAttribute("Key")
 
 		if module.inputIcons.Misc[iconKey] then
@@ -108,14 +110,19 @@ local function setInputType(lastInput)
 end
 
 local function handleGamepadSelection(changedProperty)
-	if changedProperty ~= "SelectedObject" then	return end
-	
+	if changedProperty ~= "SelectedObject" then
+		return
+	end
+
 	local object = GuiService.SelectedObject
-	
+
 	task.defer(function()
 		if object then
 			if selectionImage.Visible then
-				TweenService:Create(selectionImage, ti, {Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y), Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)}):Play()
+				TweenService:Create(selectionImage, ti, {
+					Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),
+					Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y),
+				}):Play()
 			else
 				selectionImage.Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y)
 				selectionImage.Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)
@@ -126,6 +133,30 @@ local function handleGamepadSelection(changedProperty)
 			selectionImage.Visible = false
 		end
 	end)
+end
+
+function module.CreateNewInput(inputName: string, func: () -> any?, ...)
+	local newInput = {
+		Name = inputName,
+		KeyInputs = { ... },
+		Callback = func,
+
+		Enable = function(self)
+			local callback = self.Callback
+			ContextActionService:BindAction(self.Name, function(_, inputState: Enum.UserInputState, input: InputObject)
+				return callback(inputState, input)
+			end, false, table.unpack(self.KeyInputs))
+		end,
+
+		Disable = function(self)
+			ContextActionService:UnbindAction(self.Name)
+		end,
+	}
+
+	module.inputs[inputName] = newInput
+	newInput:Enable()
+
+	return newInput
 end
 
 UserInputService.InputBegan:Connect(setInputType)

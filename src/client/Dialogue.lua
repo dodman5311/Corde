@@ -19,7 +19,7 @@ local inventory = require(client.Inventory)
 local util = require(client.Util)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
-local globalInputType = require(client.GlobalInputType)
+local globalInputService = require(client.GlobalInputService)
 
 local currentNpcModule
 local currentNpc
@@ -69,7 +69,7 @@ local function showDialogueOptions(options)
         end)
     end
 
-    if globalInputType.inputType == "Gamepad" then
+    if globalInputService.inputType == "Gamepad" then
         GuiService:Select(UI.Box.Choices)
     end
 end

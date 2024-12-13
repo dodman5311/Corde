@@ -23,7 +23,7 @@ function module:EnterLock(lockObject : Instance)
 
     local newModel = model:Clone()
     newModel.Parent = workspace
-    newModel:PivotTo(CFrame.new(0,-100,0))    
+    newModel:PivotTo(CFrame.new(0,-100,0))     
     local cameraRoot = newModel.PrimaryPart.CameraRoot
 
     cameraService:EnterFirstPerson(cameraRoot.WorldCFrame, cameraRoot:GetAttribute("ViewRange"), cameraRoot:GetAttribute("FieldOfView"))

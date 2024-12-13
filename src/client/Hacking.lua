@@ -5,7 +5,6 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
 local mouseTarget = Instance.new("ObjectValue")
@@ -14,7 +13,6 @@ mouseTarget.Name = "MouseTarget"
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds.NET
-local models = assets.Models
 local gui = assets.Gui
 
 local camera = workspace.CurrentCamera
@@ -30,385 +28,404 @@ local acts = require(Client.Acts)
 local actionPrompt = require(Client.ActionPrompt)
 local util = require(Client.Util)
 local hackingFunctions = require(Client.HackingFunctions)
-local globalInputType = require(Client.GlobalInputType)
+local globalInputService = require(Client.GlobalInputService)
 
 local ti = TweenInfo.new(0.25)
 
 local currentInputIndex = 1
 
-local function getKeyCodeFromNumber(number : number | string)
-    if tonumber(number) == 1 then
-        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.One or Enum.KeyCode.DPadUp
-    elseif tonumber(number) == 2 then
-        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Two or Enum.KeyCode.DPadLeft
-    elseif tonumber(number) == 3 then
-        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Three or Enum.KeyCode.DPadDown
-    elseif tonumber(number) == 4 then
-        return globalInputType.inputType ~= "Gamepad" and Enum.KeyCode.Four or Enum.KeyCode.DPadRight
-    end
+local function getKeyCodeFromNumber(number: number | string)
+	if tonumber(number) == 1 then
+		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.One or Enum.KeyCode.DPadUp
+	elseif tonumber(number) == 2 then
+		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Two or Enum.KeyCode.DPadLeft
+	elseif tonumber(number) == 3 then
+		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Three or Enum.KeyCode.DPadDown
+	elseif tonumber(number) == 4 then
+		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Four or Enum.KeyCode.DPadRight
+	end
 end
 
-local function completePoint(point : BillboardGui)
-    local hackUi = point.HackPrompt
-    local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
+local function completePoint(point: BillboardGui)
+	local hackUi = point.HackPrompt
+	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
 
-    point:RemoveTag("ActiveNetPoint")
-    hackUi.Visible = true
+	point:RemoveTag("ActiveNetPoint")
+	hackUi.Visible = true
 
-    util.tween(hackUi, ti, {Size = UDim2.fromScale(1.2,1.2), GroupTransparency = 1}, false, function()
-        point:Destroy()
-    end)
+	util.tween(hackUi, ti, { Size = UDim2.fromScale(1.2, 1.2), GroupTransparency = 1 }, false, function()
+		point:Destroy()
+	end)
 end
 
-local function showPointPromt(point : BillboardGui)
-    if not point:HasTag("ActiveNetPoint") then
-        return
-    end
+local function showPointPromt(point: BillboardGui)
+	if not point:HasTag("ActiveNetPoint") then
+		return
+	end
 
-    util.PlaySound(sounds.Select, script, 0.025)
+	util.PlaySound(sounds.Select, script, 0.025)
 
-    local hackUi = point.HackPrompt
-    local ti = TweenInfo.new(0.25)
+	local hackUi = point.HackPrompt
+	local ti = TweenInfo.new(0.25)
 
-    currentInputIndex = 1
+	currentInputIndex = 1
 
-    hackUi.ActionName.Visible = false
-    hackUi.ItemName.Visible = false
-    hackUi.ActionName.Text = `Action: <font color="rgb(255,145,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
-    hackUi.ItemName.Text = point.Adornee.Name
+	hackUi.ActionName.Visible = false
+	hackUi.ItemName.Visible = false
+	hackUi.ActionName.Text = `Action: <font color="rgb(255,145,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
+	hackUi.ItemName.Text = point.Adornee.Name
 
-    for _,v in ipairs(hackUi:GetChildren()) do
-        if string.match(v.Name, "Keystroke_") then
-            local key = math.random(1,4)
-            v:SetAttribute("Key", key)
-            v.TextTransparency = 1
-            
-            v.Text = globalInputType.inputType == "Gamepad" and "" or key
+	for _, v in ipairs(hackUi:GetChildren()) do
+		if string.match(v.Name, "Keystroke_") then
+			local key = math.random(1, 4)
+			v:SetAttribute("Key", key)
+			v.TextTransparency = 1
 
-            v.Size = UDim2.fromScale(0.1, 0.075)
-            v.TextColor3 = Color3.new(1,1,1)
+			v.Text = globalInputService.inputType == "Gamepad" and "" or key
 
-            v.Prompt.ImageTransparency = 1
-            v.Prompt.Visible = globalInputType.inputType == "Gamepad"
+			v.Size = UDim2.fromScale(0.1, 0.075)
+			v.TextColor3 = Color3.new(1, 1, 1)
 
-            if key == 1 then
-                v.Prompt.Image = globalInputType.inputIcons.Misc.Up
-            elseif key == 2 then
-                v.Prompt.Image = globalInputType.inputIcons.Misc.Left
-            elseif key == 3 then
-                v.Prompt.Image = globalInputType.inputIcons.Misc.Down
-            elseif key == 4 then
-                v.Prompt.Image = globalInputType.inputIcons.Misc.Right
-            end
-        end
-    end
+			v.Prompt.ImageTransparency = 1
+			v.Prompt.Visible = globalInputService.inputType == "Gamepad"
 
-    hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255,145,0)
-    hackUi.Keystroke_1.Prompt.ImageTransparency = 1
+			if key == 1 then
+				v.Prompt.Image = globalInputService.inputIcons.Misc.Up
+			elseif key == 2 then
+				v.Prompt.Image = globalInputService.inputIcons.Misc.Left
+			elseif key == 3 then
+				v.Prompt.Image = globalInputService.inputIcons.Misc.Down
+			elseif key == 4 then
+				v.Prompt.Image = globalInputService.inputIcons.Misc.Right
+			end
+		end
+	end
 
-    hackUi.Image.Position = UDim2.fromScale(0,0)
+	hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255, 145, 0)
+	hackUi.Keystroke_1.Prompt.ImageTransparency = 1
 
-    local animation = uiAnimationService.PlayAnimation(hackUi, 0.045, false, true)
+	hackUi.Image.Position = UDim2.fromScale(0, 0)
 
-    animation:OnFrameRached(4):Connect(function()
-        if not hackUi.Parent then
-            return
-        end
+	local animation = uiAnimationService.PlayAnimation(hackUi, 0.045, false, true)
 
-        util.tween({hackUi.Keystroke_1, hackUi.Keystroke_2, hackUi.Keystroke_3, hackUi.Keystroke_4}, ti, {TextTransparency = 0})
-        util.tween({hackUi.Keystroke_2.Prompt, hackUi.Keystroke_3.Prompt, hackUi.Keystroke_4.Prompt}, ti, {ImageTransparency = 0.75})
-        util.tween({hackUi.Keystroke_1.Prompt}, ti, {ImageTransparency = 0})
+	animation:OnFrameRached(4):Connect(function()
+		if not hackUi.Parent then
+			return
+		end
 
-        util.flickerUi(hackUi.ItemName, 0.035, 5, true)
-        util.flickerUi(hackUi.ActionName, 0.035, 5)
+		util.tween(
+			{ hackUi.Keystroke_1, hackUi.Keystroke_2, hackUi.Keystroke_3, hackUi.Keystroke_4 },
+			ti,
+			{ TextTransparency = 0 }
+		)
+		util.tween(
+			{ hackUi.Keystroke_2.Prompt, hackUi.Keystroke_3.Prompt, hackUi.Keystroke_4.Prompt },
+			ti,
+			{ ImageTransparency = 0.75 }
+		)
+		util.tween({ hackUi.Keystroke_1.Prompt }, ti, { ImageTransparency = 0 })
 
-        if not hackUi.Parent then
-            return
-        end
+		util.flickerUi(hackUi.ItemName, 0.035, 5, true)
+		util.flickerUi(hackUi.ActionName, 0.035, 5)
 
-        hackUi.ActionName.Visible = true
-        hackUi.ItemName.Visible = true
-    end)
+		if not hackUi.Parent then
+			return
+		end
 
-    point.HackPrompt.Visible = true
-    point.Point.Visible = false
+		hackUi.ActionName.Visible = true
+		hackUi.ItemName.Visible = true
+	end)
 
-    actionPrompt.showEnergyUsage(point.Adornee:GetAttribute("RamUsage"))
+	point.HackPrompt.Visible = true
+	point.Point.Visible = false
+
+	actionPrompt.showEnergyUsage(point.Adornee:GetAttribute("RamUsage"))
 end
 
-local function hidePointPromt(point : BillboardGui?)
-    if not point or not point.Parent then
-        return
-    end
+local function hidePointPromt(point: BillboardGui?)
+	if not point or not point.Parent then
+		return
+	end
 
-    if not point:HasTag("ActiveNetPoint") then
-        return
-    end
+	if not point:HasTag("ActiveNetPoint") then
+		return
+	end
 
-    point.HackPrompt.Visible = false
-    point.Point.Visible = true
-    actionPrompt.hideEnergyUsage()
+	point.HackPrompt.Visible = false
+	point.Point.Visible = true
+	actionPrompt.hideEnergyUsage()
 end
 
-local function placeNetPoint(object : Instance)
-    local newNetPoint : BillboardGui = gui.NetPoint:Clone()
-    newNetPoint.Parent = player.PlayerGui
-    newNetPoint:AddTag("ActiveNetPoint")
-    newNetPoint.Adornee = object
+local function placeNetPoint(object: Instance)
+	local newNetPoint: BillboardGui = gui.NetPoint:Clone()
+	newNetPoint.Parent = player.PlayerGui
+	newNetPoint:AddTag("ActiveNetPoint")
+	newNetPoint.Adornee = object
 
-    newNetPoint.Enabled = true
+	newNetPoint.Enabled = true
 end
 
 local function placeNetPoints()
-    for _,object in ipairs(CollectionService:GetTagged("Hackable")) do
-        if not object:FindFirstAncestor("Workspace") then
-            continue
-        end
-        placeNetPoint(object)
-    end
-end 
+	for _, object in ipairs(CollectionService:GetTagged("Hackable")) do
+		if not object:FindFirstAncestor("Workspace") then
+			continue
+		end
+		placeNetPoint(object)
+	end
+end
 
 local function clearNetPoints()
-    for _,object in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
-        object:Destroy()
-    end
+	for _, object in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
+		object:Destroy()
+	end
 end
 
 local function refreshNetPoints()
-    clearNetPoints()
-    placeNetPoints()
+	clearNetPoints()
+	placeNetPoints()
 end
 
 local function getValidNetPoints()
-    local character = player.Character
-    if not character then
-        return
-    end
+	local character = player.Character
+	if not character then
+		return
+	end
 
-    local closest, closestPoint = math.huge, nil
-    local validPoints = {}
+	local closest, closestPoint = math.huge, nil
+	local validPoints = {}
 
-    for _,netPoint : BillboardGui in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
-        local object : BasePart | Model = netPoint.Adornee
+	for _, netPoint: BillboardGui in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
+		local object: BasePart | Model = netPoint.Adornee
 
-        local vector, onScreen = camera:WorldToViewportPoint(object:GetPivot().Position)
-        if not onScreen then
-            continue
-        end
-        table.insert(validPoints, netPoint)
+		local vector, onScreen = camera:WorldToViewportPoint(object:GetPivot().Position)
+		if not onScreen then
+			continue
+		end
+		table.insert(validPoints, netPoint)
 
-        local distanceToCursor = (Vector2.new(vector.X, vector.Y) - player:GetAttribute("CursorLocation")).Magnitude
+		local distanceToCursor = (Vector2.new(vector.X, vector.Y) - player:GetAttribute("CursorLocation")).Magnitude
 
-        if distanceToCursor < closest then
-            closest = distanceToCursor
-            closestPoint = netPoint
-        end
-    end
+		if distanceToCursor < closest then
+			closest = distanceToCursor
+			closestPoint = netPoint
+		end
+	end
 
-    return validPoints, closestPoint
+	return validPoints, closestPoint
 end
 
-local function drawNetLines(validPoints : {}, closestPoint : BillboardGui)
-    local character = player.Character
-    if not character then
-        return
-    end
+local function drawNetLines(validPoints: {}, closestPoint: BillboardGui)
+	local character = player.Character
+	if not character then
+		return
+	end
 
+	local netLines: Path2D = UI.NetLines.Path2D
+	local activeLine: Path2D = UI.NetLines.ActiveLine
 
-    local netLines : Path2D = UI.NetLines.Path2D
-    local activeLine : Path2D = UI.NetLines.ActiveLine
+	local tangentPoints = {}
 
-    local tangentPoints = {}
+	local playerPos = camera:WorldToViewportPoint(character:GetPivot().Position)
 
-    local playerPos = camera:WorldToViewportPoint(character:GetPivot().Position)
+	for _, netPoint: BillboardGui in ipairs(validPoints) do
+		if netPoint == closestPoint then
+			continue
+		end
 
-    for _,netPoint : BillboardGui in ipairs(validPoints) do
-        if netPoint == closestPoint then
-            continue
-        end
+		local object: BasePart | Model = netPoint.Adornee
+		local screenPos = camera:WorldToViewportPoint(object:GetPivot().Position)
 
-        local object : BasePart | Model = netPoint.Adornee
-        local screenPos = camera:WorldToViewportPoint(object:GetPivot().Position)
-       
-        local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
-        local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
+		local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
+		local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
 
-        table.insert(tangentPoints, playerPoint)
-        table.insert(tangentPoints, point)
-        
-        -- draw points
-    end
+		table.insert(tangentPoints, playerPoint)
+		table.insert(tangentPoints, point)
 
-    netLines:SetControlPoints(tangentPoints)
+		-- draw points
+	end
 
-    if not closestPoint then
-        activeLine:SetControlPoints({})
-        return
-    end
+	netLines:SetControlPoints(tangentPoints)
 
-    currentActivePoint.Value = closestPoint
+	if not closestPoint then
+		activeLine:SetControlPoints({})
+		return
+	end
 
-    local closestObject : BasePart | Model = closestPoint.Adornee
-    local screenPos = camera:WorldToViewportPoint(closestObject:GetPivot().Position)
-    local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
-    local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
+	currentActivePoint.Value = closestPoint
 
-    activeLine:SetControlPoints({
-        playerPoint,
-        point
-    })
+	local closestObject: BasePart | Model = closestPoint.Adornee
+	local screenPos = camera:WorldToViewportPoint(closestObject:GetPivot().Position)
+	local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
+	local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
+
+	activeLine:SetControlPoints({
+		playerPoint,
+		point,
+	})
 end
 
 local function clearNetLines()
-    local netLines : Path2D = UI.NetLines.Path2D
-    local activeLine : Path2D = UI.NetLines.ActiveLine
+	local netLines: Path2D = UI.NetLines.Path2D
+	local activeLine: Path2D = UI.NetLines.ActiveLine
 
-    netLines:SetControlPoints({})
-    activeLine:SetControlPoints({})
+	netLines:SetControlPoints({})
+	activeLine:SetControlPoints({})
 end
 
 local function processNet()
-    if not acts:checkAct("InNet") then
-        return
-    end
+	if not acts:checkAct("InNet") then
+		return
+	end
 
-    local validPoints, closestPoint = getValidNetPoints()
-    drawNetLines(validPoints, closestPoint)
+	local validPoints, closestPoint = getValidNetPoints()
+	drawNetLines(validPoints, closestPoint)
 
-    if not player.Character then
-        return
-    end
-    actionPrompt.updateActionValue(player.Character:GetAttribute("RAM"))
+	if not player.Character then
+		return
+	end
+	actionPrompt.updateActionValue(player.Character:GetAttribute("RAM"))
 end
 
-local function doHackAction(object, point : BillboardGui)
-    local character = player.Character
+local function doHackAction(object, point: BillboardGui)
+	local character = player.Character
 
-    character:SetAttribute("RAM", character:GetAttribute("RAM") - object:GetAttribute("RamUsage"))
+	character:SetAttribute("RAM", character:GetAttribute("RAM") - object:GetAttribute("RamUsage"))
 
-    local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
+	local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
 
-    util.PlaySound(sounds.HackSuccess, script)
-    completePoint(point)
+	util.PlaySound(sounds.HackSuccess, script)
+	completePoint(point)
 
-    if hackFunction then
-        task.spawn(hackFunction, object, point)
-    end
+	if hackFunction then
+		task.spawn(hackFunction, object, point)
+	end
 
-    refreshNetPoints()
+	refreshNetPoints()
 end
 
-local function checkHackGate(point : BillboardGui)
-    local object = point.Adornee
+local function checkHackGate(point: BillboardGui)
+	local object = point.Adornee
 
-    if object:GetAttribute("HackType") ~= "Prompt" then
-        -- gate
-        return
-    end
+	if object:GetAttribute("HackType") ~= "Prompt" then
+		-- gate
+		return
+	end
 
-   doHackAction(object, point)
+	doHackAction(object, point)
 end
 
-local function checkKeystrokeInput(input)
-    local character = player.Character
-    if not character then
-        return
-    end
+local function checkKeystrokeInput(state, input)
+	local character = player.Character
+	local point = currentActivePoint.Value
 
-    local point = currentActivePoint.Value
-    if not point or not point.Parent then
-        return
-    end
+	if
+		state ~= Enum.UserInputState.Begin
+		or acts:checkAct("Paused")
+		or not character
+		or not point
+		or not point.Parent
+	then
+		return
+	end
 
-    local object = point.Adornee
-    local hackUi = currentActivePoint.Value.HackPrompt
-    local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
+	local object = point.Adornee
+	local hackUi = currentActivePoint.Value.HackPrompt
+	local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
 
-    if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Key")) then
-        return
-    end
+	if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Key")) then
+		return
+	end
 
-    if character:GetAttribute("RAM") < object:GetAttribute("RamUsage") then
-        util.PlaySound(sounds.LowRam, script, 0.025)
-        return
-    end
+	if character:GetAttribute("RAM") < object:GetAttribute("RamUsage") then
+		util.PlaySound(sounds.LowRam, script, 0.025)
+		return
+	end
 
-    util.PlaySound(sounds.HackInput, script, 0.05)
+	util.PlaySound(sounds.HackInput, script, 0.05)
 
-    keystrokeLabel.TextColor3 = Color3.new(1,1,1)
+	keystrokeLabel.TextColor3 = Color3.new(1, 1, 1)
 
-    util.tween(keystrokeLabel, TweenInfo.new(0.25), {Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1})
-    util.tween(keystrokeLabel.Prompt, TweenInfo.new(0.25), {ImageTransparency = 1})
+	util.tween(keystrokeLabel, TweenInfo.new(0.25), { Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1 })
+	util.tween(keystrokeLabel.Prompt, TweenInfo.new(0.25), { ImageTransparency = 1 })
 
-    currentInputIndex += 1
+	currentInputIndex += 1
 
-    keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
-    if not keystrokeLabel then
-        checkHackGate(currentActivePoint.Value)
-        return
-    end
-    keystrokeLabel.TextColor3 = Color3.fromRGB(255,145,0)
-    keystrokeLabel.Prompt.ImageTransparency = 0
+	keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
+	if not keystrokeLabel then
+		checkHackGate(currentActivePoint.Value)
+		return
+	end
+	keystrokeLabel.TextColor3 = Color3.fromRGB(255, 145, 0)
+	keystrokeLabel.Prompt.ImageTransparency = 0
 end
 
 function module:EnterNetMode()
-    acts:createAct("InNet")
-    actionPrompt.showActionPrompt("RAM")
-    placeNetPoints()
+	acts:createAct("InNet")
+	actionPrompt.showActionPrompt("RAM")
+	placeNetPoints()
 
-    util.PlaySound(sounds.NetOpen, script)
+	util.PlaySound(sounds.NetOpen, script)
 
-    util.tween(Lighting.NETColor, ti, {
-        TintColor = Color3.fromRGB(185, 255, 250),
-        Brightness = 0.25,
-        Contrast = 1,
-        Saturation = -1,
-
-    })
+	util.tween(Lighting.NETColor, ti, {
+		TintColor = Color3.fromRGB(185, 255, 250),
+		Brightness = 0.25,
+		Contrast = 1,
+		Saturation = -1,
+	})
 end
 
 function module:ExitNetMode()
-    acts:removeAct("InNet")
-    actionPrompt.hideActionPrompt()
-    actionPrompt.hideEnergyUsage()
-    clearNetPoints()
-    clearNetLines()
+	acts:removeAct("InNet")
+	actionPrompt.hideActionPrompt()
+	actionPrompt.hideEnergyUsage()
+	clearNetPoints()
+	clearNetLines()
 
-    util.PlaySound(sounds.NetClose, script, 0, 0.25)
+	util.PlaySound(sounds.NetClose, script, 0, 0.25)
 
-    util.tween(Lighting.NETColor, ti, {
-        TintColor = Color3.new(1,1,1),
-        Brightness = 0,
-        Contrast = 0,
-        Saturation = 0,
-    })
+	util.tween(Lighting.NETColor, ti, {
+		TintColor = Color3.new(1, 1, 1),
+		Brightness = 0,
+		Contrast = 0,
+		Saturation = 0,
+	})
 end
 
 function module.Init()
-    RunService.RenderStepped:Connect(processNet)
+	RunService.RenderStepped:Connect(processNet)
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent or acts:checkAct("Paused") then
-        return
-    end
+local function pressNeyKey(state)
+	if state ~= Enum.UserInputState.Begin or acts:checkAct("Paused") then
+		return
+	end
 
-    if input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.ButtonL1 then
-        if acts:checkAct("InNet") then
-            module:ExitNetMode()
-        elseif not acts:checkAct("Interacting") then
-            module:EnterNetMode()
-        end
-    end
+	if acts:checkAct("InNet") then
+		module:ExitNetMode()
+	elseif not acts:checkAct("Interacting") then
+		module:EnterNetMode()
+	end
+end
 
-    checkKeystrokeInput(input)
-end)
+globalInputService.CreateNewInput("OpenNET", pressNeyKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
+globalInputService.CreateNewInput(
+	"EnterHackingInput",
+	checkKeystrokeInput,
+	Enum.KeyCode.One,
+	Enum.KeyCode.Two,
+	Enum.KeyCode.Three,
+	Enum.KeyCode.Four,
+	Enum.KeyCode.DPadDown,
+	Enum.KeyCode.DPadLeft,
+	Enum.KeyCode.DPadRight,
+	Enum.KeyCode.DPadUp
+)
 
 currentActivePoint.Changed:Connect(function(point)
-    hidePointPromt(lastActivePoint)
-    showPointPromt(point)
+	hidePointPromt(lastActivePoint)
+	showPointPromt(point)
 
-    lastActivePoint = point
+	lastActivePoint = point
 end)
 
 return module
