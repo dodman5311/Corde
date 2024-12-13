@@ -17,13 +17,15 @@ local Inventory = {} -- {Name = "", Desc = "", Value = 1, InUse = false, Use = "
 
 local player = Players.LocalPlayer
 
+local client = script.Parent
 local signal = require(ReplicatedStorage.Packages.Signal)
-local UIAnimationService = require(script.Parent.UIAnimationService)
-local util = require(script.Parent.Util)
-local acts = require(script.Parent.Acts)
-local mouseOver = require(script.Parent.MouseOver)
-local camera = require(script.Parent.Camera)
-local globalInputService = require(script.Parent.GlobalInputService)
+local UIAnimationService = require(client.UIAnimationService)
+local util = require(client.Util)
+local acts = require(client.Acts)
+local mouseOver = require(client.MouseOver)
+local camera = require(client.Camera)
+local globalInputService = require(client.GlobalInputService)
+local hacking = require(client.Hacking)
 
 local assets = ReplicatedStorage.Assets
 local models = assets.Models
@@ -37,6 +39,7 @@ Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
 Inventory.ItemAddedToSlot = signal.new()
 Inventory.ItemUsed = signal.new()
+Inventory.InvetoryToggled = signal.new()
 
 local rng = Random.new()
 
@@ -577,7 +580,13 @@ local function initGui()
 end
 
 function Inventory.OpenInventory()
+	hacking:ExitNetMode()
+	hacking.ToggleNetInput:Disable()
+	globalInputService.inputs.ToggleFire:Disable()
+	globalInputService.inputs.ToggleReady:Disable()
+
 	Inventory.InventoryInteract:Enable()
+
 	camera.followViewDistance.current = 1
 	acts:createAct("InventoryOpen", "InventoryOpening")
 
@@ -600,9 +609,14 @@ function Inventory.OpenInventory()
 	if globalInputService.inputType == "Gamepad" then
 		GuiService:Select(UI.Inventory.Slots)
 	end
+	Inventory.InvetoryToggled:Fire(true)
 end
 
 function Inventory.CloseInventory()
+	hacking.ToggleNetInput:Enable()
+	globalInputService.inputs.ToggleFire:Enable()
+	globalInputService.inputs.ToggleReady:Enable()
+
 	Inventory.InventoryInteract:Disable()
 	closeNote()
 
@@ -618,6 +632,7 @@ function Inventory.CloseInventory()
 	UI.Enabled = false
 
 	acts:removeAct("InventoryOpen")
+	Inventory.InvetoryToggled:Fire(false)
 end
 
 local function noteNavigationInput(state, input)

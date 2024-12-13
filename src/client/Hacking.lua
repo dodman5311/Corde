@@ -375,6 +375,10 @@ function module:EnterNetMode()
 end
 
 function module:ExitNetMode()
+	if not acts:checkAct("InNet") then
+		return
+	end
+
 	acts:removeAct("InNet")
 	actionPrompt.hideActionPrompt()
 	actionPrompt.hideEnergyUsage()
@@ -407,7 +411,8 @@ local function pressNeyKey(state)
 	end
 end
 
-globalInputService.CreateNewInput("OpenNET", pressNeyKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
+module.ToggleNetInput =
+	globalInputService.CreateNewInput("OpenNET", pressNeyKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
 globalInputService.CreateNewInput(
 	"EnterHackingInput",
 	checkKeystrokeInput,

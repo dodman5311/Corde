@@ -1,18 +1,14 @@
 local module = {}
 
 local CollectionService = game:GetService("CollectionService")
-local ContextActionService = game:GetService("ContextActionService")
 local Lighting = game:GetService("Lighting")
-local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
 local Client = player.PlayerScripts.Client
 
-local util = require(Client.Util)
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 

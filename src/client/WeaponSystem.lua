@@ -494,6 +494,14 @@ local function readyKeyToggle(state, input)
 	end
 end
 
+inventory.InvetoryToggled:Connect(function(value)
+	if value then
+		return
+	end
+	readyKeyToggle(Enum.UserInputState.End)
+	fireKeyToggle(Enum.UserInputState.End)
+end)
+
 local function reloadInput(state)
 	if state ~= Enum.UserInputState.Begin then
 		return
