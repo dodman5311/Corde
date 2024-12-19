@@ -73,17 +73,6 @@ local function showInteract(object, cursor)
 	cursor.Locked.Visible = object:GetAttribute("Locked")
 end
 
-local function showLocked(cursor: Frame)
-	task.spawn(function()
-		for _ = 1, 10 do
-			cursor.Position = UDim2.fromScale(rng:NextNumber(-0.025, 0.025), rng:NextNumber(-0.025, 0.025))
-			task.wait(0.025)
-		end
-
-		cursor.Position = UDim2.fromScale(0, 0)
-	end)
-end
-
 local function hideInteract(cursor)
 	cursor.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
@@ -97,17 +86,70 @@ local function hideInteract(cursor)
 	interactTimer:Cancel()
 end
 
+local INTEREST_ICON_SPEED = 0.045
+
+local function showInterest(cursor)
+	cursor.Image.Position = UDim2.fromScale(0, 0)
+	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
+	cursor.CursorRed.Image.Position = UDim2.fromScale(0, 0)
+	cursor.Visible = true
+
+	local a1 = uiAnimationService.PlayAnimation(cursor, INTEREST_ICON_SPEED)
+	local a2 = uiAnimationService.PlayAnimation(cursor.CursorBlue, INTEREST_ICON_SPEED)
+	local a3 = uiAnimationService.PlayAnimation(cursor.CursorRed, INTEREST_ICON_SPEED)
+
+	a1:OnFrameRached(3):Connect(function()
+		a1:Pause()
+		a2:Pause()
+		a3:Pause()
+	end)
+end
+
+local function hideInterest(cursor)
+	local a = uiAnimationService.CheckPlaying(cursor)
+
+	if not a then
+		cursor.Visible = false
+		return
+	end
+
+	uiAnimationService.CheckPlaying(cursor.CursorBlue):Resume()
+	uiAnimationService.CheckPlaying(cursor.CursorRed):Resume()
+	a:Resume()
+
+	a.OnEnded:Connect(function()
+		cursor.Visible = false
+	end)
+end
+
+local function showLocked(cursor: Frame)
+	task.spawn(function()
+		for _ = 1, 10 do
+			cursor.Position = UDim2.fromScale(rng:NextNumber(-0.025, 0.025), rng:NextNumber(-0.025, 0.025))
+			task.wait(0.025)
+		end
+
+		cursor.Position = UDim2.fromScale(0, 0)
+	end)
+end
+
 mouseTarget.Changed:Connect(function(value)
 	if not UI then
 		return
 	end
 
 	local interactUi = UI.Cursor.Interact
+	local interestUi = UI.Cursor.Interest
 
 	if value and value:HasTag("Interactable") then
-		showInteract(value, interactUi)
+		if value:HasTag("Interest") then
+			showInterest(interestUi)
+		else
+			showInteract(value, interactUi)
+		end
 	else
 		hideInteract(interactUi)
+		hideInterest(interestUi)
 	end
 end)
 
@@ -154,7 +196,7 @@ local function InteractiWithObject(object: Instance)
 		pickupContainer(object)
 	end
 
-	if object:HasTag("NPC") or object:HasTag("Comment") then
+	if object:HasTag("NPC") or object:HasTag("Interest") then
 		dialogue:EnterDialogue(mouseTarget.Value)
 	end
 

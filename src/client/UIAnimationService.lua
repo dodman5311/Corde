@@ -114,8 +114,10 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 	return animations[frame]
 end
 
-function module.CheckPlaying(frame)
-	return animations[frame] and animations[frame].Connection
+function module.CheckPlaying(frame) -- returns the animation if it's playing
+	if animations[frame] and animations[frame].Connection then
+		return animations[frame]
+	end
 end
 
 function module.StopAnimation(frame)

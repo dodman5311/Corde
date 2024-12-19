@@ -7,6 +7,7 @@ export type item = {
 	InUse: boolean,
 }
 
+local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
@@ -46,7 +47,15 @@ local rng = Random.new()
 local UITemplate = gui.Inventory
 local UI
 
-function Inventory:ShowItemAdded() -- @TODO
+function Inventory:ShowNotification(itemName, notificationMessage) -- @TODO
+	local newNotification = gui.Notification:Clone()
+	newNotification.Parent = player.PlayerGui.HUD.Notifications
+
+	newNotification.Text = itemName .. " " .. notificationMessage
+	Debris:AddItem(newNotification, 6)
+
+	local ti = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 3)
+	util.tween(newNotification, ti, { TextTransparency = 1 })
 end
 
 function Inventory:SearchForItem(itemName)
@@ -96,7 +105,7 @@ function Inventory:AddItem(item: item)
 			continue
 		end
 
-		self:ShowItemAdded(item.Name)
+		self:ShowNotification(item.Name, "Added to inventory")
 
 		self["slot_" .. i] = newItem
 		self.ItemAdded:Fire(newItem, "slot_" .. i)
@@ -136,6 +145,7 @@ function Inventory:RemoveItem(ItemOrSlot)
 		return
 	end
 
+	self:ShowNotification(item.Name, "Removed from inventory")
 	self.ItemRemoved:Fire(item, slot)
 	self[slot] = nil
 
@@ -570,9 +580,17 @@ local function initGui()
 			refreshGui()
 		end)
 
-		button.InputBegan:Connect(function()
+		button.InputBegan:Connect(function(input)
 			if acts:checkAct("Reloading") then
 				return
+			end
+
+			if input.KeyCode == Enum.KeyCode.Q then
+				Inventory:DropItem(slotUi.ItemName.Text)
+			end
+
+			if input.KeyCode == Enum.KeyCode.Return then
+				useItem(slotUi)
 			end
 
 			refreshGui()
@@ -673,11 +691,11 @@ local function inventoryInteract(state, input)
 		return
 	end
 
-	if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonB then
+	if input.KeyCode == Enum.KeyCode.ButtonB then
 		Inventory:DropItem(GuiService.SelectedObject.Parent.Name)
 	end
 
-	if input.KeyCode == Enum.KeyCode.Return or input.KeyCode == Enum.KeyCode.ButtonX then
+	if input.KeyCode == Enum.KeyCode.ButtonX then
 		useItem(GuiService.SelectedObject.Parent)
 	end
 
@@ -700,8 +718,6 @@ function Inventory.Init()
 	Inventory.InventoryInteract = globalInputService.CreateNewInput(
 		"InventoryInteraction",
 		inventoryInteract,
-		Enum.KeyCode.Q,
-		Enum.KeyCode.Return,
 		Enum.KeyCode.ButtonB,
 		Enum.KeyCode.ButtonX
 	)
