@@ -340,6 +340,25 @@ local function createBullet(weaponData)
 	end
 end
 
+local function createShell()
+	local character = player.Character
+	local torso = character.Torso
+	local shell: Part = models.Shell:Clone()
+
+	Debris:AddItem(shell, 5)
+
+	shell.CanCollide = true
+	shell.Parent = workspace.Ignore
+
+	shell.CFrame = torso.Chamber.WorldCFrame
+	shell.AssemblyLinearVelocity = (torso.Chamber.WorldCFrame * CFrame.Angles(0, math.rad(rng:NextNumber(-20, 20)), 0)).LookVector
+		* rng:NextNumber(10, 20)
+	shell.AssemblyAngularVelocity = Vector3.new(0, rng:NextNumber(-25, -5), 0)
+
+	local ti = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 3)
+	util.tween(shell.SurfaceGui.Frame, ti, { BackgroundTransparency = 1 })
+end
+
 local function fireWeapon(input)
 	local character = player.Character
 	if not character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting") then
@@ -377,16 +396,7 @@ local function fireWeapon(input)
 		torso.Muzzle.Flash.Enabled = false
 	end)
 
-	local shell: Part = models.Shell:Clone()
-	Debris:AddItem(shell, 5)
-
-	shell.CanCollide = true
-	shell.Parent = workspace.Ignore
-
-	shell.CFrame = torso.Chamber.WorldCFrame
-	shell.AssemblyLinearVelocity = (torso.Chamber.WorldCFrame * CFrame.Angles(0, math.rad(rng:NextNumber(-20, 20)), 0)).LookVector
-		* rng:NextNumber(10, 20)
-	shell.AssemblyAngularVelocity = Vector3.new(0, rng:NextNumber(-25, -5), 0)
+	createShell()
 
 	--accuracyReduction.Speed = weaponData.RecoilSpeed
 	--accuracyReduction.Target = weaponData.Recoil

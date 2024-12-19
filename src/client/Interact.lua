@@ -154,7 +154,7 @@ local function InteractiWithObject(object: Instance)
 		pickupContainer(object)
 	end
 
-	if object:HasTag("NPC") then
+	if object:HasTag("NPC") or object:HasTag("Comment") then
 		dialogue:EnterDialogue(mouseTarget.Value)
 	end
 

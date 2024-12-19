@@ -380,6 +380,7 @@ local function nextNotePage(note: item, indexChange: number)
 
 	local noteUi = UI.Note
 	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
+	util.PlaySound(sounds.Paper, script, 0.075)
 
 	if currentNoteIndex > #note.Value.Message then
 		closeNote()
