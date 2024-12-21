@@ -20,7 +20,6 @@ local acts = require(script.Parent.Acts)
 local Projectiles = {}
 local isPaused = false
 
-
 export type Projectile = {
 	["Instance"]: Instance,
 	["Speed"]: number,
@@ -77,15 +76,7 @@ function module.createFromPreset(cframe, spread, presetName, DamageOverride, inf
 		end
 	end
 
-	return module.createProjectile(
-		getPreset.Speed,
-		cframe,
-		spread,
-		damage,
-		getPreset.LifeTime,
-		info,
-		getPreset.Model
-	)
+	return module.createProjectile(getPreset.Speed, cframe, spread, damage, getPreset.LifeTime, info, getPreset.Model)
 end
 
 function module.createProjectile(speed, cframe, spread, dmg, LifeTime, extraInfo, sender, model)
@@ -118,7 +109,9 @@ local function checkRaycast(projectile, raycastDistance)
 	local cframe = projectile.Instance.CFrame
 
 	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Exclude
 	rp.CollisionGroup = "Bullet"
+	rp.FilterDescendantsInstances = { workspace.Ignore }
 
 	local newRaycast
 
@@ -154,16 +147,15 @@ local function removeProjectileInstance(projectile)
 end
 
 local function createWallHitEffect(rayResult)
-	
 	local newHitEffect = util.callFromCache(models.WallHit)
 	util.addToCache(newHitEffect, 0.6)
 
 	newHitEffect.Parent = workspace
 	newHitEffect.CFrame = CFrame.new(rayResult.Position, rayResult.Position + rayResult.Normal)
-	newHitEffect.CFrame *= CFrame.Angles(0,math.rad(-180),0)
+	newHitEffect.CFrame *= CFrame.Angles(0, math.rad(-180), 0)
 
 	newHitEffect.Particle:Emit(6)
-	
+
 	return newHitEffect
 end
 
@@ -181,19 +173,18 @@ function module.projectileHit(raycast, projectile)
 			model:SetAttribute("Health", currentHealth)
 			projectile.HitEvent:Fire(raycast, currentHealth)
 		else
-			createWallHitEffect(raycast)	
+			createWallHitEffect(raycast)
 			projectile.HitEvent:Fire(raycast)
 		end
 	else
 		createWallHitEffect(raycast)
 		projectile.HitEvent:Fire(raycast)
 	end
-	
+
 	projectile.ToBeRemoved = true
 end
 
 RunService.Heartbeat:Connect(function()
-
 	if acts:checkAct("Paused") then
 		return
 	end
@@ -210,15 +201,15 @@ RunService.Heartbeat:Connect(function()
 
 		local distanceToMove = timePassed * projectile.Speed
 
-        if projectile["ToBeRemoved"] then
-            removeProjectileInstance(projectile)
-            table.remove(Projectiles, table.find(Projectiles, projectile))
-            continue
-        end
+		if projectile["ToBeRemoved"] then
+			removeProjectileInstance(projectile)
+			table.remove(Projectiles, table.find(Projectiles, projectile))
+			continue
+		end
 
 		local raycast = checkRaycast(projectile, distanceToMove)
 
-		projectile.Instance.CFrame *= CFrame.new(0, 0, -(distanceToMove))
+		projectile.Instance.CFrame *= CFrame.new(0, 0, -distanceToMove)
 
 		module.projectileHit(raycast, projectile)
 	end

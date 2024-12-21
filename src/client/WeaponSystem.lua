@@ -52,7 +52,7 @@ accuracyReduction.Target = 0
 
 local rng = Random.new()
 
-module.onWeaponUnequipped = signal.new()
+module.onWeaponToggled = signal.new()
 
 local function showWeapon(weaponType)
 	local character = player.Character
@@ -104,8 +104,9 @@ local function showWeapon(weaponType)
 		reload.Image:SetAttribute("Frames", 8)
 
 		module.weaponUnequipped = true
-		module.onWeaponUnequipped:Fire()
 	end
+
+	module.onWeaponToggled:Fire(weaponType)
 end
 
 function module.toggleHolstered(value)
@@ -120,6 +121,9 @@ function module.toggleHolstered(value)
 		end
 
 		showWeapon(currentWeapon.Value.Type)
+
+		print(true)
+		globalInputService.inputs.ToggleFire:Enable()
 		util.PlaySound(sounds.Unholster, script, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -127,6 +131,8 @@ function module.toggleHolstered(value)
 		end)
 	elseif not readyKeyDown and not module.weaponUnequipped then
 		showWeapon(0)
+
+		globalInputService.inputs.ToggleFire:Disable()
 		util.PlaySound(sounds.Holster, script, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -327,6 +333,7 @@ local function createBullet(weaponData)
 	newProjectile.HitEvent:Once(registerShot)
 
 	rp.FilterType = Enum.RaycastFilterType.Exclude
+	rp.CollisionGroup = "Bullet"
 	rp.FilterDescendantsInstances = { character, workspace.Ignore }
 
 	local hit = workspace:Raycast(
@@ -465,7 +472,7 @@ function module.Init()
 	RunService.RenderStepped:Connect(processCrosshair)
 end
 
-local function fireKeyToggle(state, input)
+function module.fireKeyToggle(state, input)
 	if state == Enum.UserInputState.Begin then
 		if acts:checkAct("Paused") then
 			return
@@ -490,7 +497,7 @@ local function fireKeyToggle(state, input)
 	end
 end
 
-local function readyKeyToggle(state, input)
+function module.readyKeyToggle(state, input)
 	if state == Enum.UserInputState.Begin then
 		if acts:checkAct("Paused") then
 			return
@@ -500,7 +507,7 @@ local function readyKeyToggle(state, input)
 		module.toggleHolstered(true)
 	elseif state == Enum.UserInputState.End then
 		readyKeyDown = false
-		module.toggleHolstered(readyKeyDown)
+		module.toggleHolstered(false)
 	end
 end
 
@@ -509,8 +516,8 @@ inventory.InvetoryToggled:Connect(function(value)
 		return
 	end
 
-	fireKeyToggle(Enum.UserInputState.End)
-	readyKeyToggle(Enum.UserInputState.End)
+	module.fireKeyToggle(Enum.UserInputState.End)
+	module.readyKeyToggle(Enum.UserInputState.End)
 end)
 
 local function reloadInput(state)
@@ -522,8 +529,15 @@ local function reloadInput(state)
 end
 
 globalInputService.CreateNewInput("Reload", reloadInput, Enum.KeyCode.R, Enum.KeyCode.ButtonR1)
-globalInputService.CreateNewInput("ToggleFire", fireKeyToggle, Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1)
-globalInputService.CreateNewInput("ToggleReady", readyKeyToggle, Enum.KeyCode.ButtonL2, Enum.UserInputType.MouseButton2)
+globalInputService
+	.CreateNewInput("ToggleFire", module.fireKeyToggle, Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1)
+	:Disable()
+globalInputService.CreateNewInput(
+	"ToggleReady",
+	module.readyKeyToggle,
+	Enum.KeyCode.ButtonL2,
+	Enum.UserInputType.MouseButton2
+)
 
 RunService.Heartbeat:Connect(function()
 	if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then

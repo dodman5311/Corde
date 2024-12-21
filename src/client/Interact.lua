@@ -153,12 +153,10 @@ mouseTarget.Changed:Connect(function(value)
 	end
 end)
 
-local function openDoor(object)
-	local doorModule = require(object.Module)
+local function useObject(object)
+	local objectModule = require(object.Module)
 
-	if doorModule.open() then
-		return
-	end
+	return objectModule.Use()
 end
 
 local function runTimer(actionName: string, interactionTime: number, func, ...)
@@ -170,13 +168,13 @@ local function runTimer(actionName: string, interactionTime: number, func, ...)
 	actionPrompt.showActionTimer(interactTimer, actionName)
 end
 
-local function attemptOpenDoor(object: Instance)
+local function attemptInteract(object: Instance)
 	if object:GetAttribute("Locked") then
 		util.PlaySound(sounds.Locked, script)
 		showLocked(UI.Cursor.Interact)
 	else
-		util.PlaySound(sounds.Opening, script, 0.05, 0.5)
-		runTimer("Opening", 0.5, openDoor, object)
+		util.PlaySound(sounds.Interacting, script, 0.05, 0.5)
+		runTimer("Interacting", 0.5, useObject, object)
 	end
 end
 
@@ -188,20 +186,16 @@ local function pickupContainer()
 end
 
 local function InteractiWithObject(object: Instance)
-	if safesNLocks:EnterLock(object) then
+	if safesNLocks:EnterLock(object) or not object:HasTag("Interactable") then
 		return
 	end
 
 	if object:HasTag("Container") then
-		pickupContainer(object)
-	end
-
-	if object:HasTag("NPC") or object:HasTag("Interest") then
+		pickupContainer()
+	elseif object:HasTag("NPC") or object:HasTag("Interest") then
 		dialogue:EnterDialogue(mouseTarget.Value)
-	end
-
-	if object:HasTag("Door") then
-		attemptOpenDoor(object)
+	else
+		attemptInteract(object)
 	end
 end
 
@@ -223,7 +217,11 @@ local function processCrosshair()
 
 	local hit, target = getMouseHit()
 
-	local distanceToMouse = (player.Character:GetPivot().Position - hit.Position).Magnitude
+	local characterPosition = player.Character:GetPivot().Position
+	local v2CharacterPosition = Vector2.new(characterPosition.X, characterPosition.Z)
+	local v2CursorPosition = Vector2.new(hit.Position.X, hit.Position.Z)
+
+	local distanceToMouse = (v2CharacterPosition - v2CursorPosition).Magnitude
 
 	if distanceToMouse > module.INTERACT_DISTANCE then
 		mouseTarget.Value = nil

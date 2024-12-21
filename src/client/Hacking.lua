@@ -400,13 +400,13 @@ function module.Init()
 end
 
 local function pressNeyKey(state)
-	if state ~= Enum.UserInputState.Begin or acts:checkAct("Paused") then
+	if acts:checkAct("Paused") then
 		return
 	end
 
-	if acts:checkAct("InNet") then
+	if acts:checkAct("InNet") and state == Enum.UserInputState.End then
 		module:ExitNetMode()
-	elseif not acts:checkAct("Interacting") then
+	elseif not acts:checkAct("Interacting") and state == Enum.UserInputState.Begin then
 		module:EnterNetMode()
 	end
 end

@@ -1,10 +1,11 @@
 local module = {
-	HungerRate = 0.1,
-	RamRecoveryRate = 0.035,
+	HUNGER_RATE = 0.1,
+	SPRINTING_HUNGER_MULT = 2,
+	RAM_RECOVERY_RATE = 0.035,
+	IsSprinting = false,
 }
 
 local CollectionService = game:GetService("CollectionService")
-local ContextActionService = game:GetService("ContextActionService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,7 +20,6 @@ local Client = player.PlayerScripts.Client
 
 local uiAnimationService = require(Client.UIAnimationService)
 local inventory = require(Client.Inventory)
-local timer = require(Client.Timer)
 local util = require(Client.Util)
 local weapons = require(Client.WeaponSystem)
 local acts = require(Client.Acts)
@@ -35,7 +35,6 @@ local models = assets.Models
 local logHealth = 0
 local logLv = Vector3.zero
 local logMousePos = Vector3.zero
-local hungerDamageTimer = timer:new("HungerDamage", 2)
 local cursorLocation = Vector2.zero
 
 local thumbstick1Pos = Vector3.zero
@@ -46,7 +45,11 @@ local thumbCursorGoal = Vector2.zero
 local MOVEMENT_THRESHOLD = 0.5
 local THUMBSTICK_THRESHOLD = 0.125
 local CURSOR_INTERPOLATION = 0.05
-local THUMBSTICK_SNAP_POWER = 1
+local THUMBSTICK_SNAP_POWER = 0.5
+local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.65
+
+local WALK_SPEED = 3
+local SPRINT_SPEED = 4
 
 local function spawnCharacter()
 	local presetCharacter = models.Character
@@ -61,6 +64,7 @@ local function spawnCharacter()
 		if character:GetAttribute("Health") <= 0 then
 			character:SetAttribute("Health", 0)
 
+			module.toggleSprint(false)
 			player.Character = nil
 			character:Destroy()
 
@@ -78,6 +82,10 @@ local function spawnCharacter()
 end
 
 function module:DamagePlayer(damage: number, damageType: string)
+	if player.Character:GetAttribute("Hunger") <= 0 then
+		damage *= 2
+	end
+
 	player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - damage)
 	player.Character:SetAttribute("LastDamageType", damageType)
 end
@@ -99,14 +107,6 @@ local function getMouseHit()
 	return CFrame.new(raycast.Position), raycast.Instance
 end
 
-hungerDamageTimer.Function = function()
-	if not player.Character then
-		return
-	end
-
-	module:DamagePlayer(10, "Hunger")
-end
-
 local function getClosestInteractable()
 	local character = player.Character
 	if not character then
@@ -120,7 +120,7 @@ local function getClosestInteractable()
 
 	for _, interactable in ipairs(CollectionService:GetTagged("Interactable")) do
 		local distanceToplayer = (interactable:GetPivot().Position - character:GetPivot().Position).Magnitude
-		if distanceToplayer > interact.INTERACT_DISTANCE then
+		if distanceToplayer > SNAP_DISTANCE then
 			continue
 		end
 
@@ -152,8 +152,7 @@ local function processGamepadCursorSnap()
 		return
 	end
 
-	local inter = (math.abs(distanceToPlayer - interact.INTERACT_DISTANCE) * CURSOR_INTERPOLATION)
-		* THUMBSTICK_SNAP_POWER
+	local inter = (math.abs(distanceToPlayer - SNAP_DISTANCE) * CURSOR_INTERPOLATION) * THUMBSTICK_SNAP_POWER
 
 	cursorLocation = cursorLocation:Lerp(vector, inter)
 end
@@ -238,10 +237,10 @@ local function updateDirection(inputState, vector)
 			return
 		end
 
-		uiAnimationService.PlayAnimation(frame, 0.125, true)
+		uiAnimationService.PlayAnimation(frame, 0.5 / character:GetAttribute("Walkspeed"), true)
 
 		if weapons.weaponUnequipped then
-			uiAnimationService.PlayAnimation(arms, 0.125, true)
+			uiAnimationService.PlayAnimation(arms, 0.5 / character:GetAttribute("Walkspeed"), true)
 		end
 
 		sounds.Steps:Resume()
@@ -256,7 +255,10 @@ local function updateDirection(inputState, vector)
 end
 
 sounds.Steps.DidLoop:Connect(function()
-	sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.45, 1.55)
+	sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.2, 1.3)
+	if module.IsSprinting then
+		sounds.Steps.PlaybackSpeed += 0.2
+	end
 end)
 
 local function updateCursorData(key)
@@ -307,6 +309,41 @@ local function movePlayer(state, key)
 	end
 end
 
+function module.toggleSprint(value)
+	local character = player.Character
+	if not character then
+		module.IsSprinting = false
+		return
+	end
+
+	if value then
+		if character:GetAttribute("Hunger") <= 0 then
+			module.IsSprinting = false
+			return
+		end
+
+		sounds.Steps.PlaybackSpeed = 1.45
+		weapons.readyKeyToggle(Enum.UserInputState.End)
+	else
+		sounds.Steps.PlaybackSpeed = 1.25
+	end
+
+	module.IsSprinting = value
+
+	character:SetAttribute("Walkspeed", value and SPRINT_SPEED or WALK_SPEED)
+	uiAnimationService.StopAnimation(character.Legs.UI.Frame)
+
+	updateDirection()
+end
+
+local function updateSprinting(state)
+	if state == Enum.UserInputState.Begin then
+		module.toggleSprint(true)
+	elseif state == Enum.UserInputState.End then
+		module.toggleSprint(false)
+	end
+end
+
 local function updatePlayerMovement()
 	local character = player.Character
 	if not character or acts:checkAct("Paused") then
@@ -339,6 +376,8 @@ function module.Init()
 		Enum.KeyCode.Thumbstick1
 	)
 
+	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
+
 	UserInputService.InputChanged:Connect(updateCursorData)
 
 	RunService:BindToRenderStep("updatePlayerMovement", Enum.RenderPriority.Character.Value, updatePlayerMovement)
@@ -347,26 +386,28 @@ end
 
 RunService.Heartbeat:Connect(function()
 	if player.Character and not acts:checkAct("Paused") then
-		if player.Character:GetAttribute("Hunger") <= 0 then
+		if player.Character:GetAttribute("Hunger") < 0 then
 			player.Character:SetAttribute("Hunger", 0)
-			hungerDamageTimer:Run()
+			module.toggleSprint(false)
 		elseif player.Character:GetAttribute("Hunger") > 100 then
 			player.Character:SetAttribute("Hunger", 100)
-		else
+		elseif player.Character:GetAttribute("Hunger") > 0 then
+			local mult = (module.IsSprinting and moveDirection.Magnitude > 0) and module.SPRINTING_HUNGER_MULT or 1
+
 			player.Character:SetAttribute(
 				"Hunger",
-				player.Character:GetAttribute("Hunger") - ((os.clock() - lastHeartbeat) * module.HungerRate)
+				player.Character:GetAttribute("Hunger") - ((os.clock() - lastHeartbeat) * (module.HUNGER_RATE * mult))
 			)
 		end
 
 		if player.Character:GetAttribute("RAM") < 0 then
 			player.Character:SetAttribute("RAM", 0)
-		elseif player.Character:GetAttribute("RAM") >= 1 then
+		elseif player.Character:GetAttribute("RAM") > 1 then
 			player.Character:SetAttribute("RAM", 1)
-		else
+		elseif player.Character:GetAttribute("RAM") < 1 then
 			player.Character:SetAttribute(
 				"RAM",
-				player.Character:GetAttribute("RAM") + ((os.clock() - lastHeartbeat) * module.RamRecoveryRate)
+				player.Character:GetAttribute("RAM") + ((os.clock() - lastHeartbeat) * module.RAM_RECOVERY_RATE)
 			)
 		end
 	end
@@ -386,7 +427,12 @@ end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)
 player:SetAttribute("CursorHit", Vector2.zero)
-weapons.onWeaponUnequipped:Connect(function()
+weapons.onWeaponToggled:Connect(function(value)
+	if value ~= 0 then
+		module.toggleSprint(false)
+		return
+	end
+
 	local character = player.Character
 	if not character then
 		return

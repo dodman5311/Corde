@@ -603,7 +603,6 @@ function Inventory.OpenInventory()
 
 	hacking:ExitNetMode()
 	hacking.ToggleNetInput:Disable()
-	globalInputService.inputs.ToggleFire:Disable()
 	globalInputService.inputs.ToggleReady:Disable()
 
 	Inventory.InventoryInteract:Enable()
@@ -636,7 +635,6 @@ function Inventory.CloseInventory()
 	Inventory.InvetoryToggled:Fire(false)
 
 	hacking.ToggleNetInput:Enable()
-	globalInputService.inputs.ToggleFire:Enable()
 	globalInputService.inputs.ToggleReady:Enable()
 
 	Inventory.InventoryInteract:Disable()
@@ -706,6 +704,26 @@ local function inventoryInteract(state, input)
 	refreshGui()
 end
 
+local function updatePlayerStatus()
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	local hungerBar = UI.Inventory.Player.HungerBar
+	local heathDisplay = UI.Inventory.PlayerHealth
+
+	local hunger = character:GetAttribute("Hunger")
+
+	heathDisplay.ImageColor3 = Color3.new(1):Lerp(Color3.fromRGB(125, 245, 255), character:GetAttribute("Health") / 100)
+
+	hungerBar.Value.Text = math.round(character:GetAttribute("Hunger"))
+	hungerBar.Bar.Size = UDim2.fromScale(character:GetAttribute("Hunger") / 100, 1)
+
+	heathBar.Value.Text = math.round(character:GetAttribute("Health"))
+	heathBar.Bar.Size = UDim2.fromScale(, 1)
+end
+
 function Inventory.Init()
 	Inventory.noteNavigation = globalInputService.CreateNewInput(
 		"NoteNavigation",
@@ -731,24 +749,6 @@ end
 
 UserInputService.InputBegan:Connect(updatePrompts)
 
-RunService.Heartbeat:Connect(function()
-	local character = player.Character
-	if not character then
-		return
-	end
-
-	local hungerBar = UI.Inventory.Player.HungerBar
-	local heathBar = UI.Inventory.Player.HealthBar
-	local armorBar = UI.Inventory.Player.ArmorBar
-
-	hungerBar.Value.Text = math.round(character:GetAttribute("Hunger"))
-	hungerBar.Bar.Size = UDim2.fromScale(character:GetAttribute("Hunger") / 100, 1)
-
-	heathBar.Value.Text = math.round(character:GetAttribute("Health"))
-	heathBar.Bar.Size = UDim2.fromScale(character:GetAttribute("Health") / 100, 1)
-
-	armorBar.Value.Text = math.round(character:GetAttribute("Armor"))
-	armorBar.Bar.Size = UDim2.fromScale(character:GetAttribute("Armor") / 100, 1)
-end)
+RunService.Heartbeat:Connect(updatePlayerStatus)
 
 return Inventory
