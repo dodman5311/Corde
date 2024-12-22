@@ -1,6 +1,6 @@
 local module = {
 	HUNGER_RATE = 0.1,
-	SPRINTING_HUNGER_MULT = 2,
+	SPRINTING_HUNGER_MULT = 2.5,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 }
@@ -48,7 +48,7 @@ local CURSOR_INTERPOLATION = 0.05
 local THUMBSTICK_SNAP_POWER = 0.5
 local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.65
 
-local WALK_SPEED = 3
+local WALK_SPEED = 2.75
 local SPRINT_SPEED = 4
 
 local function spawnCharacter()
@@ -393,11 +393,9 @@ RunService.Heartbeat:Connect(function()
 			player.Character:SetAttribute("Hunger", 100)
 		elseif player.Character:GetAttribute("Hunger") > 0 then
 			local mult = (module.IsSprinting and moveDirection.Magnitude > 0) and module.SPRINTING_HUNGER_MULT or 1
+			local rate = (os.clock() - lastHeartbeat) * (module.HUNGER_RATE * mult)
 
-			player.Character:SetAttribute(
-				"Hunger",
-				player.Character:GetAttribute("Hunger") - ((os.clock() - lastHeartbeat) * (module.HUNGER_RATE * mult))
-			)
+			player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") - rate)
 		end
 
 		if player.Character:GetAttribute("RAM") < 0 then

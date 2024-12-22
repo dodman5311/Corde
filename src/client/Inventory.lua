@@ -14,7 +14,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Inventory = {} -- {Name = "", Desc = "", Value = 1, InUse = false, Use = "Action"}
+local Inventory = {
+	InventoryOpen = false,
+} -- {Name = "", Desc = "", Value = 1, InUse = false, Use = "Action"}
 
 local player = Players.LocalPlayer
 
@@ -27,6 +29,7 @@ local mouseOver = require(client.MouseOver)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local hacking = require(client.Hacking)
+local timer = require(client.Timer)
 
 local assets = ReplicatedStorage.Assets
 local models = assets.Models
@@ -42,12 +45,14 @@ Inventory.ItemAddedToSlot = signal.new()
 Inventory.ItemUsed = signal.new()
 Inventory.InvetoryToggled = signal.new()
 
+Inventory.statusPumpTimer = timer:new("HealthPump", 1)
+
 local rng = Random.new()
 
 local UITemplate = gui.Inventory
 local UI
 
-function Inventory:ShowNotification(itemName, notificationMessage) -- @TODO
+function Inventory:ShowNotification(itemName, notificationMessage)
 	local newNotification = gui.Notification:Clone()
 	newNotification.Parent = player.PlayerGui.HUD.Notifications
 
@@ -608,7 +613,9 @@ function Inventory.OpenInventory()
 	Inventory.InventoryInteract:Enable()
 
 	camera.followViewDistance.current = 1
-	acts:createAct("InventoryOpen", "InventoryOpening")
+
+	acts:createAct("InventoryOpening")
+	Inventory.InventoryOpen = true
 
 	local ti = TweenInfo.new(0.25)
 
@@ -651,7 +658,7 @@ function Inventory.CloseInventory()
 
 	UI.Enabled = false
 
-	acts:removeAct("InventoryOpen")
+	Inventory.InventoryOpen = false
 end
 
 local function noteNavigationInput(state, input)
@@ -677,7 +684,7 @@ local function toggleInventoryKey(state)
 		return
 	end
 
-	if acts:checkAct("InventoryOpen") then
+	if Inventory.InventoryOpen then
 		Inventory.CloseInventory()
 	else
 		Inventory.OpenInventory()
@@ -704,24 +711,39 @@ local function inventoryInteract(state, input)
 	refreshGui()
 end
 
-local function updatePlayerStatus()
+local function pumpHealthStatus()
 	local character = player.Character
 	if not character then
 		return
 	end
 
-	local hungerBar = UI.Inventory.Player.HungerBar
+	local health = character:GetAttribute("Health") / 100
+
+	local ti = TweenInfo.new(math.clamp(health, 0.5, 1) / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+	local healthDisplay = UI.Inventory.PlayerHealth
+
+	healthDisplay.ImageTransparency = 0
+	util.tween(healthDisplay, ti, { ImageTransparency = 0.5 })
+end
+local function updatePlayerStatus()
+	local character = player.Character
+	if not character or not Inventory.InventoryOpen then
+		return
+	end
+
+	local hungerDisplay = UI.Inventory.Hunger
 	local heathDisplay = UI.Inventory.PlayerHealth
 
+	local health = character:GetAttribute("Health") / 100
 	local hunger = character:GetAttribute("Hunger")
+	local invertedHungerValue = math.abs((hunger / 100) - 1)
 
-	heathDisplay.ImageColor3 = Color3.new(1):Lerp(Color3.fromRGB(125, 245, 255), character:GetAttribute("Health") / 100)
+	heathDisplay.ImageColor3 = Color3.new(1):Lerp(Color3.fromRGB(125, 245, 255), health)
 
-	hungerBar.Value.Text = math.round(character:GetAttribute("Hunger"))
-	hungerBar.Bar.Size = UDim2.fromScale(character:GetAttribute("Hunger") / 100, 1)
+	hungerDisplay.UIGradient.Offset = Vector2.new(0, invertedHungerValue)
 
-	heathBar.Value.Text = math.round(character:GetAttribute("Health"))
-	heathBar.Bar.Size = UDim2.fromScale(, 1)
+	Inventory.statusPumpTimer.WaitTime = math.clamp(health, 0.15, 1)
+	Inventory.statusPumpTimer:Run()
 end
 
 function Inventory.Init()
@@ -747,8 +769,8 @@ function Inventory.Init()
 	initGui()
 end
 
+Inventory.statusPumpTimer.Function = pumpHealthStatus
 UserInputService.InputBegan:Connect(updatePrompts)
-
 RunService.Heartbeat:Connect(updatePlayerStatus)
 
 return Inventory
