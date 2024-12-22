@@ -1,6 +1,6 @@
 local module = {
 	HUNGER_RATE = 0.1,
-	SPRINTING_HUNGER_MULT = 2.5,
+	SPRINTING_HUNGER_MULT = 2,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 }
@@ -49,7 +49,7 @@ local THUMBSTICK_SNAP_POWER = 0.5
 local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.65
 
 local WALK_SPEED = 2.75
-local SPRINT_SPEED = 4
+local SPRINT_SPEED = 3.75
 
 local function spawnCharacter()
 	local presetCharacter = models.Character
@@ -255,7 +255,7 @@ local function updateDirection(inputState, vector)
 end
 
 sounds.Steps.DidLoop:Connect(function()
-	sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.2, 1.3)
+	sounds.Steps.PlaybackSpeed = Random.new():NextNumber(1.1, 1.2)
 	if module.IsSprinting then
 		sounds.Steps.PlaybackSpeed += 0.2
 	end
@@ -322,10 +322,10 @@ function module.toggleSprint(value)
 			return
 		end
 
-		sounds.Steps.PlaybackSpeed = 1.45
+		sounds.Steps.PlaybackSpeed = 1.35
 		weapons.readyKeyToggle(Enum.UserInputState.End)
 	else
-		sounds.Steps.PlaybackSpeed = 1.25
+		sounds.Steps.PlaybackSpeed = 1.15
 	end
 
 	module.IsSprinting = value
