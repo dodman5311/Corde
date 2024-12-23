@@ -50,6 +50,8 @@ local function getMouseHit()
 end
 
 local function showInteract(object, cursor)
+	UI.Crosshair.Visible = false
+
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorRed.Image.Position = UDim2.fromScale(0, 0)
@@ -74,6 +76,8 @@ local function showInteract(object, cursor)
 end
 
 local function hideInteract(cursor)
+	UI.Crosshair.Visible = true
+
 	cursor.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
@@ -89,6 +93,7 @@ end
 local INTEREST_ICON_SPEED = 0.045
 
 local function showInterest(cursor)
+	UI.Crosshair.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorRed.Image.Position = UDim2.fromScale(0, 0)
@@ -106,6 +111,7 @@ local function showInterest(cursor)
 end
 
 local function hideInterest(cursor)
+	UI.Crosshair.Visible = true
 	local a = uiAnimationService.CheckPlaying(cursor)
 
 	if not a then
