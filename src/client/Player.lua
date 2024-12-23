@@ -413,14 +413,18 @@ RunService.Heartbeat:Connect(function()
 	lastHeartbeat = os.clock()
 end)
 
+local function eatItem(item, slot)
+	player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value)
+	util.PlaySound(sounds.Eat, script, 0.15)
+	inventory[slot] = nil
+end
+
 inventory.ItemUsed:Connect(function(use, item, slot)
 	if not player.Character or use ~= "Eat" then
 		return
 	end
 
-	player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value)
-
-	inventory[slot] = nil
+	eatItem(item, slot)
 end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)

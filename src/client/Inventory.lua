@@ -64,6 +64,10 @@ function Inventory:ShowNotification(itemName, notificationMessage)
 end
 
 function Inventory:SearchForItem(itemName)
+	if not itemName then
+		return
+	end
+
 	for slot, item in pairs(self) do
 		if not string.match(slot, "slot_") then
 			continue
@@ -136,14 +140,18 @@ function Inventory:AddWeapon(item: item)
 	return true
 end
 
-function Inventory:RemoveItem(ItemOrSlot)
+function Inventory:RemoveItem(ItemNameOrSlot)
+	if not ItemNameOrSlot then
+		return
+	end
+
 	local item: item, slot
 
-	if Inventory[ItemOrSlot] then
-		item = Inventory[ItemOrSlot]
-		slot = ItemOrSlot
+	if Inventory[ItemNameOrSlot] then
+		item = Inventory[ItemNameOrSlot]
+		slot = ItemNameOrSlot
 	else
-		item, slot = self:SearchForItem(ItemOrSlot)
+		item, slot = self:SearchForItem(ItemNameOrSlot)
 	end
 
 	if not item then
@@ -157,12 +165,12 @@ function Inventory:RemoveItem(ItemOrSlot)
 	return item, slot
 end
 
-function Inventory:DropItem(ItemOrSlot)
-	if not ItemOrSlot then
+function Inventory:DropItem(ItemNameOrSlot)
+	if not ItemNameOrSlot then
 		return
 	end
 
-	local item: item = self:RemoveItem(ItemOrSlot)
+	local item: item = self:RemoveItem(ItemNameOrSlot)
 
 	if not item then
 		return

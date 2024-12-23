@@ -170,6 +170,15 @@ end
 
 local function attemptInteract(object: Instance)
 	if object:GetAttribute("Locked") then
+		local key = object:GetAttribute("Key")
+		if key and inventory:RemoveItem(key) then
+			util.PlaySound(sounds.Unlock, script)
+			object:SetAttribute("Locked", false)
+
+			showInteract(object, UI.Cursor.Interact)
+			return
+		end
+
 		util.PlaySound(sounds.Locked, script)
 		showLocked(UI.Cursor.Interact)
 	else
