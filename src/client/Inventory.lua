@@ -5,8 +5,10 @@ export type item = {
 	Icon: "string",
 	Use: "Eat" | "Read" | "EquipWeapon" | "Reload",
 	InUse: boolean,
+	CombineData: {},
 }
 
+local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
@@ -41,7 +43,7 @@ local currentNoteItem: item
 
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
-Inventory.ItemAddedToSlot = signal.new()
+Inventory.SlotValueChanged = signal.new()
 Inventory.ItemUsed = signal.new()
 Inventory.InvetoryToggled = signal.new()
 
@@ -85,59 +87,108 @@ function Inventory:CheckSlot(slot)
 	return self[slot]
 end
 
+function Inventory:GetFirstEmptySlot(): string -- returns slot index, (String)
+	for slotIndex = 1, 12 do
+		if self:CheckSlot("slot_" .. slotIndex) then
+			continue
+		end
+
+		return "slot_" .. slotIndex
+	end
+end
+
+function Inventory:CombineSlots(slot, slotToCombineWith)
+	local item: item = self[slot]
+	local itemToCombine: item = self[slotToCombineWith]
+
+	if not item or not slotToCombineWith or not itemToCombine or item == itemToCombine then
+		return
+	end
+
+	local combineData = item.CombineData[itemToCombine.Name]
+
+	if not combineData then
+		combineData = itemToCombine.CombineData[item.Name]
+
+		local preItem = item -- switch primary and secondary items
+		item = itemToCombine
+		itemToCombine = preItem
+
+		if not combineData then
+			return
+		end
+	end
+
+	if combineData.Action == "AddValue" then
+		if item.InUse or itemToCombine.InUse then
+			return
+		end
+
+		for _ = itemToCombine.Value, combineData.MaxValue - 1 do
+			if item.Value == 0 then
+				break
+			end
+
+			itemToCombine.Value += 1
+			item.Value -= 1
+		end
+
+		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
+	end
+
+	if not combineData["Result"] then
+		return true
+	end
+
+	if combineData.Result == "Remove" then
+		Inventory:RemoveItem(item.Name)
+	elseif combineData.Result == "RemoveOnEmpty" then
+		if item.Value <= 0 then
+			Inventory:RemoveItem(item.Name)
+		end
+	end
+
+	return true
+end
+
 function Inventory:ChangeSlot(slot, slotToChangeTo)
 	local item: item = self[slot]
-	if not item then
+	if not item or not slotToChangeTo then
 		return
 	end
 
 	if slotToChangeTo == "slot_13" and typeof(item.Value) ~= "table" then
-		return "NotWeapon"
+		return
 	end
 
 	if self[slotToChangeTo] then
 		self[slot] = self[slotToChangeTo]
-		self.ItemAddedToSlot:Fire(slot, self[slotToChangeTo])
+		self.SlotValueChanged:Fire(slot, self[slotToChangeTo])
 	else
 		self[slot] = nil
+		self.SlotValueChanged:Fire(slot)
 	end
 
 	self[slotToChangeTo] = item
-	self.ItemAddedToSlot:Fire(slotToChangeTo, item)
+	self.SlotValueChanged:Fire(slotToChangeTo, self[slotToChangeTo])
 end
 
 function Inventory:AddItem(item: item)
+	local slotToAddTo = self:GetFirstEmptySlot()
 	local newItem = table.clone(item)
 
-	for i = 1, 12 do
-		if self["slot_" .. i] then
-			continue
-		end
-
+	print(slotToAddTo)
+	if slotToAddTo then
 		self:ShowNotification(item.Name, "Added to inventory")
 
-		self["slot_" .. i] = newItem
-		self.ItemAdded:Fire(newItem, "slot_" .. i)
-		self.ItemAddedToSlot:Fire("slot_" .. i, newItem)
+		self[slotToAddTo] = newItem
+		self.ItemAdded:Fire(newItem, slotToAddTo)
+		self.SlotValueChanged:Fire(slotToAddTo, self[slotToAddTo])
 
 		return true
+	else
+		self:DropItem(newItem)
 	end
-end
-
-function Inventory:AddWeapon(item: item)
-	if not item then
-		return
-	end
-
-	if self.slot_13 then
-		self:DropItem(self.slot_13.Name)
-	end
-
-	self.slot_13 = item
-	self.ItemAdded:Fire(item, "slot_13")
-	self.ItemAddedToSlot:Fire("slot_13")
-
-	return true
 end
 
 function Inventory:RemoveItem(ItemNameOrSlot)
@@ -161,19 +212,25 @@ function Inventory:RemoveItem(ItemNameOrSlot)
 	self:ShowNotification(item.Name, "Removed from inventory")
 	self.ItemRemoved:Fire(item, slot)
 	self[slot] = nil
+	self.SlotValueChanged:Fire(slot)
 
 	return item, slot
 end
 
-function Inventory:DropItem(ItemNameOrSlot)
-	if not ItemNameOrSlot then
+function Inventory:DropItem(index) -- index can be an item table, item name, or slot index
+	if not index then
 		return
 	end
 
-	local item: item = self:RemoveItem(ItemNameOrSlot)
+	local item: item
 
-	if not item then
-		return
+	if typeof(index) == "table" then
+		item = index
+	else
+		item = self:RemoveItem(index)
+		if not item then
+			return
+		end
 	end
 
 	local droppedItem = models.DroppedItem:Clone()
@@ -202,10 +259,7 @@ function Inventory:pickupFromContainer(object)
 	local toRemove = {}
 
 	for _, v in ipairs(containerData) do
-		if not self:AddItem(v) then
-			break
-		end
-
+		self:AddItem(v)
 		table.insert(toRemove, v)
 	end
 
@@ -259,6 +313,7 @@ local function setUpWeapon()
 	local firerate = weaponUi.FireRateBar
 	local recoil = weaponUi.RecoilBar
 	local stoppingPower = weaponUi.StoppingPowerBar
+	local display = weaponUi.WeaponDisplay
 
 	if not weapon then
 		accuracy.Bar.Size = UDim2.fromScale(0, 1)
@@ -277,6 +332,8 @@ local function setUpWeapon()
 		stoppingPower.Value.Text = 0.0
 
 		weaponUi.ItemName.Text = "Vacant"
+		display.Visible = false
+		UI.Inventory.WeaponImage.Visible = true
 	else
 		local weaponData = weapon.Value
 
@@ -300,6 +357,9 @@ local function setUpWeapon()
 		stoppingPower.Value.Text = weaponData.StoppingPower
 
 		weaponUi.ItemName.Text = weapon.Name
+		display.Image = weaponData.DisplayImage
+		display.Visible = true
+		UI.Inventory.WeaponImage.Visible = false
 	end
 end
 
@@ -464,7 +524,7 @@ end
 local function useItem(slotUi)
 	local item: item = Inventory[slotUi.Name]
 
-	if (not item) or item.InUse or acts:checkAct("Reloading") then
+	if not item or acts:checkAct("Reloading") then
 		return
 	end
 
@@ -476,8 +536,7 @@ local function useItem(slotUi)
 		Inventory.ItemUsed:Fire(item.Use, item, slotUi.Name)
 	end
 
-	task.wait()
-	refreshGui()
+	task.delay(0.05, refreshGui)
 end
 
 local function updatePrompts()
@@ -493,7 +552,7 @@ local function initGui()
 	local step
 	local originalSlot
 
-	UI = UITemplate:Clone()
+	UI = UITemplate
 	UI.Parent = player.PlayerGui
 	UI.Enabled = false
 
@@ -514,6 +573,28 @@ local function initGui()
 	exitButton.MouseButton1Click:Connect(function()
 		closeNote()
 	end)
+
+	UI.Inventory.Weapon.WeaponDisplay.MouseButton2Click:Connect(function()
+		if acts:checkAct("Reloading") then
+			return
+		end
+
+		Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
+		refreshGui()
+		--UI.Inventory.Weapon.WeaponDisplay.Visible = false
+	end)
+
+	for _, frame: Frame in ipairs(CollectionService:GetTagged("DescriptionFrame")) do
+		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(frame)
+
+		mouseEnter:Connect(function()
+			UI.Inventory.Description.Text = frame:GetAttribute("Description")
+		end)
+
+		mouseLeave:Connect(function()
+			UI.Inventory.Description.Text = ""
+		end)
+	end
 
 	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
 		if not slotUi:IsA("Frame") then
@@ -589,7 +670,10 @@ local function initGui()
 				return
 			end
 
-			Inventory:ChangeSlot(originalSlot.Name, slotUi.Name)
+			if not Inventory:CombineSlots(originalSlot.Name, slotUi.Name) then
+				Inventory:ChangeSlot(originalSlot.Name, slotUi.Name)
+			end
+
 			refreshGui()
 		end)
 

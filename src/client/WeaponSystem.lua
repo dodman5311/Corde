@@ -141,6 +141,33 @@ function module.toggleHolstered(value)
 	end
 end
 
+function module.unequipWeapon()
+	if not currentWeapon then
+		return
+	end
+
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	currentWeapon.InUse = false
+	if currentWeapon.Value["CurrentMag"] then
+		currentWeapon.Value.CurrentMag.InUse = false
+	end
+
+	local torso = character.Torso
+	local reload = torso.UI.Reload
+
+	uiAnimationService.StopAnimation(reload)
+	showWeapon(0)
+
+	currentWeapon = nil
+	acts:removeAct("Firing")
+
+	--util.PlaySound(sounds.GunEquip, script, 0.15)
+end
+
 function module.equipWeapon(weapon)
 	if not weapon then
 		return
@@ -151,27 +178,15 @@ function module.equipWeapon(weapon)
 		return
 	end
 
-	if currentWeapon then
-		currentWeapon.InUse = false
-		if currentWeapon.Value["CurrentMag"] then
-			currentWeapon.Value.CurrentMag.InUse = false
-		end
-	end
+	module.unequipWeapon()
 
 	local weaponData = weapon.Value
-	local torso = character.Torso
-	local reload = torso.UI.Reload
-
-	uiAnimationService.StopAnimation(reload)
-
-	showWeapon(0)
 
 	fireSound.SoundId = weaponData.FireSound
 	fireSound.Volume = weaponData.Volume
 	reloadSound.SoundId = weaponData.ReloadSound
 
 	currentWeapon = weapon
-	acts:removeAct("Firing")
 
 	weapon.InUse = true
 
@@ -258,16 +273,27 @@ local function getNextMag()
 	return foundMag
 end
 
-local function reload(itemToUse)
-	if not currentWeapon or not player.Character then
+local function unload()
+	if acts:checkAct("Firing", "Reloading", "Interacting") or not currentWeapon then
 		return
 	end
 
 	local weaponData = currentWeapon.Value
 
-	if acts:checkAct("Firing", "Reloading", "Interacting") then
+	if weaponData.CurrentMag then
+		weaponData.CurrentMag.InUse = false
+		weaponData.CurrentMag = nil
+	end
+
+	util.PlaySound(sounds.Unload, script, 0.1)
+end
+
+local function reload(itemToUse)
+	if not currentWeapon or not player.Character or acts:checkAct("Firing", "Reloading", "Interacting") then
 		return
 	end
+
+	local weaponData = currentWeapon.Value
 
 	local foundMag = itemToUse or getNextMag()
 	if not foundMag then
@@ -425,17 +451,26 @@ local function fireWeapon(input)
 	acts:removeAct("Firing")
 end
 
-inventory.ItemAddedToSlot:Connect(function(slot, item)
+inventory.SlotValueChanged:Connect(function(slot, value)
 	if slot ~= "slot_13" then
 		return
 	end
 
-	module.equipWeapon(item)
+	if value then
+		module.equipWeapon(value)
+	else
+		module.unequipWeapon()
+	end
 end)
 
 inventory.ItemUsed:Connect(function(use, item)
 	if use == "Reload" then
 		if not currentWeapon then
+			return
+		end
+
+		if item.InUse then
+			unload()
 			return
 		end
 
