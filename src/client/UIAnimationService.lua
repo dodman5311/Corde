@@ -121,7 +121,7 @@ function module.CheckPlaying(frame) -- returns the animation if it's playing
 end
 
 function module.StopAnimation(frame)
-	if not animations[frame] then
+	if not module.CheckPlaying(frame) then
 		return
 	end
 

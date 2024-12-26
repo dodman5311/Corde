@@ -1,8 +1,7 @@
 local module = {
-    OnStep = {
+	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 20 } },
 		{ Function = "LookAtTarget", Parameters = { true, 0.5 } },
-
 	},
 
 	OnSpawn = {
@@ -12,16 +11,16 @@ local module = {
 	OnDeath = {
 		{ Function = "PlaceNpcBody" },
 		{ Function = "Destroy" },
-	}
-    -- TargetFound = {
-	-- 	{ Function = "SwitchToState", Parameters = { "Attacking" } },
-	-- 	{ Function = "MoveTowardsTarget" },
-	-- },
+	},
+	TargetFound = {
+		{ Function = "SwitchToState", Parameters = { "Attacking" } },
+		{ Function = "MoveTowardsTarget" },
+	},
 
-	-- TargetLost = {
-	-- 	{ Function = "SwitchToState", Parameters = { "Chasing" } },
-	-- 	{ Function = "MoveTowardsTarget" },
-	-- },
+	TargetLost = {
+		{ Function = "SwitchToState", Parameters = { "Chasing" } },
+		{ Function = "MoveTowardsTarget" },
+	},
 }
 
 return module

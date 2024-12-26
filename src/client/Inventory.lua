@@ -177,7 +177,6 @@ function Inventory:AddItem(item: item)
 	local slotToAddTo = self:GetFirstEmptySlot()
 	local newItem = table.clone(item)
 
-	print(slotToAddTo)
 	if slotToAddTo then
 		self:ShowNotification(item.Name, "Added to inventory")
 

@@ -122,7 +122,6 @@ function module.toggleHolstered(value)
 
 		showWeapon(currentWeapon.Value.Type)
 
-		print(true)
 		globalInputService.inputs.ToggleFire:Enable()
 		util.PlaySound(sounds.Unholster, script, 0.075)
 

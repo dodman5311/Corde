@@ -5,45 +5,46 @@ local rng = Random.new()
 
 local client = script.Parent
 local acts = require(client.Acts)
-local signal = require(ReplicatedStorage.Packages.Signal)
 local animationService = require(client.UIAnimationService)
 local util = require(client.Util)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
-
-local heartbeat = signal.new()
 export type Npc = {
-    Name : string,
-    Instance : Instance,
-    Personality : {},
-	MindData : {}, -- extra data the npc might need
-    MindState : string,
-    MindTarget : ObjectValue,
+	Name: string,
+	Instance: Instance,
+	Personality: {},
+	MindData: {}, -- extra data the npc might need
+	MindState: string,
+	MindTarget: ObjectValue,
 
-	Timer : {new : (self : any) -> nil}?,
-	Timers : {},
-	Acts : {},
-	Janitor : any,
-    OnDied : any?,
+	Heartbeat: {},
 
-    Spawn : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
-    
-    IsState : (Npc : Npc, State : string) -> boolean,
-    GetState : (Npc : Npc) -> string,
-    GetTarget : (Npc : Npc) -> any?,
-	GetTimer : (Npc : Npc, TimerName : string) -> {},
+	Timer: { new: (self: any) -> nil }?,
+	Timers: {},
+	Acts: {},
+	Janitor: any,
+	OnDied: any?,
 
-    Exists : (Npc : Npc) -> boolean,
+	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 
-    Destroy : (Npc : Npc) -> nil,
-    Place : (Npc : Npc, Position : Vector3 | CFrame) -> Instance,
-    Run : (Npc : Npc) -> nil,
-    LoadPersonality : (Npc : Npc) -> nil,
+	IsState: (Npc: Npc, State: string) -> boolean,
+	GetState: (Npc: Npc) -> string,
+	GetTarget: (Npc: Npc) -> any?,
+	GetTimer: (Npc: Npc, TimerName: string) -> {},
+
+	Exists: (Npc: Npc) -> boolean,
+
+	Destroy: (Npc: Npc) -> nil,
+	Place: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
+	Run: (Npc: Npc) -> nil,
+	LoadPersonality: (Npc: Npc) -> nil,
 }
 
-local module = {}
+local module = {
+	npcs = {},
+}
 
 local function checkSightLine(npc, target)
 	local rp = RaycastParams.new()
@@ -99,6 +100,15 @@ local function lookAtPostition(npc, position: Vector3, doLerp: boolean, lerpAlph
 	end
 end
 
+local function doAction(npc, action, ...)
+	local result = module.actions[action.Function](npc, ...)
+	if not action.ReturnEvent then
+		return
+	end
+
+	module.actions[action.ReturnEvent](npc, npc.Behavior[action.ReturnEvent], result)
+end
+
 function module.doActions(npc, actions, ...)
 	for _, action in ipairs(actions) do
 		if action.State and not npc:IsState(action.State) then
@@ -112,15 +122,6 @@ function module.doActions(npc, actions, ...)
 		if not module.actions[action.Function] then
 			warn("There is no NPC action by the name of ", action.Function)
 			continue
-		end
- 
-		local function doAction(...)
-			local result = module.actions[action.Function](npc, ...)
-			if not action.ReturnEvent then
-				return
-			end
-
-			module.actions[action.ReturnEvent](npc, npc.Behavior[action.ReturnEvent], result)
 		end
 
 		local parameters = {}
@@ -141,60 +142,90 @@ function module.doActions(npc, actions, ...)
 			end
 		end
 
-		task.spawn(doAction, table.unpack(parameters))
+		task.spawn(doAction, npc, action, table.unpack(parameters))
 	end
 end
 
 module.events = {
-	OnStep = function(npc : Npc, actions)
-		local onBeat = heartbeat:Connect(function()
+	OnStep = function(npc: Npc, actions)
+		npc.Heartbeat["OnStep"] = function()
 			module.doActions(npc, actions)
-		end)
-	
-		npc.Janitor:Add(onBeat, "Disconnect")
-		return onBeat
+		end
+
+		return npc.Heartbeat["OnStep"]
 	end,
 
-	OnSpawn = function(npc : Npc, actions)
+	OnMoved = function(npc: Npc, actions)
+		npc.Heartbeat["OnMoved"] = function()
+			module.doActions(npc, actions)
+		end
+
+		return npc.Heartbeat["OnMoved"]
+	end,
+
+	OnSpawn = function(npc: Npc, actions)
 		module.doActions(npc, actions)
 	end,
 
-	OnDeath = function(npc : Npc, actions)
+	OnDeath = function(npc: Npc, actions)
 		return npc.Instance:GetAttributeChangedSignal("Health"):Connect(function()
-            if npc.Instance:GetAttribute("Health") > 0 then
-                return
-            end
+			if npc.Instance:GetAttribute("Health") > 0 then
+				return
+			end
 
 			module.doActions(npc, actions)
-        end)
-	end
-} 
+		end)
+	end,
+}
 
 module.actions = {
-	PlayAnimation = function(npc : Npc, animaitonName :string, ...)
+	PlayAnimation = function(npc: Npc, animaitonName: string, ...)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
+
+		for _, frame in ipairs(animationFrame.Parent:GetChildren()) do
+			if frame:IsA("Frame") or frame == animationFrame then
+				continue
+			end
+
+			frame.Visible = false
+			animationService.StopAnimation(frame)
+		end
+
+		animationFrame.Visible = true
 		return animationService.PlayAnimation(animationFrame, ...)
 	end,
 
-	Destroy = function(npc : Npc)
+	SetAnimationPlayback = function(npc: Npc, animaitonName: string, action: string | "Pause" | "Resume")
+		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
+		local animation = animationService.CheckPlaying(animationFrame)
+		if not animation then
+			return
+		end
+
+		animation[action](animation)
+
+		return animation
+	end,
+
+	Destroy = function(npc: Npc)
 		npc:Destroy()
 	end,
 
-	PlaceNpcBody = function(npc : Npc)
+	PlaceNpcBody = function(npc: Npc)
 		local newBody = models.DeadNpc:Clone()
 		newBody.Parent = workspace
 		newBody:PivotTo(npc.Instance:GetPivot())
 
-		local body : Part = newBody.Body
+		local body: Part = newBody.Body
 		body.AssemblyLinearVelocity = body.CFrame.LookVector * -50
 
-		local deathSoundList 
+		local deathSoundList
 		if npc.Instance:HasTag("Friendly") then
 			deathSoundList = sounds[npc.Instance:GetAttribute("Gender") .. "_Death"]
 		elseif npc.Instance:FindFirstChild("DeathSounds") then
 			deathSoundList = npc.Instance.DeathSounds
 		end
-		
+
 		local deathSound = util.getRandomChild(deathSoundList)
 		local bloodSound = util.getRandomChild(sounds.Blood)
 
@@ -202,7 +233,7 @@ module.actions = {
 		util.PlaySound(bloodSound, script, 0.15)
 	end,
 
-	SearchForTarget = function(npc : Npc, maxDistance : number)
+	SearchForTarget = function(npc: Npc, maxDistance: number)
 		local target = Players.LocalPlayer.Character
 		local distance = 0
 
@@ -215,27 +246,27 @@ module.actions = {
 		end
 
 		npc.MindTarget.Value = target
-	
+
 		if target ~= nil then
 			npc.MindData["LastTarget"] = target
 		end
-	
+
 		return target, distance
 	end,
 
-	LookAtTarget = function(npc : Npc, doLerp, lerpAlpha)
+	LookAtTarget = function(npc: Npc, doLerp, lerpAlpha)
 		local target = npc.MindTarget.Value
 
 		if not target then
 			return
 		end
-	
+
 		local position = target:GetPivot().Position
-	
+
 		lookAtPostition(npc, position, doLerp, lerpAlpha)
 	end,
 
-	Custom = function(npc : Npc, func, ...)
+	Custom = function(npc: Npc, func, ...)
 		local result = func(...)
 
 		if not result then
@@ -246,7 +277,7 @@ module.actions = {
 	end,
 }
 
-function module.RunNpc(Npc : Npc)
+function module.RunNpc(Npc: Npc)
 	for eventName, actions in pairs(Npc.Personality) do
 		if not module.events[eventName] then
 			warn("There is no NPC event by the name of ", eventName)
@@ -265,14 +296,14 @@ function module.RunNpc(Npc : Npc)
 
 		Npc.Janitor:Add(result, "Disconnect")
 	end
-end 
+end
 
 RunService.Heartbeat:Connect(function()
-    if acts:checkAct("Paused") then
-        return
-    end
+	if acts:checkAct("Paused") then
+		return
+	end
 
-	heartbeat:Fire()
+	--for i,v in ipairs()
 end)
 
 return module
