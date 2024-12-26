@@ -30,7 +30,6 @@ export type Npc = {
 	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 
 	IsState: (Npc: Npc, State: string) -> boolean,
-	GetState: (Npc: Npc) -> string,
 	GetTarget: (Npc: Npc) -> any?,
 	GetTimer: (Npc: Npc, TimerName: string) -> {},
 
@@ -45,7 +44,6 @@ export type Npc = {
 local module = {
 	npcs = {},
 }
-
 local function checkSightLine(npc, target)
 	local rp = RaycastParams.new()
 
@@ -79,7 +77,11 @@ local function getObject(class, parent)
 	return foundInstance
 end
 
-local function lookAtPostition(npc, position: Vector3, doLerp: boolean, lerpAlpha: number)
+local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, lerpAlpha: number)
+	if npc.MindData["CantMove"] then
+		return
+	end
+
 	local subject = npc.Instance
 	local subjectPos = subject:GetPivot().Position
 	local newVector = Vector3.new(position.X, subjectPos.Y, position.Z)
@@ -151,16 +153,32 @@ module.events = {
 		npc.Heartbeat["OnStep"] = function()
 			module.doActions(npc, actions)
 		end
-
-		return npc.Heartbeat["OnStep"]
 	end,
 
 	OnMoved = function(npc: Npc, actions)
+		local lastVelocity = Vector3.zero
 		npc.Heartbeat["OnMoved"] = function()
-			module.doActions(npc, actions)
-		end
+			local velocity = npc.Instance.PrimaryPart.AssemblyLinearVelocity
 
-		return npc.Heartbeat["OnMoved"]
+			if velocity ~= lastVelocity and velocity.Magnitude >= 0.05 then
+				module.doActions(npc, actions)
+			end
+
+			lastVelocity = velocity
+		end
+	end,
+
+	OnStopped = function(npc: Npc, actions)
+		local lastVelocity = Vector3.zero
+		npc.Heartbeat["OnStopped"] = function()
+			local velocity = npc.Instance.PrimaryPart.AssemblyLinearVelocity
+
+			if velocity ~= lastVelocity and velocity.Magnitude < 0.05 then
+				module.doActions(npc, actions)
+			end
+
+			lastVelocity = velocity
+		end
 	end,
 
 	OnSpawn = function(npc: Npc, actions)
@@ -176,14 +194,54 @@ module.events = {
 			module.doActions(npc, actions)
 		end)
 	end,
+
+	OnTargetFound = function(npc: Npc, actions)
+		return npc.MindTarget.Changed:Connect(function(value)
+			if not value then
+				return
+			end
+			module.doActions(npc, actions)
+		end)
+	end,
+
+	OnTargetLost = function(npc: Npc, actions)
+		return npc.MindTarget.Changed:Connect(function(value)
+			if value then
+				return
+			end
+			module.doActions(npc, actions)
+		end)
+	end,
+
+	InCloseRange = function(npc: Npc, actions, targetDistance)
+		npc.Heartbeat["CheckCloseRange"] = function()
+			local target = npc:GetTarget()
+			if not target then
+				return
+			end
+
+			targetDistance = targetDistance or 1
+			local distance = (npc.Instance:GetPivot().Position - target:GetPivot().Position).Magnitude
+
+			if distance > targetDistance then
+				return
+			end
+
+			module.doActions(npc, actions)
+		end
+	end,
 }
 
 module.actions = {
+	SwitchToState = function(npc: Npc, state: string)
+		npc.MindState = state
+	end,
+
 	PlayAnimation = function(npc: Npc, animaitonName: string, ...)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
 
 		for _, frame in ipairs(animationFrame.Parent:GetChildren()) do
-			if frame:IsA("Frame") or frame == animationFrame then
+			if not frame:IsA("Frame") or frame == animationFrame then
 				continue
 			end
 
@@ -266,6 +324,75 @@ module.actions = {
 		lookAtPostition(npc, position, doLerp, lerpAlpha)
 	end,
 
+	ChangeWalkVelocity = function(npc: Npc, goal: Vector3, lerpAlpha: number?)
+		if npc.MindData["CantMove"] and goal.Magnitude > 0 then
+			return
+		end
+
+		local walkVelocity: LinearVelocity = npc.Instance.WalkVelocity
+		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(goal, lerpAlpha or 1)
+	end,
+
+	MoveTowardsPoint = function(npc: Npc, position: Vector3, lerpAlpha: number?)
+		npc.Heartbeat["MovingToPoint"] = function()
+			local positionDifference: Vector3 = position - npc.Instance:GetPivot().Position
+
+			if positionDifference.Magnitude <= 0.25 then -- stop when point is reached
+				module.actions.ChangeWalkVelocity(npc, Vector3.zero, lerpAlpha)
+				npc.Heartbeat["MovingToPoint"] = nil
+				return
+			end
+
+			local moveUnit: Vector3 = positionDifference.Unit
+
+			module.actions.ChangeWalkVelocity(npc, moveUnit * npc.Instance:GetAttribute("Walkspeed"), lerpAlpha)
+		end
+	end,
+
+	MoveForwards = function(npc: Npc, lerpAlpha: number?)
+		module.actions.ChangeWalkVelocity(
+			npc,
+			npc.Instance:GetPivot().LookVector * npc.Instance:GetAttribute("Walkspeed"),
+			lerpAlpha
+		)
+	end,
+
+	StopMoving = function(npc: Npc, lerpAlpha: number?)
+		module.actions.ChangeWalkVelocity(npc, Vector3.zero, lerpAlpha)
+	end,
+
+	MoveTowardsTarget = function(npc: Npc, lerpAlpha: number?)
+		local target = npc:GetTarget()
+		if not target then
+			return
+		end
+
+		module.actions.MoveTowardsPoint(npc, target:GetPivot().Position, lerpAlpha)
+	end,
+
+	MeleeAttack = function(npc: Npc, damage: number, cooldown: number, stopMotion: boolean?)
+		if npc.MindState == "Attacking" then
+			return
+		end
+		npc.MindState = "Attacking"
+		module.actions.PlayAnimation(npc, "Animation_Attack", 0.05, false, true)
+
+		if stopMotion then
+			npc.MindData["CantMove"] = true
+			module.actions.StopMoving(npc)
+		end
+
+		task.delay(cooldown, function()
+			if npc.MindState == "Attacking" then
+				npc.MindState = "Chasing"
+			end
+
+			if stopMotion then
+				npc.MindData["CantMove"] = false
+			end
+		end)
+	end,
+
 	Custom = function(npc: Npc, func, ...)
 		local result = func(...)
 
@@ -303,7 +430,11 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
-	--for i,v in ipairs()
+	for _, npc: Npc in ipairs(module.npcs) do
+		for _, heartbeatFunction in pairs(npc.Heartbeat) do
+			heartbeatFunction()
+		end
+	end
 end)
 
 return module

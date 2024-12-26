@@ -7,6 +7,7 @@ local janitor = require(ReplicatedStorage.Packages.Janitor)
 local acts = require(client.Acts)
 local npcFunctions = require(client.NpcFunctions)
 local signal = require(ReplicatedStorage.Packages.Signal)
+local simplePath = require(ReplicatedStorage.Packages.SimplePath)
 
 export type Npc = {
 	Name: string,
@@ -18,6 +19,7 @@ export type Npc = {
 
 	Heartbeat: {},
 
+	Path: any?,
 	Timer: { new: (self: any) -> nil }?,
 	Timers: {},
 	Acts: {},
@@ -27,7 +29,6 @@ export type Npc = {
 	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 
 	IsState: (Npc: Npc, State: string) -> boolean,
-	GetState: (Npc: Npc) -> string,
 	GetTarget: (Npc: Npc) -> any?,
 	GetTimer: (Npc: Npc, TimerName: string) -> {},
 
@@ -42,7 +43,6 @@ export type Npc = {
 local NpcService = {}
 
 --// Values
-local Npcs = {}
 
 function NpcService.new(npcName: string): Npc
 	local npcModel = ReplicatedStorage.Assets.Npcs:FindFirstChild(npcName, true)
@@ -66,6 +66,7 @@ function NpcService.new(npcName: string): Npc
 
 		Heartbeat = {},
 
+		Path = simplePath.new(newNpcModel),
 		Timer = timer:newQueue(),
 		Timers = {},
 		Acts = acts:new(),
@@ -74,11 +75,7 @@ function NpcService.new(npcName: string): Npc
 		OnDied = signal.new(),
 
 		IsState = function(self: Npc, state: string)
-			return self.Instance:GetAttribute("State") == state
-		end,
-
-		GetState = function(self: Npc)
-			return self.Instance:GetAttribute("State")
+			return self.MindState == state
 		end,
 
 		GetTarget = function(self: Npc)
