@@ -33,6 +33,7 @@ local globalInputService = require(Client.GlobalInputService)
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
+local HUD
 
 local logHealth = 0
 local logLv = Vector3.zero
@@ -53,7 +54,9 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.5
 local WALK_SPEED = 2.75
 local SPRINT_SPEED = 3.75
 
-local function damageVFX(character)
+local function playerDamaged(character)
+	local damageUi = HUD.DamageEffects
+
 	util.getRandomChild(sounds.Pain):Play()
 
 	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(5, 25, 0, 0.5)
@@ -63,12 +66,14 @@ local function damageVFX(character)
 	cameraService.shaker:Shake(damageShakeInstance)
 	haptics.hapticPulse(globalInputService.LastGamepadInput, Enum.VibrationMotor.Large, 10, 0.25, "DamageTaken")
 
+	damageUi.Glitch_HighHealth.Visible = true
+	uiAnimationService.PlayAnimation(damageUi.Glitch_HighHealth, 0.04).OnEnded:Once(function()
+		damageUi.Glitch_HighHealth.Visible = false
+	end)
+
 	if not character.Parent then
 		return
 	end
-
-	local walkVelocity = character.WalkVelocity
-	walkVelocity.VectorVelocity = Vector3.zero
 end
 
 local function spawnCharacter()
@@ -94,7 +99,7 @@ local function spawnCharacter()
 		end
 
 		if character:GetAttribute("Health") < logHealth then
-			damageVFX(character)
+			playerDamaged(character)
 		end
 
 		logHealth = character:GetAttribute("Health")
@@ -379,7 +384,7 @@ local function updatePlayerMovement()
 	if cameraService.mode == "FirstPerson" then
 		walkVelocity.VectorVelocity = Vector3.zero
 	else
-		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.01)
+		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)
 	end
 end
 
@@ -397,8 +402,9 @@ function module.Init()
 	)
 
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
-
 	UserInputService.InputChanged:Connect(updateCursorData)
+
+	HUD = player.PlayerGui.HUD
 end
 
 RunService.Heartbeat:Connect(function()
