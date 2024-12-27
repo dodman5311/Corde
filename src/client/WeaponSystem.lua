@@ -53,6 +53,7 @@ accuracyReduction.Target = 0
 local rng = Random.new()
 
 module.onWeaponToggled = signal.new()
+local rp = RaycastParams.new()
 
 local function showWeapon(weaponType)
 	local character = player.Character
@@ -331,16 +332,43 @@ local function reload(itemToUse)
 	acts:removeAct("Reloading", "Interacting")
 end
 
-local rp = RaycastParams.new()
+local function inflictPower(model: Model)
+	if not currentWeapon then
+		return
+	end
+
+	local weaponData = currentWeapon.Value
+
+	local newForce = Instance.new("LinearVelocity")
+	newForce.Parent = model
+	newForce.MaxForce = 11000
+	newForce.Attachment0 = model.PrimaryPart.RootAttachment
+	newForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
+	newForce.VectorVelocity = Vector3.new(0, 0, 10 * weaponData.StoppingPower)
+	--Debris:AddItem(newForce, 0.1)
+
+	task.delay(0.1, function()
+		local walkVelocity: LinearVelocity = model:FindFirstChild("WalkVelocity")
+		if walkVelocity then
+			walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(Vector3.zero, weaponData.StoppingPower)
+		end
+
+		newForce:Destroy()
+	end)
+end
 
 local function registerShot(result, health)
 	local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
 
-	if health and health <= 0 and not module.hasKilled and hitModel:HasTag("Friendly") then
+	if not health then
+		return
+	end
+
+	if health > 0 then
+		inflictPower(hitModel)
+	elseif not module.hasKilled and hitModel:HasTag("Friendly") then
 		module.hasKilled = true
-		task.delay(0.1, function()
-			sequences:beginSequence("noMercy")
-		end)
+		sequences:beginSequence("noMercy")
 	end
 end
 
@@ -443,7 +471,7 @@ local function fireWeapon(input)
 
 	cameraService.shaker:Shake(cameraRecoilInstance)
 
-	haptics.hapticPulse(input, Enum.VibrationMotor.Large, cameraRecoil, cameraRecoil / 1.5, "GunFire")
+	haptics.hapticPulse(input, Enum.VibrationMotor.RightTrigger, cameraRecoil, cameraRecoil / 1.5, "GunFire")
 
 	task.wait(60 / currentWeapon.Value.RateOfFire)
 

@@ -7,6 +7,7 @@ local client = script.Parent
 local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
 local util = require(client.Util)
+local playerService = require(client.Player)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -16,7 +17,7 @@ export type Npc = {
 	Instance: Instance,
 	Personality: {},
 	MindData: {}, -- extra data the npc might need
-	MindState: string,
+	MindState: StringValue,
 	MindTarget: ObjectValue,
 
 	Heartbeat: {},
@@ -30,6 +31,7 @@ export type Npc = {
 	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 
 	IsState: (Npc: Npc, State: string) -> boolean,
+	GetState: (Npc: Npc) -> string,
 	GetTarget: (Npc: Npc) -> any?,
 	GetTimer: (Npc: Npc, TimerName: string) -> {},
 
@@ -44,7 +46,7 @@ export type Npc = {
 local module = {
 	npcs = {},
 }
-local function checkSightLine(npc, target)
+local function checkSightLine(npc, target, maxSightAngle)
 	local rp = RaycastParams.new()
 
 	rp.FilterType = Enum.RaycastFilterType.Include
@@ -56,12 +58,16 @@ local function checkSightLine(npc, target)
 	local position = npcCFrame.Position
 	local targetPosition = targetCFrame.Position
 
+	if not maxSightAngle then
+		return not workspace:Raycast(position, targetPosition - position, rp)
+	end
+
 	local npcDirection = npcCFrame.LookVector
 	local targetDirection = CFrame.lookAt(position, targetPosition).LookVector
 
-	local directionDifference = (npcDirection - targetDirection).Magnitude
+	local directionDifference = (targetDirection - npcDirection).Magnitude
 
-	if directionDifference >= 0.5 then
+	if directionDifference >= (maxSightAngle / 180) * 2 then
 		return
 	end
 
@@ -73,14 +79,15 @@ local function getObject(class, parent)
 	if not foundInstance then
 		foundInstance = Instance.new(class)
 		foundInstance.Parent = parent
+		return foundInstance, true
 	end
-	return foundInstance
+	return foundInstance, false
 end
 
 local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, lerpAlpha: number)
-	if npc.MindData["CantMove"] then
-		return
-	end
+	-- if npc.MindData["CantMove"] then
+	-- 	return
+	-- end
 
 	local subject = npc.Instance
 	local subjectPos = subject:GetPivot().Position
@@ -88,10 +95,14 @@ local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, ler
 
 	local goal = CFrame.lookAt(subjectPos, newVector)
 
-	local Align = getObject("AlignOrientation", subject.PrimaryPart)
+	local Align, isNew = getObject("AlignOrientation", subject.PrimaryPart)
 	Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
 	Align.RigidityEnabled = true
 	Align.AlignType = Enum.AlignType.Parallel
+
+	if isNew then
+		Align.CFrame = subject:GetPivot()
+	end
 
 	Align.Attachment0 = getObject("Attachment", subject.PrimaryPart)
 
@@ -99,6 +110,25 @@ local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, ler
 		Align.CFrame = Align.CFrame:Lerp(goal, lerpAlpha)
 	else
 		Align.CFrame = goal
+	end
+end
+
+local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType)
+	local newHitbox = workspace:GetPartBoundsInBox(
+		npc.Instance:GetPivot() * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2)),
+		Vector3.new(size.X, 1, size.Y)
+	)
+
+	for _, part in ipairs(newHitbox) do
+		local model = part:FindFirstAncestorOfClass("Model")
+		if not model then
+			continue
+		end
+
+		if model == Players.LocalPlayer.Character then
+			playerService:DamagePlayer(damage, damageType)
+			break
+		end
 	end
 end
 
@@ -230,11 +260,17 @@ module.events = {
 			module.doActions(npc, actions)
 		end
 	end,
+
+	OnStateChanged = function(npc: Npc, actions)
+		return npc.MindState.Changed:Connect(function()
+			module.doActions(npc, actions)
+		end)
+	end,
 }
 
 module.actions = {
 	SwitchToState = function(npc: Npc, state: string)
-		npc.MindState = state
+		npc.MindState.Value = state
 	end,
 
 	PlayAnimation = function(npc: Npc, animaitonName: string, ...)
@@ -291,7 +327,7 @@ module.actions = {
 		util.PlaySound(bloodSound, script, 0.15)
 	end,
 
-	SearchForTarget = function(npc: Npc, maxDistance: number)
+	SearchForTarget = function(npc: Npc, maxDistance: number, maxSightAngle: number?)
 		local target = Players.LocalPlayer.Character
 		local distance = 0
 
@@ -299,7 +335,7 @@ module.actions = {
 			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 		end
 
-		if not target or not checkSightLine(npc, target) or distance > maxDistance then
+		if not target or not checkSightLine(npc, target, maxSightAngle) or distance > maxDistance then
 			target = nil
 		end
 
@@ -370,12 +406,20 @@ module.actions = {
 		module.actions.MoveTowardsPoint(npc, target:GetPivot().Position, lerpAlpha)
 	end,
 
-	MeleeAttack = function(npc: Npc, damage: number, cooldown: number, stopMotion: boolean?)
-		if npc.MindState == "Attacking" then
+	MeleeAttack = function(npc: Npc, damage: number, cooldown: number, damageFrame: number?, stopMotion: boolean?)
+		if npc:IsState("Attacking") then
 			return
 		end
-		npc.MindState = "Attacking"
-		module.actions.PlayAnimation(npc, "Animation_Attack", 0.05, false, true)
+		npc.MindState.Value = "Attacking"
+		local attackAnimation = module.actions.PlayAnimation(npc, "Animation_Attack", 0.05, false, true)
+
+		if damageFrame then
+			attackAnimation:OnFrameRached(damageFrame):Connect(function()
+				createDamageHitbox(npc, Vector2.new(1, 2), damage, "Melee")
+			end)
+		else
+			createDamageHitbox(npc, Vector2.new(1, 2), damage, "Melee")
+		end
 
 		if stopMotion then
 			npc.MindData["CantMove"] = true
@@ -383,8 +427,8 @@ module.actions = {
 		end
 
 		task.delay(cooldown, function()
-			if npc.MindState == "Attacking" then
-				npc.MindState = "Chasing"
+			if npc:IsState("Attacking") then
+				module.actions.SwitchToState(npc, "Chasing")
 			end
 
 			if stopMotion then

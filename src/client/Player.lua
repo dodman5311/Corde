@@ -26,6 +26,8 @@ local acts = require(Client.Acts)
 local lastHeartbeat = os.clock()
 local interact = require(Client.Interact)
 local cameraService = require(Client.Camera)
+local cameraShaker = require(Client.CameraShaker)
+local haptics = require(Client.Haptics)
 local globalInputService = require(Client.GlobalInputService)
 
 local assets = ReplicatedStorage.Assets
@@ -51,6 +53,24 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.5
 local WALK_SPEED = 2.75
 local SPRINT_SPEED = 3.75
 
+local function damageVFX(character)
+	util.getRandomChild(sounds.Pain):Play()
+
+	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(5, 25, 0, 0.5)
+	damageShakeInstance.PositionInfluence = Vector3.one * 0.25
+	damageShakeInstance.RotationInfluence = Vector3.new(0, 0, 2)
+
+	cameraService.shaker:Shake(damageShakeInstance)
+	haptics.hapticPulse(globalInputService.LastGamepadInput, Enum.VibrationMotor.Large, 10, 0.25, "DamageTaken")
+
+	if not character.Parent then
+		return
+	end
+
+	local walkVelocity = character.WalkVelocity
+	walkVelocity.VectorVelocity = Vector3.zero
+end
+
 local function spawnCharacter()
 	local presetCharacter = models.Character
 	local character: Model = presetCharacter:Clone()
@@ -73,8 +93,8 @@ local function spawnCharacter()
 			end)
 		end
 
-		if logHealth > character:GetAttribute("Health") then
-			util.getRandomChild(sounds.Pain):Play()
+		if character:GetAttribute("Health") < logHealth then
+			damageVFX(character)
 		end
 
 		logHealth = character:GetAttribute("Health")
@@ -359,7 +379,7 @@ local function updatePlayerMovement()
 	if cameraService.mode == "FirstPerson" then
 		walkVelocity.VectorVelocity = Vector3.zero
 	else
-		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)
+		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.01)
 	end
 end
 
@@ -379,12 +399,12 @@ function module.Init()
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 
 	UserInputService.InputChanged:Connect(updateCursorData)
-
-	RunService:BindToRenderStep("updatePlayerMovement", Enum.RenderPriority.Character.Value, updatePlayerMovement)
-	RunService:BindToRenderStep("updatePlayerDirection", Enum.RenderPriority.Character.Value + 1, updatePlayerDirection)
 end
 
 RunService.Heartbeat:Connect(function()
+	updatePlayerMovement()
+	updatePlayerDirection()
+
 	if player.Character and not acts:checkAct("Paused") then
 		if player.Character:GetAttribute("Hunger") < 0 then
 			player.Character:SetAttribute("Hunger", 0)

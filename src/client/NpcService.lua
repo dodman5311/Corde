@@ -14,7 +14,7 @@ export type Npc = {
 	Instance: Instance,
 	Personality: {},
 	MindData: {}, -- extra data the npc might need
-	MindState: string,
+	MindState: StringValue,
 	MindTarget: ObjectValue,
 
 	Heartbeat: {},
@@ -29,6 +29,7 @@ export type Npc = {
 	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 
 	IsState: (Npc: Npc, State: string) -> boolean,
+	GetState: (Npc: Npc) -> string,
 	GetTarget: (Npc: Npc) -> any?,
 	GetTimer: (Npc: Npc, TimerName: string) -> {},
 
@@ -55,13 +56,16 @@ function NpcService.new(npcName: string): Npc
 	local targetValue = Instance.new("ObjectValue")
 	targetValue.Parent = newNpcModel
 	targetValue.Name = "Target"
+	local stateValue = Instance.new("StringValue")
+	stateValue.Parent = newNpcModel
+	stateValue.Name = "State"
 
 	local Npc: Npc = {
 		Name = npcName,
 		Instance = newNpcModel,
 		Personality = require(personalities:FindFirstChild(npcName)),
 		MindData = {},
-		MindState = "Idle",
+		MindState = stateValue,
 		MindTarget = targetValue,
 
 		Heartbeat = {},
@@ -75,7 +79,11 @@ function NpcService.new(npcName: string): Npc
 		OnDied = signal.new(),
 
 		IsState = function(self: Npc, state: string)
-			return self.MindState == state
+			return self.MindState.Value == state
+		end,
+
+		GetState = function(self: Npc)
+			return self.MindState.Value
 		end,
 
 		GetTarget = function(self: Npc)

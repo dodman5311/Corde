@@ -40,6 +40,7 @@ local module = {
 	},
 
 	inputs = {},
+	LastGamepadInput = nil,
 }
 
 local ps4Keys = {
@@ -93,6 +94,7 @@ local function setInputType(lastInput)
 	if lastInput.UserInputType.Name:find("Gamepad") then
 		module.inputType = "Gamepad"
 		setGamepadType(lastInput)
+		module.LastGamepadInput = lastInput
 	else
 		module.inputType = "Keyboard"
 	end
