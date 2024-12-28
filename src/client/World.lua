@@ -50,13 +50,15 @@ function module:resume()
 	end
 end
 
-function module.Init()
-	Lighting.Ambient = Color3.new()
-
+function module.Start()
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = 0.747
 		shadowPart.Material = Enum.Material.ForceField
 	end
+end
+
+function module.Init()
+	Lighting.Ambient = Color3.new()
 end
 
 RunService.Heartbeat:Connect(function()

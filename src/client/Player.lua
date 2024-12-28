@@ -33,7 +33,13 @@ local globalInputService = require(Client.GlobalInputService)
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
-local HUD
+local gui = assets.Gui
+
+local HUD = gui.HUD
+HUD.Parent = player.PlayerGui
+
+local cursor = gui.Cursor
+cursor.Parent = player.PlayerGui
 
 local logHealth = 0
 local logLv = Vector3.zero
@@ -115,7 +121,7 @@ local function playerDamaged(character, healthPercent)
 	end
 end
 
-local function spawnCharacter()
+function module.spawnCharacter()
 	local presetCharacter = models.Character
 	local character: Model = presetCharacter:Clone()
 
@@ -221,6 +227,12 @@ local function processGamepadCursorSnap()
 	cursorLocation = cursorLocation:Lerp(vector, inter)
 end
 
+local function updateCursorUi(cursorLocation)
+	local cursorFrame = cursor.Cursor
+
+	cursorFrame.Position = UDim2.fromOffset(cursorLocation.X, cursorLocation.Y)
+end
+
 local function updatePlayerDirection()
 	if globalInputService.inputType == "Gamepad" then
 		thumbCursorGoal = ((thumbstickLookPos / 3) + Vector2.new(0.5, 0.5)) * camera.ViewportSize
@@ -229,6 +241,7 @@ local function updatePlayerDirection()
 	end
 
 	player:SetAttribute("CursorLocation", cursorLocation)
+	updateCursorUi(cursorLocation)
 
 	local character = player.Character
 	if not character or acts:checkAct("Paused") then
@@ -427,9 +440,22 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.Init()
-	spawnCharacter()
+function module.Start()
+	module.spawnCharacter()
+	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
 
+	a.OnStepped:Connect(function()
+		HUD.Glitch.Visible = math.random(1, 2) ~= 1
+
+		if math.random(1, 3) == 1 then
+			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		else
+			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
+		end
+	end)
+end
+
+function module.Init()
 	globalInputService.CreateNewInput(
 		"Walk",
 		movePlayer,
@@ -442,19 +468,6 @@ function module.Init()
 
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 	UserInputService.InputChanged:Connect(updateCursorData)
-
-	HUD = player.PlayerGui.HUD
-	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
-
-	a.OnStepped:Connect(function()
-		HUD.Glitch.Visible = math.random(1, 2) ~= 1
-
-		if math.random(1, 3) == 1 then
-			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		else
-			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
-		end
-	end)
 end
 
 RunService.Heartbeat:Connect(function()

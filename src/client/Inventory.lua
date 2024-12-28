@@ -843,6 +843,14 @@ local function updatePlayerStatus()
 	end
 end
 
+function Inventory.PlayerDied()
+	Inventory.ToggleInventoryInput:Disable()
+end
+
+function Inventory.Start()
+	Inventory.ToggleInventoryInput:Enable()
+end
+
 function Inventory.Init()
 	Inventory.noteNavigation = globalInputService.CreateNewInput(
 		"NoteNavigation",
@@ -859,10 +867,13 @@ function Inventory.Init()
 		Enum.KeyCode.ButtonX
 	)
 
+	Inventory.ToggleInventoryInput =
+		globalInputService.CreateNewInput("ToggleInventory", toggleInventoryKey, Enum.KeyCode.E, Enum.KeyCode.ButtonY)
+
 	Inventory.InventoryInteract:Disable()
 	Inventory.noteNavigation:Disable()
+	Inventory.ToggleInventoryInput:Disable()
 
-	globalInputService.CreateNewInput("ToggleInventory", toggleInventoryKey, Enum.KeyCode.E, Enum.KeyCode.ButtonY)
 	initGui()
 end
 

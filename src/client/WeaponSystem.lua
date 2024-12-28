@@ -36,8 +36,7 @@ local sounds = assets.Sounds
 local gui = assets.Gui
 local models = assets.Models
 
-local UI = gui.HUD
-UI.Parent = player.PlayerGui
+local UI
 
 local fireSound = Instance.new("Sound")
 fireSound.Parent = script
@@ -219,10 +218,6 @@ local function processCrosshair()
 
 	crosshair.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
 	crosshair.Size = UDim2.fromScale(size, size)
-
-	local cursor = UI.Cursor
-
-	cursor.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
 end
 
 local function useAmmo()
@@ -529,10 +524,12 @@ inventory.ItemRemoved:Connect(function(item)
 	end
 end)
 
+function module.Start()
+	module.equipWeapon(inventory:CheckSlot("slot_13"))
+end
+
 function module.Init()
-	task.delay(0.01, function()
-		module.equipWeapon(inventory:CheckSlot("slot_13"))
-	end)
+	UI = player.PlayerGui.HUD
 
 	UserInputService.MouseIconEnabled = false
 

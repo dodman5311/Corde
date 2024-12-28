@@ -7,10 +7,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-local mouseTarget = Instance.new("ObjectValue")
-mouseTarget.Parent = player
-mouseTarget.Name = "MouseTarget"
-
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds.NET
 local gui = assets.Gui

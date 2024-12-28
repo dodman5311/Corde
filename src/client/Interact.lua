@@ -17,6 +17,7 @@ local sounds = assets.Sounds
 local camera = workspace.CurrentCamera
 
 local UI
+local cursorUi
 
 local Client = player.PlayerScripts.Client
 local uiAnimationService = require(Client.UIAnimationService)
@@ -140,12 +141,12 @@ local function showLocked(cursor: Frame)
 end
 
 mouseTarget.Changed:Connect(function(value)
-	if not UI then
+	if not cursorUi then
 		return
 	end
 
-	local interactUi = UI.Cursor.Interact
-	local interestUi = UI.Cursor.Interest
+	local interactUi = cursorUi.Cursor.Interact
+	local interestUi = cursorUi.Cursor.Interest
 
 	if value and value:HasTag("Interactable") then
 		if value:HasTag("Interest") then
@@ -181,12 +182,12 @@ local function attemptInteract(object: Instance)
 			util.PlaySound(sounds.Unlock, script)
 			object:SetAttribute("Locked", false)
 
-			showInteract(object, UI.Cursor.Interact)
+			showInteract(object, cursorUi.Cursor.Interact)
 			return
 		end
 
 		util.PlaySound(sounds.Locked, script)
-		showLocked(UI.Cursor.Interact)
+		showLocked(cursorUi.Cursor.Interact)
 	else
 		util.PlaySound(sounds.Interacting, script, 0.05, 0.5)
 		runTimer("Interacting", 0.5, useObject, object)
@@ -247,6 +248,7 @@ end
 
 function module.Init()
 	UI = player.PlayerGui.HUD
+	cursorUi = player.PlayerGui.Cursor
 	RunService.RenderStepped:Connect(processCrosshair)
 end
 
