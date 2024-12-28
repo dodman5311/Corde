@@ -8,6 +8,7 @@ local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
 local util = require(client.Util)
 local playerService = require(client.Player)
+local bloodEffects = require(client.BloodEffects)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -127,6 +128,10 @@ local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damag
 
 		if model == Players.LocalPlayer.Character then
 			playerService:DamagePlayer(damage, damageType)
+
+			bloodEffects.createSplatter(model:GetPivot())
+
+			bloodEffects.bloodSploof(npc.Instance:GetPivot(), model:GetPivot().Position)
 			break
 		end
 	end

@@ -8,7 +8,6 @@ local animations = {}
 
 function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 	if animations[frame] then
-		animations[frame].Connection:Disconnect()
 		animations[frame] = nil
 	end
 
@@ -29,8 +28,6 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 	local currentFrame = 0
 
 	local newAnimation = {
-		Connection = nil,
-
 		RunAnimation = function(self)
 			if self.Paused then
 				lastFrameStep = os.clock()
@@ -55,6 +52,8 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 				x = 0
 			end
 
+			self.OnStepped:Fire(currentFrame)
+
 			if currentFrames <= 0 then
 				currentFrames = frames
 				currentFrame = 0
@@ -68,7 +67,6 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 						image.Position = UDim2.fromScale(x, y)
 					end
 
-					animations[frame].Connection:Disconnect()
 					animations[frame] = nil
 					return
 				end
@@ -97,6 +95,8 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 			return reachedSignal
 		end,
 
+		OnStepped = signal.new(),
+
 		Pause = function(self)
 			self.Paused = true
 		end,
@@ -106,16 +106,12 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 		end,
 	}
 
-	newAnimation.Connection = RunService.Heartbeat:Connect(function()
-		newAnimation:RunAnimation()
-	end)
-
 	animations[frame] = newAnimation
 	return animations[frame]
 end
 
 function module.CheckPlaying(frame) -- returns the animation if it's playing
-	if animations[frame] and animations[frame].Connection then
+	if animations[frame] then
 		return animations[frame]
 	end
 end
@@ -125,7 +121,6 @@ function module.StopAnimation(frame)
 		return
 	end
 
-	animations[frame].Connection:Disconnect()
 	animations[frame] = nil
 
 	if not frame or not frame.Parent then
@@ -134,5 +129,11 @@ function module.StopAnimation(frame)
 
 	frame.Image.Position = UDim2.fromScale(0, 0)
 end
+
+RunService.Heartbeat:Connect(function()
+	for _, animation in pairs(animations) do
+		animation:RunAnimation()
+	end
+end)
 
 return module

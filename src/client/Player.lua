@@ -54,22 +54,61 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.5
 local WALK_SPEED = 2.75
 local SPRINT_SPEED = 3.75
 
-local function playerDamaged(character)
+local function playerDamaged(character, healthPercent)
 	local damageUi = HUD.DamageEffects
+	local invertedHealthPercent = math.abs(healthPercent - 1)
+
+	local timeScale = 0.5 + invertedHealthPercent
+	local ti = TweenInfo.new(timeScale, Enum.EasingStyle.Linear)
+
+	local glitchToPlay
+	local damageSoundFolder
+
+	if healthPercent >= 0.65 then
+		glitchToPlay = damageUi.Glitch_HighHealth
+		damageSoundFolder = sounds.DamageSounds.HighHealth
+	elseif healthPercent >= 0.35 then
+		glitchToPlay = damageUi.Glitch_MedHealth
+		damageSoundFolder = sounds.DamageSounds.MedHealth
+	else
+		print("LOW")
+		glitchToPlay = damageUi.Glitch_LowHealth
+		damageSoundFolder = sounds.DamageSounds.LowHealth
+	end
 
 	util.getRandomChild(sounds.Pain):Play()
+	util.PlaySound(util.getRandomChild(sounds.Blood), script, 0.1).Volume = invertedHealthPercent
+	util.PlaySound(util.getRandomChild(damageSoundFolder), script, 0.1)
 
-	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(5, 25, 0, 0.5)
-	damageShakeInstance.PositionInfluence = Vector3.one * 0.25
+	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(invertedHealthPercent * 10, 25, 0, timeScale / 1.5)
+	damageShakeInstance.PositionInfluence = Vector3.one * 0.5
 	damageShakeInstance.RotationInfluence = Vector3.new(0, 0, 2)
 
 	cameraService.shaker:Shake(damageShakeInstance)
-	haptics.hapticPulse(globalInputService.LastGamepadInput, Enum.VibrationMotor.Large, 10, 0.25, "DamageTaken")
+	haptics.hapticPulse(
+		globalInputService["LastGamepadInput"],
+		Enum.VibrationMotor.Large,
+		invertedHealthPercent * 10,
+		timeScale / 2,
+		"DamageTaken"
+	)
 
-	damageUi.Glitch_HighHealth.Visible = true
-	uiAnimationService.PlayAnimation(damageUi.Glitch_HighHealth, 0.04).OnEnded:Once(function()
-		damageUi.Glitch_HighHealth.Visible = false
-	end)
+	glitchToPlay.Visible = true
+	uiAnimationService
+		.PlayAnimation(glitchToPlay, timeScale / glitchToPlay.Image:GetAttribute("Frames")).OnEnded
+		:Once(function()
+			glitchToPlay.Visible = false
+		end)
+
+	damageUi.Vignette.ImageTransparency = healthPercent
+	HUD.Glitch.Image.ImageTransparency = healthPercent * 2
+	util.tween(sounds.Heartbeat, ti, { Volume = math.clamp((invertedHealthPercent - 0.5) * 2, 0, 1) })
+
+	util.tween(damageUi.Vignette, ti, { ImageTransparency = healthPercent * 2 }, false, function()
+		local ti2 = TweenInfo.new(6, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 8)
+		util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = invertedHealthPercent + 0.75 })
+		util.tween(sounds.Heartbeat, ti2, { Volume = 0 })
+	end, Enum.PlaybackState.Completed)
 
 	if not character.Parent then
 		return
@@ -99,7 +138,7 @@ local function spawnCharacter()
 		end
 
 		if character:GetAttribute("Health") < logHealth then
-			playerDamaged(character)
+			playerDamaged(character, character:GetAttribute("Health") / character:GetAttribute("MaxHealth"))
 		end
 
 		logHealth = character:GetAttribute("Health")
@@ -405,6 +444,17 @@ function module.Init()
 	UserInputService.InputChanged:Connect(updateCursorData)
 
 	HUD = player.PlayerGui.HUD
+	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
+
+	a.OnStepped:Connect(function()
+		HUD.Glitch.Visible = math.random(1, 2) ~= 1
+
+		if math.random(1, 3) == 1 then
+			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		else
+			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
+		end
+	end)
 end
 
 RunService.Heartbeat:Connect(function()

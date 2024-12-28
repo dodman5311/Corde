@@ -835,6 +835,12 @@ local function updatePlayerStatus()
 
 	Inventory.statusPumpTimer.WaitTime = math.clamp(health, 0.15, 1)
 	Inventory.statusPumpTimer:Run()
+
+	hungerDisplay.NoHunger.Visible = hunger <= 0
+
+	if hunger <= 0 then
+		hungerDisplay.NoHunger.Position = UDim2.fromScale(rng:NextNumber(0.45, 0.55), rng:NextNumber(0.45, 0.55))
+	end
 end
 
 function Inventory.Init()
