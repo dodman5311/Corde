@@ -25,6 +25,7 @@ local actionPrompt = require(Client.ActionPrompt)
 local util = require(Client.Util)
 local hackingFunctions = require(Client.HackingFunctions)
 local globalInputService = require(Client.GlobalInputService)
+local inventory = require(Client.Inventory)
 
 local ti = TweenInfo.new(0.25)
 
@@ -421,6 +422,14 @@ globalInputService.CreateNewInput(
 	Enum.KeyCode.DPadRight,
 	Enum.KeyCode.DPadUp
 )
+
+inventory.InvetoryToggled:Connect(function(value)
+	if not value then
+		return
+	end
+
+	module:ExitNetMode()
+end)
 
 currentActivePoint.Changed:Connect(function(point)
 	hidePointPromt(lastActivePoint)

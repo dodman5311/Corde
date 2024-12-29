@@ -18,7 +18,7 @@ local function flicker(frame, speed, amnt)
 end
 
 function util.SearchDictionary(dictionary, value)
-	for i,v in pairs(dictionary) do
+	for i, v in pairs(dictionary) do
 		if v == value then
 			return i
 		end
@@ -101,7 +101,14 @@ function util.circleCurve(t)
 	return math.sqrt(1 - (2 * t - 1) ^ 2)
 end
 
-function util.tween(instance : Instance | {}, tweenInfo : TweenInfo, propertyTable : {}, yield : boolean?, endingFunction, endingState : Enum.PlaybackState)
+function util.tween(
+	instance: Instance | {},
+	tweenInfo: TweenInfo,
+	propertyTable: {},
+	yield: boolean?,
+	endingFunction,
+	endingState: Enum.PlaybackState
+)
 	local createdTween
 
 	if typeof(instance) == "table" then
@@ -143,6 +150,40 @@ function util.callFromCache(object)
 		getObject = object:Clone()
 	end
 	return getObject
+end
+
+function util:GetMatchingChildren(
+	parent: Instance,
+	propertiesTable: {},
+	getDescendants: boolean?
+): table -- e.g {PropertyName = Value}
+	local children
+	local matchingChildren = {}
+	if getDescendants then
+		children = parent:GetChildren()
+	else
+		children = parent:GetDescendants()
+	end
+
+	for _, child: Instance in ipairs(children) do
+		local childMatches = true
+
+		for propertyName, value in pairs(propertiesTable) do
+			if child[propertyName] == value then
+				continue
+			end
+
+			childMatches = false
+		end
+
+		if not childMatches then
+			continue
+		end
+
+		table.insert(matchingChildren, child)
+	end
+
+	return matchingChildren
 end
 
 local function placeInCache(object)
@@ -284,7 +325,7 @@ function util.checkForHumanoid(subject)
 	return humanoid, model
 end
 
-function util.getRandomChild(Parent : Instance)
+function util.getRandomChild(Parent: Instance)
 	if not Parent then
 		return
 	end
@@ -308,7 +349,7 @@ function util.randomAngle(angle)
 	return math.rad(math.random(-angle * 1000, angle * 1000) / 1000)
 end
 
-function util.PlaySound(sound : Sound, parent : Instance, range : number?, stopTime : number?)
+function util.PlaySound(sound: Sound, parent: Instance, range: number?, stopTime: number?)
 	if not sound then
 		return
 	end

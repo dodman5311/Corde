@@ -218,6 +218,16 @@ local function processCrosshair()
 
 	crosshair.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
 	crosshair.Size = UDim2.fromScale(size, size)
+
+	if spread == 0 then
+		for _, dot: Frame in ipairs(util:GetMatchingChildren(crosshair, { ClassName = "Frame" })) do
+			dot.BackgroundTransparency = 1
+		end
+	else
+		for _, dot: Frame in ipairs(util:GetMatchingChildren(crosshair, { ClassName = "Frame" })) do
+			dot.BackgroundTransparency = size * 1.5
+		end
+	end
 end
 
 local function useAmmo()
@@ -421,7 +431,12 @@ end
 
 local function fireWeapon(input)
 	local character = player.Character
-	if not character or not currentWeapon or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting") then
+	if
+		not character
+		or not currentWeapon
+		or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting", "InObjectView")
+	then
+		fireKeyDown = false
 		return
 	end
 
@@ -524,7 +539,7 @@ inventory.ItemRemoved:Connect(function(item)
 	end
 end)
 
-function module.Start()
+function module.OnSpawn(character: Model)
 	module.equipWeapon(inventory:CheckSlot("slot_13"))
 end
 

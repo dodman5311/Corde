@@ -1,3 +1,5 @@
+local interact = require(script.Parent.Interact)
+
 local function setLightEnabled(object: Instance, value)
 	local lightPart = object.LightPart
 	local light = lightPart:FindFirstChildOfClass("PointLight")
@@ -40,11 +42,7 @@ local module = {
 		data.Dialogue.Start = data.Start
 	end,
 
-	Activate = function(object)
-		local objectModule = require(object.Module)
-
-		return objectModule.Use()
-	end,
+	Activate = interact.UseObject,
 }
 
 return module

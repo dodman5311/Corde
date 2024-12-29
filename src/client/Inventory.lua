@@ -30,7 +30,6 @@ local acts = require(client.Acts)
 local mouseOver = require(client.MouseOver)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
-local hacking = require(client.Hacking)
 local timer = require(client.Timer)
 
 local assets = ReplicatedStorage.Assets
@@ -697,8 +696,7 @@ end
 function Inventory.OpenInventory()
 	Inventory.InvetoryToggled:Fire(true)
 
-	hacking:ExitNetMode()
-	hacking.ToggleNetInput:Disable()
+	globalInputService.inputs.OpenNET:Disable()
 	globalInputService.inputs.ToggleReady:Disable()
 
 	Inventory.InventoryInteract:Enable()
@@ -730,9 +728,7 @@ function Inventory.OpenInventory()
 end
 
 function Inventory.CloseInventory()
-	Inventory.InvetoryToggled:Fire(false)
-
-	hacking.ToggleNetInput:Enable()
+	globalInputService.inputs.OpenNET:Enable()
 	globalInputService.inputs.ToggleReady:Enable()
 
 	Inventory.InventoryInteract:Disable()
@@ -750,6 +746,7 @@ function Inventory.CloseInventory()
 	UI.Enabled = false
 
 	Inventory.InventoryOpen = false
+	Inventory.InvetoryToggled:Fire(false)
 end
 
 local function noteNavigationInput(state, input)
@@ -847,7 +844,7 @@ function Inventory.PlayerDied()
 	Inventory.ToggleInventoryInput:Disable()
 end
 
-function Inventory.Start()
+function Inventory.OnSpawn()
 	Inventory.ToggleInventoryInput:Enable()
 end
 

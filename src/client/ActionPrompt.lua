@@ -136,7 +136,6 @@ function module.showActionTimer(actionTimer, actionTitle)
 end
 
 local function characterSpawned(character)
-	local character = player.Character
 	local promptPart = character.ActionPrompt
 	local prompt = promptPart.UI
 
@@ -147,10 +146,8 @@ local function characterSpawned(character)
 	util.tween(barFrame.UsageBar, ti, { BackgroundTransparency = 0.5, BackgroundColor3 = Color3.fromRGB(255, 20, 90) })
 end
 
-function module.Start()
-	if player.Character then
-		characterSpawned(player.Character)
-	end
+function module.OnSpawn(character: Model)
+	characterSpawned(character)
 end
 
 function module.Init() end

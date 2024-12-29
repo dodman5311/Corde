@@ -48,14 +48,16 @@ local cursorLocation = Vector2.zero
 
 local thumbstick1Pos = Vector3.zero
 local thumbstick2Pos = Vector3.zero
-local thumbstickLookPos = Vector2.new(1, 1)
+local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
 
 local MOVEMENT_THRESHOLD = 0.5
-local THUMBSTICK_THRESHOLD = 0.125
+local THUMBSTICK_THRESHOLD = 0.25
 local CURSOR_INTERPOLATION = 0.05
 local THUMBSTICK_SNAP_POWER = 0.5
 local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.5
+
+local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
 local WALK_SPEED = 2.75
 local SPRINT_SPEED = 3.75
@@ -137,10 +139,6 @@ function module.spawnCharacter()
 			module.toggleSprint(false)
 			player.Character = nil
 			character:Destroy()
-
-			task.delay(2, function()
-				spawnCharacter()
-			end)
 		end
 
 		if character:GetAttribute("Health") < logHealth then
@@ -149,6 +147,8 @@ function module.spawnCharacter()
 
 		logHealth = character:GetAttribute("Health")
 	end)
+
+	return character
 end
 
 function module:DamagePlayer(damage: number, damageType: string)
@@ -158,6 +158,12 @@ function module:DamagePlayer(damage: number, damageType: string)
 
 	player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - damage)
 	player.Character:SetAttribute("LastDamageType", damageType)
+end
+
+local function updateCursorUi(cursorLocation)
+	local cursorFrame = cursor.Cursor
+
+	cursorFrame.Position = UDim2.fromOffset(cursorLocation.X, cursorLocation.Y)
 end
 
 local function getMouseHit()
@@ -227,21 +233,24 @@ local function processGamepadCursorSnap()
 	cursorLocation = cursorLocation:Lerp(vector, inter)
 end
 
-local function updateCursorUi(cursorLocation)
-	local cursorFrame = cursor.Cursor
-
-	cursorFrame.Position = UDim2.fromOffset(cursorLocation.X, cursorLocation.Y)
-end
-
-local function updatePlayerDirection()
+local function updateCursorLocation()
 	if globalInputService.inputType == "Gamepad" then
-		thumbCursorGoal = ((thumbstickLookPos / 3) + Vector2.new(0.5, 0.5)) * camera.ViewportSize
-		cursorLocation = cursorLocation:Lerp(thumbCursorGoal, CURSOR_INTERPOLATION)
+		if acts:checkAct("InObjectView") then
+			cursorLocation += thumbstickLookPos * OBJECTVIEW_GAMEPAD_SENSITIVITY
+		else
+			thumbCursorGoal = ((thumbstickLookPos / 3) + Vector2.new(0.5, 0.5)) * camera.ViewportSize
+			cursorLocation = cursorLocation:Lerp(thumbCursorGoal, CURSOR_INTERPOLATION)
+		end
+
 		processGamepadCursorSnap()
 	end
 
 	player:SetAttribute("CursorLocation", cursorLocation)
 	updateCursorUi(cursorLocation)
+end
+
+local function updatePlayerDirection()
+	updateCursorLocation()
 
 	local character = player.Character
 	if not character or acts:checkAct("Paused") then
@@ -356,6 +365,19 @@ local function updateCursorData(key)
 	elseif thumbstick1Pos.Magnitude >= THUMBSTICK_THRESHOLD then
 		local thumbPos = (thumbstick1Pos / 10) * 3
 		thumbstickLookPos = Vector2.new(thumbPos.X, -thumbPos.Y)
+	elseif not acts:checkAct("InObjectView") then
+		local character = player.Character
+		if not character then
+			return
+		end
+
+		local playerPos = character:GetPivot() * CFrame.new(0, 0, -4).Position
+		local viewportPos = camera:WorldToViewportPoint(playerPos)
+		local viewportVector2 = Vector2.new(viewportPos.X, viewportPos.Y)
+
+		thumbstickLookPos = (viewportVector2 / camera.ViewportSize) - Vector2.new(0.5, 0.5)
+	else
+		thumbstickLookPos = Vector2.zero
 	end
 end
 
@@ -440,8 +462,7 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.Start()
-	module.spawnCharacter()
+function module.OnSpawn()
 	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
 
 	a.OnStepped:Connect(function()

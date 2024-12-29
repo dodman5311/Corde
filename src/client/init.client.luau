@@ -8,12 +8,15 @@ for _, module in ipairs(script:GetChildren()) do
 	modules[module.Name] = require(module)
 end
 
-for _, module in pairs(modules) do
-	if module.Init then
-		module.Init()
-	end
+local function callModuleAction(actionName: string, ...)
+	for _, module in pairs(modules) do
+		if not module[actionName] then
+			continue
+		end
 
-	if module.Start then
-		task.delay(1, module.Start)
+		module[actionName](...)
 	end
 end
+
+callModuleAction("Init")
+callModuleAction("OnSpawn", modules["Player"].spawnCharacter())

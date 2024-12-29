@@ -10,7 +10,7 @@ function module:SpawnFromSpawner(spawner: Part)
 	end
 end
 
-function module.Start()
+function module.OnSpawn(character: Model)
 	for _, spawner: Part in ipairs(CollectionService:GetTagged("SpawnPoint")) do
 		local gui = spawner:FindFirstChildOfClass("SurfaceGui")
 		if gui then

@@ -16,7 +16,6 @@ local sounds = assets.Sounds
 
 local camera = workspace.CurrentCamera
 
-local UI
 local cursorUi
 
 local Client = player.PlayerScripts.Client
@@ -28,10 +27,34 @@ local actionPrompt = require(Client.ActionPrompt)
 local timer = require(Client.Timer)
 local util = require(Client.Util)
 local globalInputService = require(Client.GlobalInputService)
-local safesNLocks = require(Client.SafesAndLocks)
+local objectsView = require(Client.ObjectsView)
+local objectFunctions = require(Client.ObjectFucntions)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
+
+local function checkSightline(object: Instance): boolean
+	if acts:checkAct("InObjectView") then
+		return true
+	elseif not object then
+		return false
+	end
+
+	local character = player.Character
+	if not character then
+		return false
+	end
+
+	local characterPosition = character:GetPivot().Position
+	local objectPosition = object:GetPivot().Position
+
+	local rp = RaycastParams.new()
+	rp.FilterDescendantsInstances = { character, object }
+
+	local raycast = workspace:Raycast(characterPosition, objectPosition - characterPosition, rp)
+
+	return not raycast
+end
 
 local function getMouseHit()
 	local cursorLocation = player:GetAttribute("CursorLocation")
@@ -51,7 +74,7 @@ local function getMouseHit()
 end
 
 local function showInteract(object, cursor)
-	UI.Crosshair.Visible = false
+	cursor.Parent.Center.Visible = false
 
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
@@ -77,7 +100,7 @@ local function showInteract(object, cursor)
 end
 
 local function hideInteract(cursor)
-	UI.Crosshair.Visible = true
+	cursor.Parent.Center.Visible = true
 
 	cursor.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
@@ -94,7 +117,7 @@ end
 local INTEREST_ICON_SPEED = 0.045
 
 local function showInterest(cursor)
-	UI.Crosshair.Visible = false
+	cursor.Parent.Center.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorRed.Image.Position = UDim2.fromScale(0, 0)
@@ -112,7 +135,7 @@ local function showInterest(cursor)
 end
 
 local function hideInterest(cursor)
-	UI.Crosshair.Visible = true
+	cursor.Parent.Center.Visible = true
 	local a = uiAnimationService.CheckPlaying(cursor)
 
 	if not a then
@@ -140,7 +163,7 @@ local function showLocked(cursor: Frame)
 	end)
 end
 
-mouseTarget.Changed:Connect(function(value)
+local function checkMouseTargetInteractable(value)
 	if not cursorUi then
 		return
 	end
@@ -148,7 +171,7 @@ mouseTarget.Changed:Connect(function(value)
 	local interactUi = cursorUi.Cursor.Interact
 	local interestUi = cursorUi.Cursor.Interest
 
-	if value and value:HasTag("Interactable") then
+	if value and value:HasTag("Interactable") and checkSightline(value) then
 		if value:HasTag("Interest") then
 			showInterest(interestUi)
 		else
@@ -158,12 +181,22 @@ mouseTarget.Changed:Connect(function(value)
 		hideInteract(interactUi)
 		hideInterest(interestUi)
 	end
-end)
+end
 
-local function useObject(object)
-	local objectModule = require(object.Module)
+mouseTarget.Changed:Connect(checkMouseTargetInteractable)
 
-	return objectModule.Use()
+function module.UseObject(object)
+	if object:FindFirstChild("Module") then
+		local objectModule = require(object.Module)
+		return objectModule.Use()
+	end
+
+	local use = object:GetAttribute("Use")
+	if not use then
+		return
+	end
+
+	return objectFunctions[use](object)
 end
 
 local function runTimer(actionName: string, interactionTime: number, func, ...)
@@ -176,9 +209,18 @@ local function runTimer(actionName: string, interactionTime: number, func, ...)
 end
 
 local function attemptInteract(object: Instance)
+	if not checkSightline(object) then
+		return
+	end
+
 	if object:GetAttribute("Locked") then
+		if object:FindFirstChild("LockedSide") and checkSightline(object.LockedSide) then
+			dialogue:EnterDialogue(object.LockedSide)
+			return
+		end
+
 		local key = object:GetAttribute("Key")
-		if key and inventory:RemoveItem(key) then
+		if key and (key == "" or inventory:RemoveItem(key)) then
 			util.PlaySound(sounds.Unlock, script)
 			object:SetAttribute("Locked", false)
 
@@ -190,7 +232,7 @@ local function attemptInteract(object: Instance)
 		showLocked(cursorUi.Cursor.Interact)
 	else
 		util.PlaySound(sounds.Interacting, script, 0.05, 0.5)
-		runTimer("Interacting", 0.5, useObject, object)
+		runTimer("Interacting", 0.5, module.UseObject, object)
 	end
 end
 
@@ -202,7 +244,7 @@ local function pickupContainer()
 end
 
 local function InteractiWithObject(object: Instance)
-	if safesNLocks:EnterLock(object) or not object:HasTag("Interactable") then
+	if objectsView:EnterView(object) or not object:HasTag("Interactable") then
 		return
 	end
 
@@ -239,7 +281,7 @@ local function processCrosshair()
 
 	local distanceToMouse = (v2CharacterPosition - v2CursorPosition).Magnitude
 
-	if distanceToMouse > module.INTERACT_DISTANCE then
+	if distanceToMouse > module.INTERACT_DISTANCE and not acts:checkAct("InObjectView") then
 		mouseTarget.Value = nil
 	else
 		mouseTarget.Value = target and (target:FindFirstAncestorOfClass("Model") or target)
@@ -247,7 +289,6 @@ local function processCrosshair()
 end
 
 function module.Init()
-	UI = player.PlayerGui.HUD
 	cursorUi = player.PlayerGui.Cursor
 	RunService.RenderStepped:Connect(processCrosshair)
 end
