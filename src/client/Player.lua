@@ -79,7 +79,6 @@ local function playerDamaged(character, healthPercent)
 		glitchToPlay = damageUi.Glitch_MedHealth
 		damageSoundFolder = sounds.DamageSounds.MedHealth
 	else
-		print("LOW")
 		glitchToPlay = damageUi.Glitch_LowHealth
 		damageSoundFolder = sounds.DamageSounds.LowHealth
 	end
@@ -114,7 +113,7 @@ local function playerDamaged(character, healthPercent)
 
 	util.tween(damageUi.Vignette, ti, { ImageTransparency = healthPercent * 2 }, false, function()
 		local ti2 = TweenInfo.new(6, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 8)
-		util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = invertedHealthPercent + 0.75 })
+		util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = healthPercent + 0.5 })
 		util.tween(sounds.Heartbeat, ti2, { Volume = 0 })
 	end, Enum.PlaybackState.Completed)
 
@@ -462,7 +461,7 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.OnSpawn()
+function module.StartGame()
 	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
 
 	a.OnStepped:Connect(function()

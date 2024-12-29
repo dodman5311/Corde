@@ -216,7 +216,7 @@ module.events = {
 		end
 	end,
 
-	OnSpawn = function(npc: Npc, actions)
+	Start = function(npc: Npc, actions)
 		module.doActions(npc, actions)
 	end,
 

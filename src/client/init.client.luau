@@ -19,4 +19,7 @@ local function callModuleAction(actionName: string, ...)
 end
 
 callModuleAction("Init")
-callModuleAction("OnSpawn", modules["Player"].spawnCharacter())
+
+modules.MainMenu.StartEvent:Connect(function(gameSave)
+	callModuleAction("StartGame", gameSave, modules["Player"].spawnCharacter())
+end)

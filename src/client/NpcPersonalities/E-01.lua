@@ -1,7 +1,7 @@
 local module = {
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 10, 100 } },
-		{ Function = "LookAtTarget", Parameters = { true, 0.015 } },
+		{ Function = "LookAtTarget", Parameters = { true, 0.025 } },
 		{ Function = "MoveForwards", State = "Chasing", Parameters = { 0.05 } },
 		{ Function = "StopMoving", State = "Idle" },
 	},
@@ -15,7 +15,7 @@ local module = {
 		Parameters = { 3.475 },
 	},
 
-	OnSpawn = {
+	Start = {
 		{ Function = "SwitchToState", Parameters = { "Idle" } },
 		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
 	},

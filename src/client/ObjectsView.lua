@@ -26,11 +26,14 @@ function module:EnterView(object: Instance)
 	end
 	acts:createAct("InObjectView")
 
-	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 })
-
 	globalInputService.inputs["Walk"]:Disable()
 	globalInputService.inputs["ToggleFire"]:Disable()
-	module.exitInput:Enable()
+	globalInputService.inputs.Interact:Disable()
+
+	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
+		module.exitInput:Enable()
+		globalInputService.inputs.Interact:Enable()
+	end, Enum.PlaybackState.Completed)
 
 	local newModel = model:Clone()
 	newModel.Parent = workspace
@@ -51,7 +54,10 @@ function module:EnterView(object: Instance)
 end
 
 function module:ExitView()
-	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 })
+	globalInputService.inputs.Interact:Disable()
+	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
+		globalInputService.inputs.Interact:Enable()
+	end, Enum.PlaybackState.Completed)
 
 	module.exitInput:Disable()
 

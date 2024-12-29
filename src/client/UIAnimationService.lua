@@ -6,7 +6,13 @@ local RunService = game:GetService("RunService")
 
 local animations = {}
 
-function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
+function module.PlayAnimation(
+	frame: Frame,
+	frameDelay: number,
+	loop: boolean?,
+	stayOnLastFrame: boolean?,
+	startOnFrame: number?
+)
 	if animations[frame] then
 		animations[frame] = nil
 	end
@@ -28,6 +34,26 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 	local currentFrame = 0
 
 	local newAnimation = {
+		NextFrame = function()
+			x += 1
+			currentFrames -= 1
+			currentFrame += 1
+
+			if x > image.Size.X.Scale - 1 then
+				y += 1
+				x = 0
+			end
+		end,
+
+		SetToFrame = function(self, frameNumber: number)
+			x = 0
+			y = 0
+			for _ = 1, frameNumber do
+				self:NextFrame()
+			end
+			image.Position = UDim2.fromScale(-x, -y)
+		end,
+
 		RunAnimation = function(self)
 			if self.Paused then
 				lastFrameStep = os.clock()
@@ -43,15 +69,7 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 				return
 			end
 
-			x += 1
-			currentFrames -= 1
-			currentFrame += 1
-
-			if x > image.Size.X.Scale - 1 then
-				y += 1
-				x = 0
-			end
-
+			self:NextFrame()
 			self.OnStepped:Fire(currentFrame)
 
 			if currentFrames <= 0 then
@@ -105,6 +123,10 @@ function module.PlayAnimation(frame, frameDelay, loop, stayOnLastFrame)
 			self.Paused = false
 		end,
 	}
+
+	if startOnFrame then
+		newAnimation:SetToFrame(startOnFrame)
+	end
 
 	animations[frame] = newAnimation
 	return animations[frame]

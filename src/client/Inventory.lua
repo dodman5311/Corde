@@ -844,7 +844,7 @@ function Inventory.PlayerDied()
 	Inventory.ToggleInventoryInput:Disable()
 end
 
-function Inventory.OnSpawn()
+function Inventory.StartGame()
 	Inventory.ToggleInventoryInput:Enable()
 end
 

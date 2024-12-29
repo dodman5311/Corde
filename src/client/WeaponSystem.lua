@@ -430,11 +430,15 @@ local function createShell()
 end
 
 local function fireWeapon(input)
+	if acts:checkAct("Firing") then
+		return
+	end
+
 	local character = player.Character
 	if
 		not character
 		or not currentWeapon
-		or acts:checkAct("Reloading", "Firing", "Holstering", "Interacting", "InObjectView")
+		or acts:checkAct("Reloading", "Holstering", "Interacting", "InObjectView")
 	then
 		fireKeyDown = false
 		return
@@ -486,7 +490,7 @@ local function fireWeapon(input)
 
 	cameraService.shaker:Shake(cameraRecoilInstance)
 
-	haptics.hapticPulse(input, Enum.VibrationMotor.RightTrigger, cameraRecoil, cameraRecoil / 1.5, "GunFire")
+	haptics.hapticPulse(input, Enum.VibrationMotor.Small, cameraRecoil, cameraRecoil / 1.5, "GunFire")
 
 	task.wait(60 / currentWeapon.Value.RateOfFire)
 
@@ -539,7 +543,7 @@ inventory.ItemRemoved:Connect(function(item)
 	end
 end)
 
-function module.OnSpawn(character: Model)
+function module.StartGame()
 	module.equipWeapon(inventory:CheckSlot("slot_13"))
 end
 

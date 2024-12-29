@@ -50,7 +50,7 @@ function module:resume()
 	end
 end
 
-function module.OnSpawn(character: Model)
+function module.StartGame()
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = 0.747
 		shadowPart.Material = Enum.Material.ForceField

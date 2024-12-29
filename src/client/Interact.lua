@@ -136,18 +136,10 @@ end
 
 local function hideInterest(cursor)
 	cursor.Parent.Center.Visible = true
-	local a = uiAnimationService.CheckPlaying(cursor)
 
-	if not a then
-		cursor.Visible = false
-		return
-	end
-
-	uiAnimationService.CheckPlaying(cursor.CursorBlue):Resume()
-	uiAnimationService.CheckPlaying(cursor.CursorRed):Resume()
-	a:Resume()
-
-	a.OnEnded:Connect(function()
+	uiAnimationService.PlayAnimation(cursor, INTEREST_ICON_SPEED, false, false, 3)
+	uiAnimationService.PlayAnimation(cursor.CursorBlue, INTEREST_ICON_SPEED, false, false, 3)
+	uiAnimationService.PlayAnimation(cursor.CursorRed, INTEREST_ICON_SPEED, false, false, 3).OnEnded:Connect(function()
 		cursor.Visible = false
 	end)
 end

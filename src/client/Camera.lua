@@ -29,6 +29,8 @@ local camera = workspace.CurrentCamera
 
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
+local util = require(script.Parent.Util)
+
 local shakeOffset = CFrame.new()
 local cameraShaker = require(script.Parent.CameraShaker)
 local mouseView = Vector2.zero
@@ -47,12 +49,12 @@ function module:EnterFirstPerson(rootCFrame: CFrame, viewRange: number?, fieldOf
 		FieldOfView = fieldOfView or 60,
 	} :: FirstPersonData
 
-	camera.FieldOfView = module.firstPersonData.FieldOfView
+	util.tween(camera, TweenInfo.new(0.1), { FieldOfView = module.firstPersonData.FieldOfView })
 	module.mode = "FirstPerson" :: CameraMode
 end
 
 function module:EnterFollow()
-	camera.FieldOfView = module.fieldOfView
+	util.tween(camera, TweenInfo.new(0.1), { FieldOfView = module.fieldOfView })
 	module.mode = "Follow" :: CameraMode
 end
 

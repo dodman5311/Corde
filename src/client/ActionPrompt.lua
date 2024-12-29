@@ -146,7 +146,7 @@ local function characterSpawned(character)
 	util.tween(barFrame.UsageBar, ti, { BackgroundTransparency = 0.5, BackgroundColor3 = Color3.fromRGB(255, 20, 90) })
 end
 
-function module.OnSpawn(character: Model)
+function module.StartGame(_, character: Model)
 	characterSpawned(character)
 end
 
