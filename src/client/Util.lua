@@ -2,6 +2,7 @@ local util = {
 	bound = {},
 }
 local deb = game:GetService("Debris")
+local SoundService = game:GetService("SoundService")
 local ts = game:GetService("TweenService")
 
 local rng = Random.new()
@@ -349,26 +350,34 @@ function util.randomAngle(angle)
 	return math.rad(math.random(-angle * 1000, angle * 1000) / 1000)
 end
 
+util.PlayingSounds = {}
+
 function util.PlaySound(sound: Sound, parent: Instance, range: number?, stopTime: number?)
 	if not sound then
 		return
 	end
 
 	local soundClone = sound:Clone()
-	soundClone.Name = "SoundPlaying"
-	soundClone.Parent = parent
+	--soundClone.Name = "SoundPlaying"
+	soundClone.Parent = parent or script
 	if range then
 		soundClone.PlaybackSpeed += rng:NextNumber(-range, range)
 	end
 
 	soundClone:Play()
 
+	if soundClone.SoundGroup == SoundService.SoundEffects then
+		util.PlayingSounds[soundClone] = true
+	end
+
 	if stopTime then
 		task.delay(stopTime, function()
+			util.PlayingSounds[soundClone] = nil
 			soundClone:Destroy()
 		end)
 	else
 		soundClone.Ended:Once(function()
+			util.PlayingSounds[soundClone] = nil
 			soundClone:Destroy()
 		end)
 	end

@@ -75,6 +75,14 @@ local function checkSightLine(npc, target, maxSightAngle)
 	return not workspace:Raycast(position, targetPosition - position, rp)
 end
 
+local function checkEarshot(npc, target, distance)
+	for sound: Sound, playing in pairs(util.PlayingSounds) do
+		if distance <= sound.RollOffMaxDistance and playing and checkSightLine(npc, target, 400) then
+			return true
+		end
+	end
+end
+
 local function getObject(class, parent)
 	local foundInstance = parent:FindFirstChildOfClass(class)
 	if not foundInstance then
@@ -340,7 +348,11 @@ module.actions = {
 			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 		end
 
-		if not target or not checkSightLine(npc, target, maxSightAngle) or distance > maxDistance then
+		if
+			not target
+			or not checkEarshot(npc, target, distance)
+				and (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle))
+		then
 			target = nil
 		end
 

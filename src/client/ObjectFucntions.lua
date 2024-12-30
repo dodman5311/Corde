@@ -11,7 +11,7 @@ local objectFunctions = {
 
 		object:RemoveTag("Interactable")
 
-		assets.Sounds.QuickOpen:Play()
+		util.PlaySound(assets.Sounds.QuickOpen)
 		task.wait(0.5)
 		util.tween(door, ti, { CFrame = door.CFrame * CFrame.new(0, 0, -door.Size.Z) })
 	end,
@@ -23,9 +23,9 @@ local objectFunctions = {
 
 		object:RemoveTag("Interactable")
 
-		assets.Sounds.DoorsOpening:Play()
+		util.PlaySound(assets.Sounds.DoorsOpening)
 		task.wait(1.1)
-		assets.Sounds.Open:Play()
+		util.PlaySound(assets.Sounds.Open)
 		object.LeftEmit.ParticleEmitter.Enabled = true
 		object.RightEmit.ParticleEmitter.Enabled = true
 
@@ -48,7 +48,7 @@ local objectFunctions = {
 		object.Off.Transparency = 1
 		object.On.Transparency = 0
 
-		assets.Sounds.Platform:Play()
+		util.PlaySound(assets.Sounds.Platform)
 		task.wait(0.5)
 
 		util.tween(platform, ti, { CFrame = platform.CFrame * CFrame.new(0, 0, platform.Size.Z) }, true)

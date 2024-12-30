@@ -180,7 +180,7 @@ function typeOutMessage(messageData, dialogue)
 				util.PlaySound(sounds.SystemVoice, script, 0.02)
 				messageUi.TextColor3 = Color3.fromRGB(218, 133, 65)
 			else
-				util.PlaySound(currentNpc.Voice, script)
+				util.PlaySound(currentNpc.Voice)
 				messageUi.TextColor3 = Color3.fromRGB(255, 255, 255)
 			end
 

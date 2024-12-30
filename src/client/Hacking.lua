@@ -290,7 +290,7 @@ local function doHackAction(object, point: BillboardGui)
 
 	local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
 
-	util.PlaySound(sounds.HackSuccess, script)
+	util.PlaySound(sounds.HackSuccess)
 	completePoint(point)
 
 	if hackFunction then
@@ -361,7 +361,7 @@ function module:EnterNetMode()
 	actionPrompt.showActionPrompt("RAM")
 	placeNetPoints()
 
-	util.PlaySound(sounds.NetOpen, script)
+	util.PlaySound(sounds.NetOpen)
 
 	util.tween(Lighting.NETColor, ti, {
 		TintColor = Color3.fromRGB(185, 255, 250),

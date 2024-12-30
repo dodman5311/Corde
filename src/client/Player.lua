@@ -83,7 +83,7 @@ local function playerDamaged(character, healthPercent)
 		damageSoundFolder = sounds.DamageSounds.LowHealth
 	end
 
-	util.getRandomChild(sounds.Pain):Play()
+	util.PlaySound(util.getRandomChild(sounds.Pain))
 	util.PlaySound(util.getRandomChild(sounds.Blood), script, 0.1).Volume = invertedHealthPercent
 	util.PlaySound(util.getRandomChild(damageSoundFolder), script, 0.1)
 
@@ -328,8 +328,10 @@ local function updateDirection(inputState, vector)
 			uiAnimationService.PlayAnimation(arms, 0.5 / character:GetAttribute("Walkspeed"), true)
 		end
 
+		util.PlayingSounds[sounds.Steps] = true
 		sounds.Steps:Resume()
 	else
+		util.PlayingSounds[sounds.Steps] = false
 		sounds.Steps:Pause()
 		uiAnimationService.StopAnimation(frame)
 
@@ -421,8 +423,12 @@ function module.toggleSprint(value)
 		end
 
 		sounds.Steps.PlaybackSpeed = 1.35
+		sounds.Steps.RollOffMaxDistance = 5
+		sounds.Steps.Volume = 0.75
 		weapons.readyKeyToggle(Enum.UserInputState.End)
 	else
+		sounds.Steps.Volume = 0.5
+		sounds.Steps.RollOffMaxDistance = 2.5
 		sounds.Steps.PlaybackSpeed = 1.15
 	end
 
@@ -488,6 +494,7 @@ function module.Init()
 
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 	UserInputService.InputChanged:Connect(updateCursorData)
+	util.PlayingSounds[sounds.Steps] = true
 end
 
 RunService.Heartbeat:Connect(function()

@@ -7,6 +7,7 @@ local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
@@ -40,8 +41,13 @@ local UI
 
 local fireSound = Instance.new("Sound")
 fireSound.Parent = script
+fireSound.RollOffMaxDistance = 15
+fireSound.SoundGroup = SoundService.SoundEffects
+
 local reloadSound = Instance.new("Sound")
 reloadSound.Parent = script
+reloadSound.RollOffMaxDistance = 10
+reloadSound.SoundGroup = SoundService.SoundEffects
 
 local accuracyReduction = spring.new(0)
 accuracyReduction.Damper = 0.875
@@ -315,7 +321,8 @@ local function reload(itemToUse)
 	local torso = player.Character.Torso
 
 	acts:createAct("Reloading", "Interacting")
-	reloadSound:Play()
+
+	util.PlaySound(reloadSound)
 
 	torso.UI.Fire.Visible = false
 	uiAnimationService.PlayAnimation(torso.UI.Reload, reloadTime / 24).OnEnded:Once(function()
@@ -573,7 +580,7 @@ function module.fireKeyToggle(state, input)
 		end
 
 		if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
-			sounds.GunClick:Play()
+			util.PlaySound(sounds.GunClick)
 		end
 	elseif state == Enum.UserInputState.End then
 		fireKeyDown = false

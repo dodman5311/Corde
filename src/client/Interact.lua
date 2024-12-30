@@ -213,14 +213,14 @@ local function attemptInteract(object: Instance)
 
 		local key = object:GetAttribute("Key")
 		if key and (key == "" or inventory:RemoveItem(key)) then
-			util.PlaySound(sounds.Unlock, script)
+			util.PlaySound(sounds.Unlock)
 			object:SetAttribute("Locked", false)
 
 			showInteract(object, cursorUi.Cursor.Interact)
 			return
 		end
 
-		util.PlaySound(sounds.Locked, script)
+		util.PlaySound(sounds.Locked)
 		showLocked(cursorUi.Cursor.Interact)
 	else
 		util.PlaySound(sounds.Interacting, script, 0.05, 0.5)

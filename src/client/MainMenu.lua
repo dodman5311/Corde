@@ -36,7 +36,7 @@ local hoverFunctions = {
 			local size = button:GetAttribute("DefaultSize")
 			util.tween(button, ti, { Size = UDim2.fromScale(size.X.Scale + 0.01, size.Y.Scale + 0.01) })
 
-			local sound = util.PlaySound(sounds.HoverStart, script)
+			local sound = util.PlaySound(sounds.HoverStart)
 			sound.PlaybackSpeed = 3
 			sound.Volume = 0.1
 		end,
@@ -50,7 +50,7 @@ local hoverFunctions = {
 				return
 			end
 
-			local sound = util.PlaySound(sounds.HoverStart, script)
+			local sound = util.PlaySound(sounds.HoverStart)
 			sound.PlaybackSpeed = 2
 			sound.Volume = 0.025
 		end,
