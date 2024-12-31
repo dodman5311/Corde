@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RUN_SERVICE = game:GetService("RunService")
 local signal = require(ReplicatedStorage.Packages.Signal)
 local runningTimers = {}
+local acts = require(script.Parent.Acts)
 
 module.wait = function(sec, index)
 	local waitTimer = module:new(index or "waitAt_" .. os.clock())
@@ -17,6 +18,8 @@ end
 
 module.new = function(self, timerName, waitTime, Function, ...)
 	local queue = self
+
+	local pausedAt = 0
 
 	if not timerName then
 		timerName = #queue + 1
@@ -36,6 +39,18 @@ module.new = function(self, timerName, waitTime, Function, ...)
 		OnTimerStepped = signal.new(),
 		OnEnded = signal.new(),
 	}
+
+	timer.OnPaused = acts.OnActAdded:Connect(function(act)
+		if act == "Paused" then
+			pausedAt = os.clock()
+		end
+	end)
+
+	timer.OnResumed = acts.OnActRemoved:Connect(function(act)
+		if act == "Paused" then
+			timer:Delay(os.clock() - pausedAt)
+		end
+	end)
 
 	function timer:Run()
 		if self.IsRunning then
@@ -138,7 +153,10 @@ function module:getTimer(timerName)
 end
 
 RUN_SERVICE.Heartbeat:Connect(function()
-	for _,timer in ipairs(runningTimers) do
+	for _, timer in ipairs(runningTimers) do
+		if acts:checkAct("Paused") then
+			return
+		end
 		timer.OnTimerStepped:Fire(os.clock() - timer.CallTime)
 
 		if (os.clock() - timer.CallTime) < timer.WaitTime then
@@ -146,7 +164,7 @@ RUN_SERVICE.Heartbeat:Connect(function()
 		end
 
 		table.remove(runningTimers, table.find(runningTimers, timer))
-		
+
 		timer.IsRunning = false
 		timer.OnEnded:Fire(Enum.PlaybackState.Completed)
 

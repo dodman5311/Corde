@@ -186,6 +186,7 @@ end
 
 RunService.Heartbeat:Connect(function()
 	if acts:checkAct("Paused") then
+		lastRenderStep = os.clock()
 		return
 	end
 
@@ -197,6 +198,7 @@ RunService.Heartbeat:Connect(function()
 		end
 
 		local timePassed = os.clock() - lastRenderStep
+
 		projectile.Age += timePassed
 
 		local distanceToMove = timePassed * projectile.Speed

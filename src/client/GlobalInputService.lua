@@ -11,6 +11,8 @@ local Player = Players.LocalPlayer
 local selectionUi = ReplicatedStorage.Assets.Gui.GamepadSelectionUi
 local selectionImage = selectionUi.SelectionImage
 
+local acts = require(script.Parent.Acts)
+
 local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
 
 local module = {
@@ -146,6 +148,9 @@ function module.CreateNewInput(inputName: string, func: () -> any?, ...)
 		Enable = function(self)
 			local callback = self.Callback
 			ContextActionService:BindAction(self.Name, function(_, inputState: Enum.UserInputState, input: InputObject)
+				if acts:checkAct("Paused") then -- pause inputs
+					return
+				end
 				return callback(inputState, input)
 			end, false, table.unpack(self.KeyInputs))
 		end,

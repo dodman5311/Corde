@@ -353,7 +353,7 @@ local function updateCursorData(key)
 		thumbstick2Pos = key.Position
 	elseif key.KeyCode == Enum.KeyCode.Thumbstick1 then
 		thumbstick1Pos = key.Position
-	elseif key.UserInputType == Enum.UserInputType.MouseMovement then
+	elseif key.UserInputType == Enum.UserInputType.MouseMovement or key.UserInputType == Enum.UserInputType.Touch then
 		cursorLocation = UserInputService:GetMouseLocation()
 	end
 
@@ -467,19 +467,7 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.StartGame()
-	local a = uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true)
-
-	a.OnStepped:Connect(function()
-		HUD.Glitch.Visible = math.random(1, 2) ~= 1
-
-		if math.random(1, 3) == 1 then
-			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		else
-			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
-		end
-	end)
-end
+function module.StartGame() end
 
 function module.Init()
 	globalInputService.CreateNewInput(
@@ -495,6 +483,16 @@ function module.Init()
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 	UserInputService.InputChanged:Connect(updateCursorData)
 	util.PlayingSounds[sounds.Steps] = true
+
+	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
+		HUD.Glitch.Visible = math.random(1, 2) ~= 1
+
+		if math.random(1, 3) == 1 then
+			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		else
+			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
+		end
+	end)
 end
 
 RunService.Heartbeat:Connect(function()

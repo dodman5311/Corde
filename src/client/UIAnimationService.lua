@@ -3,11 +3,12 @@ local module = {}
 
 local signal = require(ReplicatedStorage.Packages.Signal)
 local RunService = game:GetService("RunService")
+local acts = require(script.Parent.Acts)
 
 local animations = {}
 
 function module.PlayAnimation(
-	frame: Frame,
+	frame: GuiObject,
 	frameDelay: number,
 	loop: boolean?,
 	stayOnLastFrame: boolean?,
@@ -55,7 +56,7 @@ function module.PlayAnimation(
 		end,
 
 		RunAnimation = function(self)
-			if self.Paused then
+			if self.Paused or acts:checkAct("Paused") then
 				lastFrameStep = os.clock()
 				return
 			end
