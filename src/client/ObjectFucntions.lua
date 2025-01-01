@@ -10,6 +10,7 @@ local objectFunctions = {
 		local door = object.Door
 
 		object:RemoveTag("Interactable")
+		object:RemoveTag("Hackable")
 
 		util.PlaySound(assets.Sounds.QuickOpen)
 		task.wait(0.5)
@@ -22,6 +23,7 @@ local objectFunctions = {
 		local rightDoor = object.RightDoor
 
 		object:RemoveTag("Interactable")
+		object:RemoveTag("Hackable")
 
 		util.PlaySound(assets.Sounds.DoorsOpening)
 		task.wait(1.1)
@@ -44,6 +46,7 @@ local objectFunctions = {
 		local platform = object.Platform
 
 		object:RemoveTag("Interactable")
+		object:RemoveTag("Hackable")
 
 		object.Off.Transparency = 1
 		object.On.Transparency = 0
