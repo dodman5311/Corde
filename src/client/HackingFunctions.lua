@@ -1,7 +1,6 @@
 local interact = require(script.Parent.Interact)
 
-local function setLightEnabled(object: Instance, value)
-	local lightPart = object.LightPart
+local function setLightEnabled(lightPart: Instance, value)
 	local light = lightPart:FindFirstChildOfClass("PointLight")
 		or lightPart:FindFirstChildOfClass("SurfaceLight")
 		or lightPart:FindFirstChildOfClass("SpotLight")
@@ -23,14 +22,14 @@ local module = {
 	end,
 
 	Disable = function(object: Instance)
-		if object:FindFirstChild("LightPart") then
+		if object:FindFirstChild("Light") then
 			setLightEnabled(object, false)
 			object:SetAttribute("HackAction", "Enable")
 		end
 	end,
 
 	Enable = function(object: Instance)
-		if object:FindFirstChild("LightPart") then
+		if object:FindFirstChild("Light") then
 			setLightEnabled(object, true)
 			object:SetAttribute("HackAction", "Disable")
 		end

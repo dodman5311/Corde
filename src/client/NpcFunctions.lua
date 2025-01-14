@@ -90,6 +90,7 @@ local function getObject(class, parent)
 		foundInstance.Parent = parent
 		return foundInstance, true
 	end
+
 	return foundInstance, false
 end
 

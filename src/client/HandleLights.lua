@@ -17,7 +17,7 @@ local function fadeLight(light, goal)
 	local lightObject = light:FindFirstChild("Light")
 	if lightObject and light:GetAttribute("LightType") == "Dynamic" then
 		lightObject.Brightness =
-			Lerp(lightObject.Brightness, lightObject:GetAttribute("DefaultBrightness") * math.abs(goal - 1), 0.01)
+			Lerp(lightObject.Brightness, lightObject:GetAttribute("DefaultBrightness") * math.abs(goal - 1), 0.02)
 	end
 
 	local lensflare = light:FindFirstChild("LensFlare")
@@ -48,7 +48,6 @@ local function checkLights()
 		return
 	end
 
-	local ignore = cs:GetTagged("Ignore")
 	local lights = cs:GetTagged("Light")
 
 	for _, light in ipairs(lights) do
@@ -89,7 +88,7 @@ end
 
 getLightBrightness()
 
-rs.RenderStepped:Connect(function()
+rs.Heartbeat:Connect(function()
 	checkLights()
 end)
 
