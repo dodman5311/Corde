@@ -28,7 +28,8 @@ local timer = require(Client.Timer)
 local util = require(Client.Util)
 local globalInputService = require(Client.GlobalInputService)
 local objectsView = require(Client.ObjectsView)
-local objectFunctions = require(Client.ObjectFucntions)
+local objectFunctions = require(Client.ObjectFunctions)
+local sequences = require(Client.Sequences)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
@@ -243,7 +244,12 @@ local function InteractiWithObject(object: Instance)
 	if object:HasTag("Container") then
 		pickupContainer()
 	elseif object:HasTag("NPC") or object:HasTag("Interest") then
-		dialogue:EnterDialogue(mouseTarget.Value)
+		if object:GetAttribute("Sequence") then
+			object:RemoveTag("Interactable")
+			sequences:beginSequence(object:GetAttribute("Sequence"), object)
+		else
+			dialogue:EnterDialogue(mouseTarget.Value)
+		end
 	else
 		attemptInteract(object)
 	end

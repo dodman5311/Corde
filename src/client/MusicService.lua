@@ -1,5 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local musicService = {}
+local musicService = {
+	playingTrack = nil,
+}
 --// Services
 
 --// Instances
@@ -10,21 +12,20 @@ local music = assets.Music
 local util = require(script.Parent.Util)
 
 --// Values
-local DEFAULT_FADE_TIME = 0.25
+local DEFAULT_FADE_TIME = 0.5
 local lastTrack
-local currentTrack
 
 function musicService:StopTrack(fadeTime: number?): Sound?
-	if not currentTrack then
+	if not musicService.playingTrack then
 		return
 	end
 	fadeTime = fadeTime or DEFAULT_FADE_TIME
 
 	local ti = TweenInfo.new(fadeTime, Enum.EasingStyle.Linear)
-	local trackToStop: Sound = currentTrack
+	local trackToStop: Sound = musicService.playingTrack
 
 	lastTrack = trackToStop
-	currentTrack = nil
+	musicService.playingTrack = nil
 
 	if fadeTime == 0 then
 		trackToStop:Stop()
@@ -38,7 +39,7 @@ function musicService:StopTrack(fadeTime: number?): Sound?
 end
 
 function musicService:PlayTrack(trackName: string, fadeTime: number?): Sound?
-	if not trackName or (currentTrack and trackName == currentTrack.Name) then
+	if not trackName or (musicService.playingTrack and trackName == musicService.playingTrack.Name) then
 		return
 	end
 	fadeTime = fadeTime or DEFAULT_FADE_TIME
@@ -47,7 +48,7 @@ function musicService:PlayTrack(trackName: string, fadeTime: number?): Sound?
 	local track: Sound = music:FindFirstChild(trackName)
 
 	self:StopTrack()
-	currentTrack = track
+	musicService.playingTrack = track
 
 	if fadeTime == 0 then
 		track.Volume = track:GetAttribute("Volume")
@@ -66,14 +67,20 @@ function musicService:ReturnToLastTrack(): Sound?
 	if not lastTrack then
 		return
 	end
-	self:StopTrack()
-	self:PlayTrack(lastTrack.Name)
-	return lastTrack
+	return self:PlayTrack(lastTrack.Name)
 end
 
 --// Main
 for _, track in ipairs(music:GetChildren()) do
 	track:SetAttribute("Volume", track.Volume)
 end
+
+workspace:GetAttributeChangedSignal("InCombat"):Connect(function()
+	if workspace:GetAttribute("InCombat") then
+		musicService:PlayTrack("SuddenDeath")
+	else
+		print(musicService:ReturnToLastTrack())
+	end
+end)
 
 return musicService

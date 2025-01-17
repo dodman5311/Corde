@@ -20,6 +20,7 @@ local util = require(client.Util)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
+local sequences = require(client.Sequences)
 
 local currentNpcModule
 local currentNpc
@@ -74,17 +75,20 @@ local function showDialogueOptions(options)
 	end
 end
 
+local function getActionData(action: string)
+	local str = string.split(action, ":")
+	return str[1], string.split(str[2], ",")
+end
+
 local function doActions(actions)
-	for _, action in ipairs(actions) do
-		print(action, actions)
+	for _, action: string in ipairs(actions) do
+		local actionIndex, parameters = getActionData(action)
 
-		if action == "GiveObject" then
+		if actionIndex == "GiveObject" then
 			inventory:AddItem(currentNpcModule.ObjectToGive)
-		end
-
-		if string.match(action, "SetStart_") then
-			local str = string.split(string.sub(action, 10), ".")
-			local container, index = str[1], str[2]
+		elseif actionIndex == "SetStart" then
+			local path = string.split(parameters[1], ".")
+			local container, index = path[1], path[2]
 
 			if container == "Module" then
 				container = currentNpcModule
@@ -93,19 +97,25 @@ local function doActions(actions)
 			end
 
 			currentNpcModule.Dialogue.Start = container[index]
+		elseif actionIndex == "BeginSequence" then
+			local sequenceName = parameters[1]
+
+			sequences:beginSequence(sequenceName, currentNpc)
 		end
 	end
 end
 
 local function endMessage(messageData)
-	UI.Box.Message.Text = messageData.Message
+	if messageData.Message then
+		UI.Box.Message.Text = messageData.Message
+	end
 
 	if messageData["Actions"] then
 		doActions(messageData.Actions)
 	end
 end
 
-function typeOutMessage(messageData, dialogue)
+function typeOutMessage(messageData)
 	inMessage = true
 
 	local inputEvent
@@ -147,7 +157,7 @@ function typeOutMessage(messageData, dialogue)
 		if texting then
 			task.cancel(typeThread)
 			texting = false
-			endMessage(messageData, dialogue)
+			endMessage(messageData)
 			return
 		end
 
@@ -189,7 +199,7 @@ function typeOutMessage(messageData, dialogue)
 
 		texting = false
 
-		endMessage(messageData, dialogue)
+		endMessage(messageData)
 
 		clickCooldown = true
 		task.delay(0.1, function()
@@ -199,8 +209,18 @@ function typeOutMessage(messageData, dialogue)
 end
 
 function startDialogue(dialogue)
-	for _, message in ipairs(dialogue) do
-		typeOutMessage(message, dialogue)
+	if not dialogue then
+		acts:removeAct("InDialogue")
+		return
+	end
+
+	for _, messageData in ipairs(dialogue) do
+		if not messageData.Message then
+			endMessage(messageData)
+			continue
+		end
+
+		typeOutMessage(messageData)
 		repeat
 			task.wait()
 		until not inMessage

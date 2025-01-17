@@ -49,6 +49,7 @@ local function completePoint(point: BillboardGui)
 
 	point:RemoveTag("ActiveNetPoint")
 	hackUi.Visible = true
+	point.NetLine.Enabled = false
 
 	util.tween(hackUi, ti, { Size = UDim2.fromScale(1.2, 1.2), GroupTransparency = 1 }, false, function()
 		point:Destroy()
@@ -155,7 +156,7 @@ end
 
 local function placeNetPoint(object: Instance)
 	local newNetPoint: BillboardGui = gui.NetPoint:Clone()
-	newNetPoint.Parent = player.PlayerGui
+	newNetPoint.Parent = object --player.PlayerGui
 	newNetPoint:AddTag("ActiveNetPoint")
 	newNetPoint.Adornee = object
 
@@ -173,6 +174,10 @@ end
 
 local function clearNetPoints()
 	for _, object in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
+		if object.NetLine.Attachment1 then
+			object.NetLine.Attachment1:Destroy()
+		end
+
 		object:Destroy()
 	end
 end
@@ -180,6 +185,29 @@ end
 local function refreshNetPoints()
 	clearNetPoints()
 	placeNetPoints()
+end
+
+local function checkSightline(object: Instance): boolean
+	if acts:checkAct("InObjectView") then
+		return true
+	elseif not object then
+		return false
+	end
+
+	local character = player.Character
+	if not character then
+		return false
+	end
+
+	local characterPosition = character:GetPivot().Position
+	local objectPosition = object:GetPivot().Position
+
+	local rp = RaycastParams.new()
+	rp.FilterDescendantsInstances = { character, object }
+
+	local raycast = workspace:Raycast(characterPosition, objectPosition - characterPosition, rp)
+
+	return not raycast
 end
 
 local function getValidNetPoints()
@@ -191,13 +219,20 @@ local function getValidNetPoints()
 	local closest, closestPoint = math.huge, nil
 	local validPoints = {}
 
-	for _, netPoint: BillboardGui in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do
+	for _, netPoint: BillboardGui in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do -- raycast
 		local object: BasePart | Model = netPoint.Adornee
 
 		local vector, onScreen = camera:WorldToViewportPoint(object:GetPivot().Position)
 		if not onScreen then
+			netPoint.NetLine.Enabled = false
 			continue
 		end
+
+		if not checkSightline(object) then
+			netPoint.NetLine.Enabled = false
+			continue
+		end
+
 		table.insert(validPoints, netPoint)
 
 		local distanceToCursor = (Vector2.new(vector.X, vector.Y) - player:GetAttribute("CursorLocation")).Magnitude
@@ -217,56 +252,49 @@ local function drawNetLines(validPoints: {}, closestPoint: BillboardGui)
 		return
 	end
 
-	local netLines: Path2D = UI.NetLines.Path2D
-	local activeLine: Path2D = UI.NetLines.ActiveLine
-
-	local tangentPoints = {}
-
-	local playerPos = camera:WorldToViewportPoint(character:GetPivot().Position)
-
 	for _, netPoint: BillboardGui in ipairs(validPoints) do
-		if netPoint == closestPoint then
-			continue
+		local object: BasePart | Model = netPoint.Adornee
+		local netLine: Beam = netPoint.NetLine
+		local netLineAttachment: Attachment? = netLine.Attachment1
+
+		netLine.Attachment0 = character.PrimaryPart.RootAttachment
+		netPoint.NetLine.Enabled = true
+
+		if not netLineAttachment then -- if no
+			netLineAttachment = Instance.new("Attachment")
+			netLineAttachment.Parent = character.PrimaryPart
+
+			netLine.Attachment1 = netLineAttachment
 		end
 
-		local object: BasePart | Model = netPoint.Adornee
-		local screenPos = camera:WorldToViewportPoint(object:GetPivot().Position)
+		netLineAttachment.WorldCFrame = object:GetPivot()
 
-		local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
-		local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
-
-		table.insert(tangentPoints, playerPoint)
-		table.insert(tangentPoints, point)
-
-		-- draw points
+		if netPoint == closestPoint then
+			netLine.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.5),
+				NumberSequenceKeypoint.new(0.8, 0.5),
+				NumberSequenceKeypoint.new(0.801, 1),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			netLine.Color = ColorSequence.new(Color3.fromRGB(135, 255, 255))
+			netLine.Width0 = 0.05
+			netLine.Width1 = 0.05
+		else
+			netLine.Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.75),
+				NumberSequenceKeypoint.new(0.8, 0.75),
+				NumberSequenceKeypoint.new(0.801, 1),
+				NumberSequenceKeypoint.new(1, 1),
+			})
+			netLine.Color = ColorSequence.new(Color3.new(1, 1, 1))
+			netLine.Width0 = 0.025
+			netLine.Width1 = 0.025
+		end
 	end
 
-	netLines:SetControlPoints(tangentPoints)
-
-	if not closestPoint then
-		activeLine:SetControlPoints({})
-		return
+	if closestPoint then
+		currentActivePoint.Value = closestPoint
 	end
-
-	currentActivePoint.Value = closestPoint
-
-	local closestObject: BasePart | Model = closestPoint.Adornee
-	local screenPos = camera:WorldToViewportPoint(closestObject:GetPivot().Position)
-	local playerPoint = Path2DControlPoint.new(UDim2.fromOffset(playerPos.X, playerPos.Y))
-	local point = Path2DControlPoint.new(UDim2.fromOffset(screenPos.X, screenPos.Y))
-
-	activeLine:SetControlPoints({
-		playerPoint,
-		point,
-	})
-end
-
-local function clearNetLines()
-	local netLines: Path2D = UI.NetLines.Path2D
-	local activeLine: Path2D = UI.NetLines.ActiveLine
-
-	netLines:SetControlPoints({})
-	activeLine:SetControlPoints({})
 end
 
 local function processNet()
@@ -365,7 +393,7 @@ function module:EnterNetMode()
 
 	util.tween(Lighting.NETColor, ti, {
 		TintColor = Color3.fromRGB(185, 255, 250),
-		Brightness = 0.25,
+		Brightness = 0.35,
 		Contrast = 1,
 		Saturation = -1,
 	})
@@ -380,7 +408,6 @@ function module:ExitNetMode()
 	actionPrompt.hideActionPrompt()
 	actionPrompt.hideEnergyUsage()
 	clearNetPoints()
-	clearNetLines()
 
 	util.PlaySound(sounds.NetClose, script, 0, 0.25)
 

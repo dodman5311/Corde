@@ -32,6 +32,8 @@ local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
 
+local itemsList = require(ReplicatedStorage.Shared.Items)
+
 local assets = ReplicatedStorage.Assets
 local models = assets.Models
 local gui = assets.Gui
@@ -133,6 +135,14 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 		end
 
 		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
+	elseif combineData.Action == "AddItem" then
+		if item.InUse or itemToCombine.InUse then
+			return
+		end
+
+		Inventory:AddItem(itemsList[combineData.Item])
+
+		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
 	end
 
 	if not combineData["Result"] then
@@ -145,6 +155,9 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 		if item.Value <= 0 then
 			Inventory:RemoveItem(item.Name)
 		end
+	elseif combineData.Result == "RemoveAll" then
+		Inventory:RemoveItem(item.Name)
+		Inventory:RemoveItem(itemToCombine.Name)
 	end
 
 	return true

@@ -492,11 +492,19 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
+	local inCombat = false
+
 	for _, npc: Npc in ipairs(module.npcs) do
 		for _, heartbeatFunction in pairs(npc.Heartbeat) do
 			heartbeatFunction()
 		end
+
+		if npc:GetTarget() then
+			inCombat = true
+		end
 	end
+
+	workspace:SetAttribute("InCombat", inCombat)
 end)
 
 return module

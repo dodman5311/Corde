@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local client = script.Parent
 local personalities = client.NpcPersonalities
@@ -42,6 +43,7 @@ export type Npc = {
 }
 
 local NpcService = {}
+local aggroEnemies = {}
 
 --// Values
 

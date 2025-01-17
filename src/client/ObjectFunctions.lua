@@ -1,20 +1,22 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 local util = require(client.Util)
+local sequences = require(client.Sequences)
 
 local assets = ReplicatedStorage.Assets
 
 local objectFunctions = {
 	Door = function(object: Model)
-		local ti = TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
+		local ti = TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut, 0, false, 0.5)
 		local door = object.Door
 
 		object:RemoveTag("Interactable")
 		object:RemoveTag("Hackable")
 
 		util.PlaySound(assets.Sounds.QuickOpen)
-		task.wait(0.5)
-		util.tween(door, ti, { CFrame = door.CFrame * CFrame.new(0, 0, -door.Size.Z) })
+		--task.wait(0.5)
+		util.tween(door, ti, { CFrame = door.CFrame * CFrame.new(0, 0, -door.Size.Z) }, true)
+		object:SetAttribute("Open", true)
 	end,
 
 	LargeDoubleDoor = function(object: Model)
@@ -39,6 +41,15 @@ local objectFunctions = {
 		task.wait(1.5)
 		object.LeftEmit.ParticleEmitter.Enabled = false
 		object.RightEmit.ParticleEmitter.Enabled = false
+
+		object:SetAttribute("Open", true)
+	end,
+
+	PlaySequence = function(object: Model)
+		object:RemoveTag("Interactable")
+
+		local sequenceIndex = object:GetAttribute("SequenceIndex")
+		sequences:beginSequence(sequenceIndex)
 	end,
 
 	Catwalk = function(object: Model)
