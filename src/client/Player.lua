@@ -1,5 +1,5 @@
 local module = {
-	HUNGER_RATE = 0.1,
+	HUNGER_RATE = 0.2,
 	SPRINTING_HUNGER_MULT = 2,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,

@@ -70,7 +70,7 @@ local function showPointPromt(point: BillboardGui)
 
 	hackUi.ActionName.Visible = false
 	hackUi.ItemName.Visible = false
-	hackUi.ActionName.Text = `Action: <font color="rgb(255,145,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
+	hackUi.ActionName.Text = `Action: <font color="rgb(255,240,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
 	hackUi.ItemName.Text = point.Adornee.Name
 
 	for _, v in ipairs(hackUi:GetChildren()) do
@@ -99,7 +99,7 @@ local function showPointPromt(point: BillboardGui)
 		end
 	end
 
-	hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255, 145, 0)
+	hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255, 240, 0)
 	hackUi.Keystroke_1.Prompt.ImageTransparency = 1
 
 	hackUi.Image.Position = UDim2.fromScale(0, 0)
@@ -187,28 +187,28 @@ local function refreshNetPoints()
 	placeNetPoints()
 end
 
-local function checkSightline(object: Instance): boolean
-	if acts:checkAct("InObjectView") then
-		return true
-	elseif not object then
-		return false
-	end
+-- local function checkSightline(object: Instance): boolean
+-- 	if acts:checkAct("InObjectView") then
+-- 		return true
+-- 	elseif not object then
+-- 		return false
+-- 	end
 
-	local character = player.Character
-	if not character then
-		return false
-	end
+-- 	local character = player.Character
+-- 	if not character then
+-- 		return false
+-- 	end
 
-	local characterPosition = character:GetPivot().Position
-	local objectPosition = object:GetPivot().Position
+-- 	local characterPosition = character:GetPivot().Position
+-- 	local objectPosition = object:GetPivot().Position
 
-	local rp = RaycastParams.new()
-	rp.FilterDescendantsInstances = { character, object }
+-- 	local rp = RaycastParams.new()
+-- 	rp.FilterDescendantsInstances = { character, object }
 
-	local raycast = workspace:Raycast(characterPosition, objectPosition - characterPosition, rp)
+-- 	local raycast = workspace:Raycast(characterPosition, objectPosition - characterPosition, rp)
 
-	return not raycast
-end
+-- 	return not raycast
+-- end
 
 local function getValidNetPoints()
 	local character = player.Character
@@ -228,10 +228,10 @@ local function getValidNetPoints()
 			continue
 		end
 
-		if not checkSightline(object) then
-			netPoint.NetLine.Enabled = false
-			continue
-		end
+		-- if not checkSightline(object) then
+		-- 	netPoint.NetLine.Enabled = false
+		-- 	continue
+		-- end
 
 		table.insert(validPoints, netPoint)
 
@@ -380,7 +380,7 @@ local function checkKeystrokeInput(state, input)
 		checkHackGate(currentActivePoint.Value)
 		return
 	end
-	keystrokeLabel.TextColor3 = Color3.fromRGB(255, 145, 0)
+	keystrokeLabel.TextColor3 = Color3.fromRGB(255, 240, 0)
 	keystrokeLabel.Prompt.ImageTransparency = 0
 end
 
