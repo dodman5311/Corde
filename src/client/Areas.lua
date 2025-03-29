@@ -27,7 +27,7 @@ local attributeEffects = {
 			value = cameraService.fieldOfView
 		end
 
-		util.tween(camera, shiftTi, { FieldOfView = tonumber(value) })
+		util.tween(camera, shiftTi, { FieldOfView = tonumber(value * 2) })
 	end,
 
 	Track = function(trackName)

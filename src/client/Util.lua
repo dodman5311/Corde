@@ -352,7 +352,7 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, parent: Instance, range: number?, stopTime: number?)
+function util.PlaySound(sound: Sound, parent: Instance?, range: number?, stopTime: number?)
 	if not sound then
 		return
 	end

@@ -294,6 +294,7 @@ local function setUpSlots()
 		if item then
 			slotUi.Frame.Image.Image = item.Icon
 			slotUi.ItemName.Text = item.Name
+			slotUi.ItemName.TextTransparency = 0
 
 			slotUi.Value.Text = typeof(item.Value) == "number" and item.Value or ""
 
@@ -302,10 +303,14 @@ local function setUpSlots()
 			else
 				slotUi.Value.TextColor3 = Color3.fromRGB(255, 255, 255)
 			end
+
+			--slotUi.Button.Visible = true
 		else
 			slotUi.Frame.Image.Image = ""
 			slotUi.ItemName.Text = "Vacant"
+			slotUi.ItemName.TextTransparency = 0.7
 			slotUi.Value.Text = ""
+			--slotUi.Button.Visible = false
 		end
 	end
 end
@@ -559,6 +564,14 @@ local function updatePrompts()
 	note.ActionPromptGamepad.Visible = globalInputService.inputType == "Gamepad"
 end
 
+local function createGuiSlots()
+	for slotIndex = 2, 12 do
+		local newSlot = UI.Inventory.Slots.slot_1:Clone()
+		newSlot.Name = "slot_" .. slotIndex
+		newSlot.Parent = UI.Inventory.Slots
+	end
+end
+
 local function initGui()
 	local step
 	local originalSlot
@@ -567,6 +580,11 @@ local function initGui()
 	UI.Parent = player.PlayerGui
 	UI.Enabled = false
 
+	local infoFrame = UI.Inventory.Info
+
+	createGuiSlots()
+
+	-- set up note
 	UI.Note.GroupTransparency = 1
 
 	local nextButton: TextButton = UI.Note.Next
@@ -599,11 +617,15 @@ local function initGui()
 		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(frame)
 
 		mouseEnter:Connect(function()
-			UI.Inventory.Description.Text = frame:GetAttribute("Description")
+			infoFrame.Visible = true
+			infoFrame.BackgroundImage.Visible = false
+
+			infoFrame.DescriptionIndex.Text = frame.Name
+			infoFrame.Description.Text = frame:GetAttribute("Description")
 		end)
 
 		mouseLeave:Connect(function()
-			UI.Inventory.Description.Text = ""
+			infoFrame.Visible = false
 		end)
 	end
 
@@ -615,15 +637,30 @@ local function initGui()
 		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi.Button)
 
 		mouseEnter:Connect(function()
-			UIAnimationService.PlayAnimation(slotUi.Frame, 0.1, true)
-
 			local item: item = Inventory[slotUi.Name]
 
 			if not item then
 				return
 			end
 
-			UI.Inventory.Description.Text = item.Desc
+			util.PlaySound(sounds.InventoryHover)
+
+			infoFrame.Visible = true
+
+			infoFrame.DescriptionIndex.Text = slotUi.ItemName.Text
+			infoFrame.Description.Text = item.Desc
+
+			infoFrame.BackgroundImage.Visible = true
+			infoFrame.BackgroundImage.Image.Image = slotUi.Frame.Image.Image
+			UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
+
+			slotUi.Select.Visible = true
+			slotUi.Glow.Visible = true
+			slotUi.ItemName.TextColor3 = Color3.new()
+			slotUi.Value.TextColor3 = Color3.new()
+
+			local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
+			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
 
 			if item.Use == "EquipWeapon" then
 				UI.Inventory.WeaponCompare.Visible = true
@@ -632,9 +669,17 @@ local function initGui()
 		end)
 
 		mouseLeave:Connect(function()
-			UIAnimationService.StopAnimation(slotUi.Frame)
-			UI.Inventory.Description.Text = ""
+			UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
+			UI.Inventory.Info.Visible = false
 			UI.Inventory.WeaponCompare.Visible = false
+
+			slotUi.Select.Visible = false
+			slotUi.Glow.Visible = false
+			slotUi.ItemName.TextColor3 = Color3.new(1, 1, 1)
+			slotUi.Value.TextColor3 = Color3.new(1, 1, 1)
+
+			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.9, 0.075) })
 		end)
 
 		local button: TextButton = slotUi.Button
@@ -715,6 +760,7 @@ function Inventory.OpenInventory()
 	Inventory.InventoryInteract:Enable()
 
 	camera.followViewDistance.current = 1
+	util.PlaySound(sounds.InventoryOpen)
 
 	acts:createAct("InventoryOpening")
 	Inventory.InventoryOpen = true
@@ -748,6 +794,7 @@ function Inventory.CloseInventory()
 	closeNote()
 
 	camera.followViewDistance.current = camera.followViewDistance.default
+	util.PlaySound(sounds.InventoryClose)
 
 	local ti = TweenInfo.new(0.5)
 
