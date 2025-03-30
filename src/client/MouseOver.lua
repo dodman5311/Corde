@@ -80,12 +80,14 @@ end
 game:GetService("RunService").Heartbeat:Connect(function()
 	--Check each UI object
 	--All exit events fire before all enter events for ease of use, so check for mouse exit events here
+
 	for _, Object in pairs(CurrentItems) do
 		Object.MouseIsInFrame = IsInFrame(Object.UIObj)
 		CheckMouseExited(Object)
 	end
 
 	--Now check if the mouse entered any frames
+
 	for _, Object in pairs(CurrentItems) do
 		CheckMouseEntered(Object)
 	end

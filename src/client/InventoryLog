@@ -8,8 +8,6 @@ export type item = {
 	CombineData: {},
 }
 
---// Services
-
 local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
@@ -22,20 +20,9 @@ local Inventory = {
 	InventoryOpen = false,
 } -- {Name = "", Desc = "", Value = 1, InUse = false, Use = "Action"}
 
---// Instances
 local player = Players.LocalPlayer
+
 local client = script.Parent
-
-local assets = ReplicatedStorage.Assets
-local models = assets.Models
-local gui = assets.Gui
-local sounds = assets.Sounds
-
-local UITemplate = gui.Inventory
-local UI
-local currentSelectedSlot
-
---// Modules
 local signal = require(ReplicatedStorage.Packages.Signal)
 local UIAnimationService = require(client.UIAnimationService)
 local util = require(client.Util)
@@ -44,13 +31,16 @@ local mouseOver = require(client.MouseOver)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
+
 local itemsList = require(ReplicatedStorage.Shared.Items)
 
---// Values
+local assets = ReplicatedStorage.Assets
+local models = assets.Models
+local gui = assets.Gui
+local sounds = assets.Sounds
+
 local currentNoteIndex = 0
 local currentNoteItem: item
-local rng = Random.new()
-local inAction = false
 
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
@@ -60,7 +50,11 @@ Inventory.InvetoryToggled = signal.new()
 
 Inventory.statusPumpTimer = timer:new("HealthPump", 1)
 
---// Functions
+local rng = Random.new()
+
+local UITemplate = gui.Inventory
+local UI
+
 function Inventory:ShowNotification(itemName, notificationMessage)
 	local newNotification = gui.Notification:Clone()
 	newNotification.Parent = player.PlayerGui.HUD.Notifications
@@ -578,117 +572,6 @@ local function createGuiSlots()
 	end
 end
 
-local function emptyWeaponSlot()
-	if acts:checkAct("Reloading") then
-		return
-	end
-
-	Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
-	refreshGui()
-end
-
-local function showDescription(frame)
-	local infoFrame = UI.Inventory.Info
-
-	infoFrame.Visible = true
-	infoFrame.BackgroundImage.Visible = false
-
-	infoFrame.DescriptionIndex.Text = frame.Name
-	infoFrame.Description.Text = frame:GetAttribute("Description")
-end
-
-local function slotUiHovered(slotUi)
-	local infoFrame = UI.Inventory.Info
-	local item: item = Inventory[slotUi.Name]
-	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
-
-	if not item then
-		return
-	end
-
-	util.PlaySound(sounds.InventoryHover)
-
-	infoFrame.Visible = true
-
-	infoFrame.DescriptionIndex.Text = slotUi.ItemName.Text
-	infoFrame.Description.Text = item.Desc
-
-	infoFrame.BackgroundImage.Visible = true
-	infoFrame.BackgroundImage.Image.Image = slotUi.Frame.Image.Image
-	UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
-
-	slotUi.Select.Visible = true
-	slotUi.Glow.Visible = true
-	slotUi.ItemName.TextColor3 = Color3.new()
-	slotUi.Value.TextColor3 = Color3.new()
-
-	util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
-
-	if item.Use == "EquipWeapon" then
-		UI.Inventory.WeaponCompare.Visible = true
-		compareWeapon(item)
-	end
-end
-
-local function slotUiExited(slotUi)
-	local infoFrame = UI.Inventory.Info
-
-	UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
-	UI.Inventory.Info.Visible = false
-	UI.Inventory.WeaponCompare.Visible = false
-
-	slotUi.Select.Visible = false
-	slotUi.Glow.Visible = false
-	slotUi.ItemName.TextColor3 = Color3.new(1, 1, 1)
-	slotUi.Value.TextColor3 = Color3.new(1, 1, 1)
-
-	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
-	util.tween(slotUi, ti, { Size = UDim2.fromScale(0.9, 0.075) })
-end
-
-local function closeOptionsMenu(slotUi)
-	slotUi.ZIndex = 1
-	local ti = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
-	util.tween(slotUi.ActionsFrame.Actions, ti, { Position = UDim2.fromScale(0, -1) })
-	currentSelectedSlot = nil
-end
-
-local function openOptionsMenu(slotUi)
-	if currentSelectedSlot then
-		if currentSelectedSlot == slotUi then
-			closeOptionsMenu(currentSelectedSlot)
-			return
-		end
-		closeOptionsMenu(currentSelectedSlot)
-	end
-
-	currentSelectedSlot = slotUi
-	slotUi.ZIndex = 2
-	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
-	util.tween(slotUi.ActionsFrame.Actions, ti, { Position = UDim2.fromScale(0, 0) })
-end
-
-local function slotUiMB1(slotUi)
-	-- UI.MoveObject.Image.Image = slotUi.Frame.Image.Image
-	-- UIAnimationService.PlayAnimation(UI.MoveObject, 0.075, true)
-	-- UI.MoveObject.Visible = true
-
-	-- return RunService.RenderStepped:Connect(function()
-	-- 	local mousePosition = UserInputService:GetMouseLocation()
-
-	-- 	UI.MoveObject.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
-
-	-- 	if UI.Enabled then
-	-- 		return
-	-- 	end
-
-	-- UIAnimationService.StopAnimation(UI.MoveObject)
-	-- 	UI.MoveObject.Visible = false
-	-- end)
-
-	openOptionsMenu(slotUi)
-end
-
 local function initGui()
 	local step
 	local originalSlot
@@ -716,15 +599,29 @@ local function initGui()
 		nextNotePage(currentNoteItem, -1)
 	end)
 
-	exitButton.MouseButton1Click:Connect(closeNote)
+	exitButton.MouseButton1Click:Connect(function()
+		closeNote()
+	end)
 
-	UI.Inventory.Weapon.WeaponDisplay.MouseButton2Click:Connect(emptyWeaponSlot)
+	UI.Inventory.Weapon.WeaponDisplay.MouseButton2Click:Connect(function()
+		if acts:checkAct("Reloading") then
+			return
+		end
+
+		Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
+		refreshGui()
+		--UI.Inventory.Weapon.WeaponDisplay.Visible = false
+	end)
 
 	for _, frame: Frame in ipairs(CollectionService:GetTagged("DescriptionFrame")) do
 		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(frame)
 
 		mouseEnter:Connect(function()
-			showDescription(frame)
+			infoFrame.Visible = true
+			infoFrame.BackgroundImage.Visible = false
+
+			infoFrame.DescriptionIndex.Text = frame.Name
+			infoFrame.Description.Text = frame:GetAttribute("Description")
 		end)
 
 		mouseLeave:Connect(function()
@@ -738,49 +635,52 @@ local function initGui()
 		end
 
 		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi.Button)
-		local enterAction, leaveAction = mouseOver.MouseEnterLeaveEvent(slotUi.ActionsFrame)
 
 		mouseEnter:Connect(function()
-			if inAction then
+			local item: item = Inventory[slotUi.Name]
+
+			if not item then
 				return
 			end
-			slotUiHovered(slotUi)
+
+			util.PlaySound(sounds.InventoryHover)
+
+			infoFrame.Visible = true
+
+			infoFrame.DescriptionIndex.Text = slotUi.ItemName.Text
+			infoFrame.Description.Text = item.Desc
+
+			infoFrame.BackgroundImage.Visible = true
+			infoFrame.BackgroundImage.Image.Image = slotUi.Frame.Image.Image
+			UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
+
+			slotUi.Select.Visible = true
+			slotUi.Glow.Visible = true
+			slotUi.ItemName.TextColor3 = Color3.new()
+			slotUi.Value.TextColor3 = Color3.new()
+
+			local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
+			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
+
+			if item.Use == "EquipWeapon" then
+				UI.Inventory.WeaponCompare.Visible = true
+				compareWeapon(item)
+			end
 		end)
 
 		mouseLeave:Connect(function()
-			slotUiExited(slotUi)
+			UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
+			UI.Inventory.Info.Visible = false
+			UI.Inventory.WeaponCompare.Visible = false
+
+			slotUi.Select.Visible = false
+			slotUi.Glow.Visible = false
+			slotUi.ItemName.TextColor3 = Color3.new(1, 1, 1)
+			slotUi.Value.TextColor3 = Color3.new(1, 1, 1)
+
+			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.9, 0.075) })
 		end)
-
-		enterAction:Connect(function()
-			if currentSelectedSlot ~= slotUi then
-				return
-			end
-			inAction = true
-		end)
-
-		leaveAction:Connect(function()
-			if currentSelectedSlot ~= slotUi then
-				return
-			end
-			inAction = false
-		end)
-
-		for _, optionButton: ImageButton in ipairs(slotUi.ActionsFrame.Actions:GetChildren()) do
-			if not optionButton:IsA("ImageButton") then
-				continue
-			end
-
-			local mouseEnterOption, mouseLeaveOption = mouseOver.MouseEnterLeaveEvent(optionButton)
-			mouseEnterOption:Connect(function()
-				local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
-				optionButton.ImageColor3 = Color3.fromRGB(255, 240, 193)
-			end)
-
-			mouseLeaveOption:Connect(function()
-				local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
-				optionButton.ImageColor3 = Color3.new(1, 1, 1)
-			end)
-		end
 
 		local button: TextButton = slotUi.Button
 
@@ -794,7 +694,24 @@ local function initGui()
 			if step then
 				step:Disconnect()
 			end
-			step = slotUiMB1(slotUi)
+
+			UI.MoveObject.Image.Image = slotUi.Frame.Image.Image
+			UIAnimationService.PlayAnimation(UI.MoveObject, 0.075, true)
+			UI.MoveObject.Visible = true
+
+			step = RunService.RenderStepped:Connect(function()
+				local mousePosition = UserInputService:GetMouseLocation()
+
+				UI.MoveObject.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
+
+				if UI.Enabled then
+					return
+				end
+
+				step:Disconnect()
+				UIAnimationService.StopAnimation(UI.MoveObject)
+				UI.MoveObject.Visible = false
+			end)
 		end)
 
 		button.MouseButton1Up:Connect(function()
@@ -844,7 +761,6 @@ function Inventory.OpenInventory()
 
 	camera.followViewDistance.current = 1
 	util.PlaySound(sounds.InventoryOpen)
-	sounds.InventoryAmbience:Play()
 
 	acts:createAct("InventoryOpening")
 	Inventory.InventoryOpen = true
@@ -880,7 +796,6 @@ function Inventory.CloseInventory()
 
 	camera.followViewDistance.current = camera.followViewDistance.default
 	util.PlaySound(sounds.InventoryClose)
-	sounds.InventoryAmbience:Stop()
 
 	local ti = TweenInfo.new(0.5)
 
@@ -1019,7 +934,6 @@ function Inventory.Init()
 	initGui()
 end
 
---// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus
 UserInputService.InputBegan:Connect(updatePrompts)
 RunService.Heartbeat:Connect(updatePlayerStatus)
