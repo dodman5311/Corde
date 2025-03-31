@@ -35,11 +35,11 @@ Items = {
 
 	Toolbox = {
 		Name = "Toolbox",
-		Desc = "Magazine for a rifle",
-		Value = 30,
+		Desc = "A small toolbox",
+		Value = nil,
 		InUse = false,
 		Icon = "rbxassetid://17429767099",
-		Use = "Reload",
+		Use = nil,
 		CombineData = {
 			["Small key"] = {
 				Action = "AddItem",
@@ -100,7 +100,7 @@ Items = {
 
 			["Pistol Bullets"] = {
 				Action = "AddValue",
-				MaxValue = 10,
+				MaxValue = 30,
 				Result = "RemoveOnEmpty",
 			},
 		},
@@ -108,8 +108,14 @@ Items = {
 
 	Cat_Food = {
 		Name = "Cat Food",
-		Desc = "Food (+10 Hunger)",
-		Value = 10,
+		Desc = [[Canned, wet, cat food.
+		
++30 Hunger
++25 Health]],
+		Value = {
+			Hunger = 30,
+			Health = 25,
+		},
 		InUse = false,
 		Icon = "rbxassetid://125543981396297",
 		Use = "Eat",

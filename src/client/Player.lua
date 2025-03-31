@@ -29,6 +29,7 @@ local cameraService = require(Client.Camera)
 local cameraShaker = require(Client.CameraShaker)
 local haptics = require(Client.Haptics)
 local globalInputService = require(Client.GlobalInputService)
+local controller = require(player.PlayerScripts.PlayerModule):GetControls()
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -150,10 +151,28 @@ function module.spawnCharacter()
 	return character
 end
 
+function module:ChangePlayerHealth(amount: number, changeType: "Set" | "Add" | "Subtract"?): number
+	changeType = changeType or "Set"
+
+	local currentHealth = player.Character:GetAttribute("Health")
+	local maxHealth = player.Character:GetAttribute("MaxHealth")
+
+	if changeType == "Set" then
+		player.Character:SetAttribute("Health", math.clamp(amount, 0, maxHealth))
+	elseif changeType == "Add" then
+		player.Character:SetAttribute("Health", math.clamp(currentHealth + amount, 0, maxHealth))
+	elseif changeType == "Subtract" then
+		player.Character:SetAttribute("Health", math.clamp(currentHealth - amount, 0, maxHealth))
+	end
+	return player.Character:GetAttribute("Health")
+end
+
 function module:DamagePlayer(damage: number, damageType: string)
 	if player.Character:GetAttribute("Hunger") <= 0 then
 		damage *= 2
 	end
+
+	self:ChangePlayerHealth(damage, "Subtract")
 
 	player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - damage)
 	player.Character:SetAttribute("LastDamageType", damageType)
@@ -194,6 +213,10 @@ local function getClosestInteractable()
 	local pos = Vector2.zero
 
 	for _, interactable in ipairs(CollectionService:GetTagged("Interactable")) do
+		if not interactable:FindFirstAncestor("Workspace") then
+			continue
+		end
+
 		local distanceToplayer = (interactable:GetPivot().Position - character:GetPivot().Position).Magnitude
 		if distanceToplayer > SNAP_DISTANCE then
 			continue
@@ -298,16 +321,10 @@ local function updatePlayerDirection()
 	legs.Gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint) * CFrame.Angles(0, math.rad(90), 0)
 end
 
-local function updateDirection(inputState, vector)
-	if inputState == Enum.UserInputState.Begin then
-		moveDirection += vector
-	elseif inputState == Enum.UserInputState.End then
-		moveDirection -= vector
-	elseif vector then
+local function updateDirection(vector)
+	if vector then
 		moveDirection = vector
 	end
-
-	moveDirection = Vector2.new(math.clamp(moveDirection.X, -1, 1), math.clamp(moveDirection.Y, -1, 1))
 
 	local character = player.Character
 	if not character then
@@ -367,45 +384,10 @@ local function updateCursorData(key)
 		local thumbPos = (thumbstick1Pos / 10) * 3
 		thumbstickLookPos = Vector2.new(thumbPos.X, -thumbPos.Y)
 	elseif not acts:checkAct("InObjectView") then
-		local character = player.Character
-		if not character then
-			return
-		end
-
-		local playerPos = character:GetPivot() * CFrame.new(0, 0, -4).Position
-		local viewportPos = camera:WorldToViewportPoint(playerPos)
-		local viewportVector2 = Vector2.new(viewportPos.X, viewportPos.Y)
-
-		thumbstickLookPos = (viewportVector2 / camera.ViewportSize) - Vector2.new(0.5, 0.5)
+		local direction = thumbstickLookPos.Magnitude > 0 and thumbstickLookPos.Unit * 0.2 or thumbstickLookPos
+		thumbstickLookPos = direction
 	else
 		thumbstickLookPos = Vector2.zero
-	end
-end
-
-local function movePlayer(state, key)
-	if acts:checkAct("InDialogue") then
-		moveDirection = Vector2.new(0, 0)
-		updateDirection(state, Vector2.new(0, 0))
-		return
-	end
-
-	if key.KeyCode == Enum.KeyCode.W then
-		updateDirection(state, Vector2.new(0, -1))
-	elseif key.KeyCode == Enum.KeyCode.S then
-		updateDirection(state, Vector2.new(0, 1))
-	elseif key.KeyCode == Enum.KeyCode.A then
-		updateDirection(state, Vector2.new(-1, 0))
-	elseif key.KeyCode == Enum.KeyCode.D then
-		updateDirection(state, Vector2.new(1, 0))
-	elseif key.KeyCode == Enum.KeyCode.Thumbstick1 then
-		local position = Vector2.new(key.Position.X, -key.Position.Y)
-
-		if position.Magnitude < MOVEMENT_THRESHOLD then
-			position = Vector2.zero
-		end
-
-		updateDirection(state, position)
-		--updateCursorData(key)
 	end
 end
 
@@ -440,6 +422,20 @@ function module.toggleSprint(value)
 	updateDirection()
 end
 
+local function checkIsSprinting()
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	local sprinting = module.IsSprinting
+		and moveDirection.Magnitude > 0
+		and character.PrimaryPart.AssemblyLinearVelocity.Magnitude > 3
+	character.ShadowBox.Sprint.Enabled = sprinting
+
+	return sprinting
+end
+
 local function updateSprinting(state)
 	if state == Enum.UserInputState.Begin then
 		module.toggleSprint(true)
@@ -470,19 +466,25 @@ end
 function module.StartGame() end
 
 function module.Init()
-	globalInputService.CreateNewInput(
-		"Walk",
-		movePlayer,
-		Enum.KeyCode.W,
-		Enum.KeyCode.S,
-		Enum.KeyCode.A,
-		Enum.KeyCode.D,
-		Enum.KeyCode.Thumbstick1
-	)
-
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 	UserInputService.InputChanged:Connect(updateCursorData)
 	util.PlayingSounds[sounds.Steps] = true
+
+	RunService.RenderStepped:Connect(function()
+		local moveVector = controller:GetMoveVector()
+
+		if moveVector.Magnitude < MOVEMENT_THRESHOLD then
+			moveVector = Vector3.zero
+		end
+
+		if acts:checkAct("InDialogue") then
+			moveDirection = Vector2.new(moveVector.X, moveVector.Z)
+			updateDirection(Vector2.new(0, 0))
+			return
+		end
+
+		updateDirection(Vector2.new(moveVector.X, moveVector.Z))
+	end)
 
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
 		HUD.Glitch.Visible = math.random(1, 2) ~= 1
@@ -506,7 +508,7 @@ RunService.Heartbeat:Connect(function()
 		elseif player.Character:GetAttribute("Hunger") > 100 then
 			player.Character:SetAttribute("Hunger", 100)
 		elseif player.Character:GetAttribute("Hunger") > 0 then
-			local mult = (module.IsSprinting and moveDirection.Magnitude > 0) and module.SPRINTING_HUNGER_MULT or 1
+			local mult = checkIsSprinting() and module.SPRINTING_HUNGER_MULT or 1
 			local rate = (os.clock() - lastHeartbeat) * (module.HUNGER_RATE * mult)
 
 			player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") - rate)
@@ -528,7 +530,8 @@ RunService.Heartbeat:Connect(function()
 end)
 
 local function eatItem(item, slot)
-	player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value)
+	player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value.Hunger)
+	module:ChangePlayerHealth(item.Value.Health, "Add")
 	util.PlaySound(sounds.Eat, script, 0.15)
 	inventory[slot] = nil
 end
@@ -539,6 +542,10 @@ inventory.ItemUsed:Connect(function(use, item, slot)
 	end
 
 	eatItem(item, slot)
+end)
+
+inventory.InvetoryToggled:Connect(function(value)
+	cursor.Enabled = not (globalInputService.inputType == "Gamepad" and value)
 end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)

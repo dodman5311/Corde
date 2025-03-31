@@ -1,5 +1,6 @@
 local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -113,30 +114,60 @@ local function setInputType(lastInput)
 	end
 end
 
-local function handleGamepadSelection(changedProperty)
-	if changedProperty ~= "SelectedObject" then
-		return
-	end
+local function Lerp(num, goal, i)
+	return num + (goal - num) * i
+end
 
+local function getUdim2Magnitude(udim2: UDim2)
+	local offsetMagnitude = Vector2.new(udim2.X.Offset, udim2.Y.Offset).Magnitude
+	return offsetMagnitude
+end
+
+local function lerpToDistance(value: UDim2, goal: UDim2, alpha: number, pixelMagnitude: number)
+	local valueMagnitude = getUdim2Magnitude(value - goal)
+
+	if valueMagnitude < pixelMagnitude then
+		return goal
+	end
+	return value:Lerp(goal, alpha)
+end
+
+local function handleGamepadSelection(changedProperty)
 	local object = GuiService.SelectedObject
 
-	task.defer(function()
-		if object then
-			if selectionImage.Visible then
-				TweenService:Create(selectionImage, ti, {
-					Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),
-					Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y),
-				}):Play()
-			else
-				selectionImage.Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y)
-				selectionImage.Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)
-			end
+	if object then
+		if selectionImage.Visible then
+			-- TweenService:Create(selectionImage, ti, {
+			-- 	Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),
+			-- 	Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y),
+			-- 	Rotation = object.Rotation,
+			-- }):Play()
 
-			selectionImage.Visible = true
+			selectionImage.Position = lerpToDistance(
+				selectionImage.Position,
+				UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),
+				0.25,
+				5
+			)
+
+			selectionImage.Size = lerpToDistance(
+				selectionImage.Size,
+				UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y),
+				0.25,
+				5
+			)
+
+			selectionImage.Rotation = Lerp(selectionImage.Rotation, object.Rotation, 0.25)
 		else
-			selectionImage.Visible = false
+			selectionImage.Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y)
+			selectionImage.Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y)
+			selectionImage.Rotation = object.Rotation
 		end
-	end)
+
+		selectionImage.Visible = true
+	else
+		selectionImage.Visible = false
+	end
 end
 
 function module.CreateNewInput(inputName: string, func: () -> any?, ...)
@@ -168,7 +199,9 @@ end
 
 UserInputService.InputBegan:Connect(setInputType)
 UserInputService.InputChanged:Connect(setInputType)
-GuiService.Changed:Connect(handleGamepadSelection)
+--GuiService.Changed:Connect(handleGamepadSelection)
+
+RunService.RenderStepped:Connect(handleGamepadSelection)
 
 Player:WaitForChild("PlayerGui").SelectionImageObject = selectionUi.HideSelection
 selectionUi.Parent = Player.PlayerGui

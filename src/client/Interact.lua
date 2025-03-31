@@ -255,16 +255,6 @@ local function InteractiWithObject(object: Instance)
 	end
 end
 
-globalInputService.CreateNewInput("Interact", function(state)
-	local object = mouseTarget.Value
-
-	if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
-		return
-	end
-
-	InteractiWithObject(object)
-end, Enum.KeyCode.F, Enum.KeyCode.ButtonA)
-
 local function processCrosshair()
 	if not player.Character then
 		mouseTarget.Value = nil
@@ -289,6 +279,16 @@ end
 function module.Init()
 	cursorUi = player.PlayerGui.Cursor
 	RunService.RenderStepped:Connect(processCrosshair)
+
+	globalInputService.CreateNewInput("Interact", function(state)
+		local object = mouseTarget.Value
+
+		if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
+			return
+		end
+
+		InteractiWithObject(object)
+	end, Enum.KeyCode.F, Enum.KeyCode.ButtonA)
 end
 
 interactTimer.OnEnded:Connect(function()

@@ -11,7 +11,7 @@ local module = {
 		current = 0,
 		default = 15,
 	},
-	fieldOfView = 1.75,
+	fieldOfView = 3.5,
 
 	firstPersonData = {
 		RootCFrame = CFrame.new(),
