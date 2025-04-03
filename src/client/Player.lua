@@ -51,8 +51,6 @@ local logHealth = 0
 local logLv = Vector3.zero
 local logMousePos = Vector3.zero
 local cursorLocation = Vector2.zero
-local mouseHitLocation = Vector3.zero
-local mouseHit
 
 local thumbstick1Pos = Vector3.zero
 local thumbstick2Pos = Vector3.zero
@@ -194,23 +192,6 @@ local function updateCursorUi(cursorLocation)
 	cursorFrame.Position = UDim2.fromOffset(cursorLocation.X, cursorLocation.Y)
 end
 
-local function getMouseHit()
-	local cursorLocation = player:GetAttribute("CursorLocation")
-
-	local ray = camera:ViewportPointToRay(cursorLocation.X, cursorLocation.Y)
-	local direction = ray.Direction * 600
-	local endPoint = ray.Origin + direction
-	local hit = CFrame.new(endPoint)
-
-	local raycast = workspace:Raycast(ray.Origin, direction)
-
-	if not raycast then
-		return hit
-	end
-
-	return CFrame.new(raycast.Position), raycast.Instance
-end
-
 local function getClosestInteractable()
 	local character = player.Character
 	if not character then
@@ -227,7 +208,7 @@ local function getClosestInteractable()
 			continue
 		end
 
-		local distanceToplayer = (interactable:GetPivot().Position - mouseHitLocation).Magnitude --character:GetPivot().Position).Magnitude
+		local distanceToplayer = (interactable:GetPivot().Position - interact.MouseHitLocation).Magnitude --character:GetPivot().Position).Magnitude
 		if distanceToplayer > SNAP_DISTANCE then
 			continue
 		end
@@ -301,15 +282,13 @@ local function updatePlayerDirection()
 
 	local characterPosition = character:GetPivot().Position
 
-	mouseHitLocation, mouseHit = getMouseHit().Position
-
 	if acts:checkAct("InDialogue") then
-		mouseHitLocation = logMousePos
+		interact.MouseHitLocation = logMousePos
 	else
-		logMousePos = mouseHitLocation
+		logMousePos = interact.MouseHitLocation
 	end
 
-	local lookPoint = Vector3.new(mouseHitLocation.X, characterPosition.Y, mouseHitLocation.Z)
+	local lookPoint = Vector3.new(interact.MouseHitLocation.X, characterPosition.Y, interact.MouseHitLocation.Z)
 
 	gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint)
 

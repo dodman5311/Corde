@@ -1,5 +1,7 @@
 local module = {
 	INTERACT_DISTANCE = 4,
+	MouseHit = nil,
+	MouseHitLocation = Vector3.new(),
 }
 
 local Players = game:GetService("Players")
@@ -57,7 +59,7 @@ local function checkSightline(object: Instance): boolean
 	return not raycast
 end
 
-local function getMouseHit()
+function module:GetMouseHit()
 	local cursorLocation = player:GetAttribute("CursorLocation")
 
 	local ray = camera:ViewportPointToRay(cursorLocation.X, cursorLocation.Y)
@@ -71,7 +73,10 @@ local function getMouseHit()
 		return hit
 	end
 
-	return CFrame.new(raycast.Position), raycast.Instance
+	module.MouseHit = raycast.Instance
+	module.MouseHitLocation = raycast.Position
+
+	return module.MouseHitLocation, module.MouseHit
 end
 
 local function showInteract(object, cursor)
@@ -261,11 +266,11 @@ local function processCrosshair()
 		return
 	end
 
-	local hit, target = getMouseHit()
+	local hit, target = module:GetMouseHit()
 
 	local characterPosition = player.Character:GetPivot().Position
 	local v2CharacterPosition = Vector2.new(characterPosition.X, characterPosition.Z)
-	local v2CursorPosition = Vector2.new(hit.Position.X, hit.Position.Z)
+	local v2CursorPosition = Vector2.new(hit.X, hit.Z)
 
 	local distanceToMouse = (v2CharacterPosition - v2CursorPosition).Magnitude
 

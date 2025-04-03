@@ -137,12 +137,6 @@ local function handleGamepadSelection()
 
 	if object then
 		if selectionImage.Visible then
-			-- TweenService:Create(selectionImage, ti, {
-			-- 	Position = UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),
-			-- 	Size = UDim2.fromOffset(object.AbsoluteSize.X, object.AbsoluteSize.Y),
-			-- 	Rotation = object.Rotation,
-			-- }):Play()
-
 			selectionImage.Position = lerpToDistance(
 				selectionImage.Position,
 				UDim2.fromOffset(object.AbsolutePosition.X, object.AbsolutePosition.Y),

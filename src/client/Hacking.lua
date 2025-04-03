@@ -464,13 +464,6 @@ inventory.InvetoryToggled:Connect(function(value)
 	module:ExitNetMode()
 end)
 
--- inventory.ItemUsed:Connect(function(use, item)
--- 	if use == "InstallNet" then
--- 		module.HasNet = true
--- 		inventory:RemoveItem(item.Name)
--- 	end
--- end)
-
 currentActivePoint.Changed:Connect(function(point)
 	hidePointPromt(lastActivePoint)
 	showPointPromt(point)
