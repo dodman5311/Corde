@@ -124,8 +124,9 @@ local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, ler
 end
 
 local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType)
+	local npcCFrame = npc.Instance:GetPivot()
 	local newHitbox = workspace:GetPartBoundsInBox(
-		npc.Instance:GetPivot() * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2)),
+		npcCFrame * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2)),
 		Vector3.new(size.X, 1, size.Y)
 	)
 
@@ -140,7 +141,7 @@ local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damag
 
 			bloodEffects.createSplatter(model:GetPivot())
 
-			bloodEffects.bloodSploof(npc.Instance:GetPivot(), model:GetPivot().Position)
+			bloodEffects.bloodSploof(npcCFrame, model:GetPivot().Position)
 			break
 		end
 	end
@@ -148,14 +149,18 @@ end
 
 local function doAction(npc, action, ...)
 	local result = module.actions[action.Function](npc, ...)
-	if not action.ReturnEvent then
+	if not action.ReturnAction then
 		return
 	end
 
-	module.actions[action.ReturnEvent](npc, npc.Behavior[action.ReturnEvent], result)
+	module.actions[action.ReturnAction.Function](npc, table.unpack(action.ReturnAction.Parameters), result)
 end
 
 function module.doActions(npc, actions, ...)
+	if npc:IsState("Dead") then
+		return
+	end
+
 	for _, action in ipairs(actions) do
 		if action.State and not npc:IsState(action.State) then
 			continue
@@ -188,7 +193,7 @@ function module.doActions(npc, actions, ...)
 			end
 		end
 
-		task.spawn(doAction, npc, action, table.unpack(parameters))
+		doAction(npc, action, table.unpack(parameters))
 	end
 end
 
@@ -287,7 +292,7 @@ module.actions = {
 		npc.MindState.Value = state
 	end,
 
-	PlayAnimation = function(npc: Npc, animaitonName: string, ...)
+	PlayAnimation = function(npc: Npc, animaitonName: string, frameDelay, loop, stayOnLastFrame, startOnFrame)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
 
 		for _, frame in ipairs(animationFrame.Parent:GetChildren()) do
@@ -300,7 +305,7 @@ module.actions = {
 		end
 
 		animationFrame.Visible = true
-		return animationService.PlayAnimation(animationFrame, ...)
+		return animationService.PlayAnimation(animationFrame, frameDelay, loop, stayOnLastFrame, startOnFrame)
 	end,
 
 	SetAnimationPlayback = function(npc: Npc, animaitonName: string, action: string | "Pause" | "Resume")
@@ -315,8 +320,12 @@ module.actions = {
 		return animation
 	end,
 
-	Destroy = function(npc: Npc)
-		npc:Destroy()
+	Destroy = function(npc: Npc, delay: number?)
+		if delay then
+			task.delay(delay, npc.Destroy, npc)
+		else
+			npc:Destroy()
+		end
 	end,
 
 	PlaceNpcBody = function(npc: Npc)
@@ -350,7 +359,8 @@ module.actions = {
 		end
 
 		if
-			not target
+			npc:GetState() == "Dead"
+			or not target
 			or not checkEarshot(npc, target, distance)
 				and (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle))
 		then
@@ -455,8 +465,24 @@ module.actions = {
 		end)
 	end,
 
+	Emit = function(npc: Npc, particleName: string, count: number, useEnable: boolean?)
+		local particle: ParticleEmitter = npc.Instance:FindFirstChild(particleName, true)
+		if not particle then
+			return
+		end
+
+		if useEnable then
+			particle.Enabled = true
+			task.delay(count, function()
+				particle.Enabled = false
+			end)
+		else
+			particle:Emit(count)
+		end
+	end,
+
 	Custom = function(npc: Npc, func, ...)
-		local result = func(...)
+		local result = func(npc, ...)
 
 		if not result then
 			return
@@ -495,6 +521,10 @@ RunService.Heartbeat:Connect(function()
 	local inCombat = false
 
 	for _, npc: Npc in ipairs(module.npcs) do
+		if npc:IsState("Dead") then
+			continue
+		end
+
 		for _, heartbeatFunction in pairs(npc.Heartbeat) do
 			heartbeatFunction()
 		end

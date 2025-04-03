@@ -21,7 +21,21 @@ local module = {
 	},
 
 	OnDeath = {
-		{ Function = "Destroy" },
+		{ Function = "SwitchToState", Parameters = { "Dead" } },
+		{ Function = "StopMoving" },
+		{ Function = "SearchForTarget", Parameters = { 0 } },
+
+		{ Function = "PlayAnimation", Parameters = { "Animation_Death", 0.05, false, true } },
+		{
+			Function = "Custom",
+			Parameters = {
+				function(npc)
+					npc.Instance.Shadowbox.Transparency = 1
+				end,
+			},
+		},
+		{ Function = "Emit", Parameters = { "Dust", 25 } },
+		{ Function = "Destroy", Parameters = { 2 } },
 	},
 
 	OnTargetFound = {

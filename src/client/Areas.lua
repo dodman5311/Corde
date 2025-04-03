@@ -1,4 +1,7 @@
-local module = {}
+local module = {
+	lastArea = nil,
+	currentArea = nil,
+}
 --// Services
 local collectionService = game:GetService("CollectionService")
 local players = game:GetService("Players")
@@ -16,8 +19,6 @@ local util = require(client.Util)
 local musicService = require(client.MusicService)
 
 --// Values
-local lastAreaEntered
-local currentAreaPart
 local shiftTi = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
 
 --// Functions
@@ -74,7 +75,7 @@ local function onHeartbeaat()
 		return
 	end
 
-	currentAreaPart = nil
+	module.currentArea = nil
 
 	for _, part in ipairs(collectionService:GetTagged("Area")) do
 		local partsInBox = workspace:GetPartBoundsInBox(part.CFrame, part.Size)
@@ -83,14 +84,14 @@ local function onHeartbeaat()
 			continue
 		end
 
-		currentAreaPart = part
+		module.currentArea = part
 	end
 
-	if currentAreaPart ~= lastAreaEntered then
-		onAreaEntered(currentAreaPart)
+	if module.currentArea ~= module.lastArea then
+		onAreaEntered(module.currentArea)
 	end
 
-	lastAreaEntered = currentAreaPart
+	module.lastArea = module.currentArea
 end
 
 function module.Init()

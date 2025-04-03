@@ -21,10 +21,14 @@ local acts = require(client.Acts)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local sequences = require(client.Sequences)
+local signal = require(ReplicatedStorage.Packages.Signal)
 
 local currentNpcModule
 local currentNpc
 local inMessage = false
+local rng = Random.new()
+
+Dialogue.DialogueActionSignal = signal.new()
 
 local function clearOptions()
 	for _, option in ipairs(UI.Box.Choices:GetChildren()) do
@@ -36,26 +40,100 @@ local function clearOptions()
 	end
 end
 
+local function clearMessageBox()
+	for _, frame in ipairs(UI.Box.Message:GetChildren()) do
+		if not frame:IsA("Frame") then
+			continue
+		end
+
+		frame:Destroy()
+	end
+end
+
 local function openGui()
-	camera.followViewDistance.current = 2
+	if not inventory.InventoryOpen then
+		camera.followViewDistance.current = 2
+	end
 
 	clearOptions()
-	UI.Box.Message.Text = ""
+	clearMessageBox()
 
 	UI.Enabled = true
 end
 
 local function closeGui()
-	camera.followViewDistance.current = camera.followViewDistance.default
+	if not inventory.InventoryOpen then
+		camera.followViewDistance.current = camera.followViewDistance.default
+	end
 
 	clearOptions()
-	UI.Box.Message.Text = ""
+	clearMessageBox()
 
 	UI.Enabled = false
 end
 
+local actionsFunctions = {
+	GiveObject = function()
+		inventory:AddItem(currentNpcModule.ObjectToGive)
+	end,
+
+	RemoveItem = function(parameters)
+		return inventory:RemoveItem(parameters[1])
+	end,
+
+	CheckForItem = function(parameters)
+		return inventory:SearchForItem(parameters[1])
+	end,
+
+	SetStart = function(parameters)
+		local path = string.split(parameters[1], ".")
+		local container, index = path[1], path[2]
+
+		if container == "Module" then
+			container = currentNpcModule
+		else
+			container = currentNpcModule[container]
+		end
+
+		currentNpcModule.Dialogue.Start = container[index]
+	end,
+
+	BeginSequence = function(parameters)
+		sequences:beginSequence(parameters[1], currentNpc)
+	end,
+
+	FireEvent = function(parameters)
+		Dialogue.DialogueActionSignal:Fire(table.unpack(parameters))
+	end,
+}
+
+local function doAction(action: string)
+	local str = string.split(action, ":")
+	local actionIndex = str[1]
+	local parameters = string.split(str[2], ",")
+
+	if not actionsFunctions[actionIndex] then
+		return
+	end
+
+	return actionsFunctions[actionIndex](parameters)
+end
+
+local function checkForCondition(option)
+	if typeof(option) ~= "table" then
+		return option
+	end
+
+	return doAction(option[1]) and option[2]
+end
+
 local function showDialogueOptions(options)
 	for _, option in ipairs(options) do
+		option = checkForCondition(option)
+		if not option then
+			continue
+		end
+
 		local dialogueOption = UI.Option:Clone()
 		local button: TextButton = dialogueOption.ButtonFrame.Button
 
@@ -75,39 +153,153 @@ local function showDialogueOptions(options)
 	end
 end
 
-local function getActionData(action: string)
-	local str = string.split(action, ":")
-	return str[1], string.split(str[2], ",")
-end
-
 local function doActions(actions)
 	for _, action: string in ipairs(actions) do
-		local actionIndex, parameters = getActionData(action)
+		doAction(action)
+	end
+end
 
-		if actionIndex == "GiveObject" then
-			inventory:AddItem(currentNpcModule.ObjectToGive)
-		elseif actionIndex == "SetStart" then
-			local path = string.split(parameters[1], ".")
-			local container, index = path[1], path[2]
+local letterEffects = {
+	TweenDown = {
+		Function = function(letterFrame: Frame, tweenInfo: TweenInfo)
+			letterFrame.Letter.Position = UDim2.fromScale(0, -1)
+			util.tween(letterFrame.Letter, tweenInfo, { Position = UDim2.fromScale(0, 0) })
+		end,
+	},
 
-			if container == "Module" then
-				container = currentNpcModule
-			else
-				container = currentNpcModule[container]
-			end
+	FadeIn = {
+		Function = function(letterFrame: Frame, tweenInfo: TweenInfo)
+			letterFrame.Letter.TextTransparency = 1
+			util.tween(letterFrame.Letter, tweenInfo, { TextTransparency = 0 })
+		end,
+	},
 
-			currentNpcModule.Dialogue.Start = container[index]
-		elseif actionIndex == "BeginSequence" then
-			local sequenceName = parameters[1]
+	Bold = {
+		Function = function(letterFrame: Frame)
+			local letter: TextLabel = letterFrame.Letter
+			letter.Text = `<b>{letter.Text}</b>`
+		end,
+		Prefix = "*",
+	},
 
-			sequences:beginSequence(sequenceName, currentNpc)
+	Color = {
+		Function = function(letterFrame: Frame, color: Color3)
+			letterFrame.Letter.TextColor3 = color
+		end,
+	},
+
+	PlaySound = {
+		Function = function(_, sounds: Sound)
+			util.PlaySound(sounds, script, 0.01)
+		end,
+	},
+
+	Shake = {
+		Function = function(letterFrame: Frame, magnitude: number?, lerpTime: number?)
+			magnitude = magnitude or 0.1
+			lerpTime = lerpTime or 0.025
+			local ti = TweenInfo.new(lerpTime, Enum.EasingStyle.Quad)
+
+			local goal = UDim2.fromScale(rng:NextNumber(-magnitude, magnitude), rng:NextNumber(-magnitude, magnitude))
+
+			task.spawn(function()
+				repeat
+					util.tween(letterFrame.Letter, ti, { Position = goal }, true)
+					goal = UDim2.fromScale(rng:NextNumber(-magnitude, magnitude), rng:NextNumber(-magnitude, magnitude))
+				until not letterFrame.Parent
+			end)
+		end,
+		Prefix = "#",
+	},
+}
+
+local function addLetterToWord(letter: string, wordFrame: Frame, effects: {}?)
+	local newLetter = gui.LetterFrame:Clone() --util.callFromCache(gui.LetterFrame)
+	newLetter.Parent = wordFrame
+	newLetter.Letter.Text = letter
+
+	if not effects then
+		return
+	end
+
+	for effect, params in pairs(effects) do
+		letterEffects[effect].Function(newLetter, table.unpack(params))
+	end
+
+	return newLetter
+end
+
+local function addWordToMessage(messageFrame: Frame)
+	local newWordFrame = gui.WordFrame:Clone() --util.callFromCache(gui.WordFrame)
+	newWordFrame.Parent = messageFrame
+	return newWordFrame
+end
+
+local function addPrefixEffects(effects, prefix, ...)
+	local addedValue = false
+	for effect, value in pairs(letterEffects) do
+		if not value.Prefix then
+			continue
+		end
+
+		if value.Prefix == prefix then
+			addedValue = true
+			effects[effect] = { ... }
 		end
 	end
+
+	return addedValue
+end
+
+local function writeToDynamicBox(message: string, messageFrame: Frame, doWait: boolean?, effects: {}?)
+	local waitTime = 0.025
+	local words = string.split(message, " ")
+
+	clearMessageBox()
+
+	for _, word in ipairs(words) do
+		local wordFrame: Frame = addWordToMessage(messageFrame)
+		local wordEffects = effects and table.clone(effects) or {}
+
+		for i = 1, string.len(word) do
+			local letter = string.sub(word, i, i)
+
+			if addPrefixEffects(wordEffects, letter) then
+				continue
+			end
+
+			addLetterToWord(letter, wordFrame, wordEffects)
+
+			if doWait then
+				task.wait(waitTime)
+			end
+		end
+
+		addLetterToWord(" ", wordFrame)
+	end
+end
+
+local function getMessageVisuals(messageData)
+	local sound
+	local color
+	if messageData.Speaker == "Player" then -- Play Voice
+		sound = sounds.PlayerVoice
+		color = Color3.fromRGB(207, 142, 141)
+	elseif messageData.Speaker == "System" then
+		sound = sounds.SystemVoice
+		color = Color3.fromRGB(218, 133, 65)
+	else
+		sound = currentNpc.Voice
+		color = Color3.fromRGB(255, 255, 255)
+	end
+
+	return color, sound
 end
 
 local function endMessage(messageData)
 	if messageData.Message then
-		UI.Box.Message.Text = messageData.Message
+		local color = getMessageVisuals(messageData)
+		writeToDynamicBox(messageData.Message, UI.Box.Message, false, { Color = { color } })
 	end
 
 	if messageData["Actions"] then
@@ -167,35 +359,16 @@ function typeOutMessage(messageData)
 
 	typeThread = task.spawn(function()
 		local message = messageData.Message
-		--messageUi.Visible = false
-
-		local waitTime = 0.025
-		local textLength = string.len(message)
-		local textStep = math.clamp(math.round(textLength * waitTime), 1, math.huge)
-		--local loadTime = math.clamp(textLength / 400, 0.1, 0.5)
-
-		--messageUi.Text = '<font transparency="0">' .. message .. '</font>'
-
-		--task.wait(loadTime)
 
 		messageUi.Visible = true
+		local color, sound = getMessageVisuals(messageData)
 
-		for i = 1, textLength, textStep do
-			messageUi.Text = string.sub(message, 0, i)
-
-			if messageData.Speaker == "Player" then -- Play Voice
-				util.PlaySound(sounds.PlayerVoice, script, 0.01)
-				messageUi.TextColor3 = Color3.fromRGB(207, 142, 141)
-			elseif messageData.Speaker == "System" then
-				util.PlaySound(sounds.SystemVoice, script, 0.02)
-				messageUi.TextColor3 = Color3.fromRGB(218, 133, 65)
-			else
-				util.PlaySound(currentNpc.Voice)
-				messageUi.TextColor3 = Color3.fromRGB(255, 255, 255)
-			end
-
-			task.wait(waitTime)
-		end
+		writeToDynamicBox(message, messageUi, true, {
+			TweenDown = { TweenInfo.new(0.1, Enum.EasingStyle.Quart) },
+			FadeIn = { TweenInfo.new(0.1, Enum.EasingStyle.Quart) },
+			PlaySound = { sound },
+			Color = { color },
+		})
 
 		texting = false
 
@@ -233,15 +406,16 @@ function startDialogue(dialogue)
 	end
 end
 
-function Dialogue:EnterDialogue(model)
+function Dialogue:EnterDialogue(model: Instance)
 	local module = model:FindFirstChild("Data")
 	if not module or acts:checkAct("InDialogue") then
 		return
 	end
 
-	acts:createAct("InDialogue")
 	currentNpcModule = require(module)
 	currentNpc = model
+
+	acts:createAct("InDialogue")
 
 	openGui()
 	startDialogue(currentNpcModule.Dialogue.Start)
@@ -250,6 +424,27 @@ function Dialogue:EnterDialogue(model)
 		task.wait()
 	until not acts:checkAct("InDialogue")
 	closeGui()
+end
+
+function Dialogue:EnterPlayerMonologue(dialogueModule: {})
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	local data = require(character.Data)
+	data.Dialogue = dialogueModule
+	data.Start = dialogueModule
+
+	self:EnterDialogue(character)
+end
+
+function Dialogue:SayFromPlayer(message: string)
+	self:EnterPlayerMonologue({
+		Start = {
+			{ Speaker = "Player", Message = message },
+		},
+	})
 end
 
 return Dialogue

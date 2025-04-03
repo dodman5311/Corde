@@ -3,6 +3,7 @@ local module = {
 	SPRINTING_HUNGER_MULT = 2,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
+	ThumbstickSnapPower = 0.5,
 }
 
 local CollectionService = game:GetService("CollectionService")
@@ -30,6 +31,10 @@ local cameraShaker = require(Client.CameraShaker)
 local haptics = require(Client.Haptics)
 local globalInputService = require(Client.GlobalInputService)
 local controller = require(player.PlayerScripts.PlayerModule):GetControls()
+local hacking = require(Client.Hacking)
+local areas = require(Client.Areas)
+local dialogue = require(Client.Dialogue)
+local sequences = require(Client.Sequences)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -46,6 +51,8 @@ local logHealth = 0
 local logLv = Vector3.zero
 local logMousePos = Vector3.zero
 local cursorLocation = Vector2.zero
+local mouseHitLocation = Vector3.zero
+local mouseHit
 
 local thumbstick1Pos = Vector3.zero
 local thumbstick2Pos = Vector3.zero
@@ -55,8 +62,7 @@ local thumbCursorGoal = Vector2.zero
 local MOVEMENT_THRESHOLD = 0.5
 local THUMBSTICK_THRESHOLD = 0.25
 local CURSOR_INTERPOLATION = 0.05
-local THUMBSTICK_SNAP_POWER = 0.5
-local SNAP_DISTANCE = interact.INTERACT_DISTANCE * 1.5
+local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
@@ -178,6 +184,10 @@ function module:DamagePlayer(damage: number, damageType: string)
 	player.Character:SetAttribute("LastDamageType", damageType)
 end
 
+function module:EnableHacking()
+	hacking.HasNet = true
+end
+
 local function updateCursorUi(cursorLocation)
 	local cursorFrame = cursor.Cursor
 
@@ -217,7 +227,7 @@ local function getClosestInteractable()
 			continue
 		end
 
-		local distanceToplayer = (interactable:GetPivot().Position - character:GetPivot().Position).Magnitude
+		local distanceToplayer = (interactable:GetPivot().Position - mouseHitLocation).Magnitude --character:GetPivot().Position).Magnitude
 		if distanceToplayer > SNAP_DISTANCE then
 			continue
 		end
@@ -228,6 +238,7 @@ local function getClosestInteractable()
 		end
 
 		vector = Vector2.new(vector.X, vector.Y)
+
 		local distanceToCursor = (vector - thumbCursorGoal).Magnitude
 
 		if distanceToCursor < closest then
@@ -242,15 +253,20 @@ local function getClosestInteractable()
 end
 
 local function processGamepadCursorSnap()
-	if thumbstick2Pos.Magnitude >= THUMBSTICK_THRESHOLD or acts:checkAct("InNet") then
+	if
+		thumbstick2Pos.Magnitude >= THUMBSTICK_THRESHOLD
+		or thumbstick1Pos.Magnitude >= THUMBSTICK_THRESHOLD
+		or acts:checkAct("InNet")
+	then
 		return
 	end
-	local interactable, distanceToPlayer, vector = getClosestInteractable()
+	local interactable, distanceToCursor, vector = getClosestInteractable()
+
 	if not interactable then
 		return
 	end
 
-	local inter = (math.abs(distanceToPlayer - SNAP_DISTANCE) * CURSOR_INTERPOLATION) * THUMBSTICK_SNAP_POWER
+	local inter = (math.abs(distanceToCursor - SNAP_DISTANCE) * CURSOR_INTERPOLATION) * module.ThumbstickSnapPower
 
 	cursorLocation = cursorLocation:Lerp(vector, inter)
 end
@@ -285,15 +301,15 @@ local function updatePlayerDirection()
 
 	local characterPosition = character:GetPivot().Position
 
-	local mousePosition = getMouseHit().Position
+	mouseHitLocation, mouseHit = getMouseHit().Position
 
 	if acts:checkAct("InDialogue") then
-		mousePosition = logMousePos
+		mouseHitLocation = logMousePos
 	else
-		logMousePos = mousePosition
+		logMousePos = mouseHitLocation
 	end
 
-	local lookPoint = Vector3.new(mousePosition.X, characterPosition.Y, mousePosition.Z)
+	local lookPoint = Vector3.new(mouseHitLocation.X, characterPosition.Y, mouseHitLocation.Z)
 
 	gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint)
 
@@ -401,6 +417,7 @@ function module.toggleSprint(value)
 	if value then
 		if character:GetAttribute("Hunger") <= 0 then
 			module.IsSprinting = false
+			character.ShadowBox.Sprint.Enabled = false
 			return
 		end
 
@@ -412,6 +429,7 @@ function module.toggleSprint(value)
 		sounds.Steps.Volume = 0.5
 		sounds.Steps.RollOffMaxDistance = 2.5
 		sounds.Steps.PlaybackSpeed = 1.15
+		character.ShadowBox.Sprint.Enabled = false
 	end
 
 	module.IsSprinting = value
@@ -450,10 +468,10 @@ local function updatePlayerMovement()
 		return
 	end
 
-	module.moveUnit = moveDirection.Magnitude ~= 0 and Vector3.new(moveDirection.X, 0, moveDirection.Y).Unit
+	module.moveUnit = moveDirection.Magnitude > 0 and Vector3.new(moveDirection.X, 0, moveDirection.Y).Unit
 		or Vector3.zero
-	local moveToPoint = module.moveUnit * character:GetAttribute("Walkspeed")
 
+	local moveToPoint = module.moveUnit * character:GetAttribute("Walkspeed")
 	local walkVelocity = character.WalkVelocity
 
 	if cameraService.mode == "FirstPerson" then
@@ -470,22 +488,6 @@ function module.Init()
 	UserInputService.InputChanged:Connect(updateCursorData)
 	util.PlayingSounds[sounds.Steps] = true
 
-	RunService.RenderStepped:Connect(function()
-		local moveVector = controller:GetMoveVector()
-
-		if moveVector.Magnitude < MOVEMENT_THRESHOLD then
-			moveVector = Vector3.zero
-		end
-
-		if acts:checkAct("InDialogue") then
-			moveDirection = Vector2.new(moveVector.X, moveVector.Z)
-			updateDirection(Vector2.new(0, 0))
-			return
-		end
-
-		updateDirection(Vector2.new(moveVector.X, moveVector.Z))
-	end)
-
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
 		HUD.Glitch.Visible = math.random(1, 2) ~= 1
 
@@ -500,6 +502,18 @@ end
 RunService.Heartbeat:Connect(function()
 	updatePlayerMovement()
 	updatePlayerDirection()
+
+	local moveVector = controller:GetMoveVector()
+
+	if moveVector.Magnitude < MOVEMENT_THRESHOLD then
+		moveVector = Vector3.zero
+	end
+
+	if acts:checkAct("InDialogue") or not player:GetAttribute("MovementEnabled") then
+		updateDirection(Vector2.zero)
+	else
+		updateDirection(Vector2.new(moveVector.X, moveVector.Z))
+	end
 
 	if player.Character and not acts:checkAct("Paused") then
 		if player.Character:GetAttribute("Hunger") < 0 then
@@ -537,11 +551,23 @@ local function eatItem(item, slot)
 end
 
 inventory.ItemUsed:Connect(function(use, item, slot)
-	if not player.Character or use ~= "Eat" then
+	if not player.Character then
 		return
 	end
 
-	eatItem(item, slot)
+	if use == "Eat" then
+		eatItem(item, slot)
+	elseif use == "ToggleFlashlight" then
+		item.InUse = not item.InUse
+
+		if item.InUse then
+			util.PlaySound(sounds.FlashlightOn)
+		else
+			util.PlaySound(sounds.FlashlightOff)
+		end
+
+		player.Character:FindFirstChild("Flashlight", true).Enabled = item.InUse
+	end
 end)
 
 inventory.InvetoryToggled:Connect(function(value)
@@ -549,7 +575,8 @@ inventory.InvetoryToggled:Connect(function(value)
 end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)
-player:SetAttribute("CursorHit", Vector2.zero)
+player:SetAttribute("MovementEnabled", true)
+
 weapons.onWeaponToggled:Connect(function(value)
 	if value ~= 0 then
 		module.toggleSprint(false)
@@ -563,6 +590,22 @@ weapons.onWeaponToggled:Connect(function(value)
 	uiAnimationService.StopAnimation(character.Legs.UI.Frame)
 
 	updateDirection()
+end)
+
+inventory.ItemUsed:Connect(function(use, item)
+	if use == "InstallNet" then
+		if areas.currentArea.Name == "MirrorArea" then
+			module:EnableHacking()
+			inventory:RemoveItem(item.Name)
+			sequences:beginSequence("UseInjector")
+		else
+			dialogue:SayFromPlayer("I need a *mirror to use this correctly.")
+		end
+	end
+end)
+
+dialogue.DialogueActionSignal:Connect(function(actionName, ...)
+	module[actionName](module, ...)
 end)
 
 return module

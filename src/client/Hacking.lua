@@ -1,4 +1,6 @@
-local module = {}
+local module = {
+	HasNet = false,
+}
 
 local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
@@ -385,6 +387,10 @@ local function checkKeystrokeInput(state, input)
 end
 
 function module:EnterNetMode()
+	if not module.HasNet then
+		return
+	end
+
 	acts:createAct("InNet")
 	actionPrompt.showActionPrompt("RAM")
 	placeNetPoints()
@@ -457,6 +463,13 @@ inventory.InvetoryToggled:Connect(function(value)
 
 	module:ExitNetMode()
 end)
+
+-- inventory.ItemUsed:Connect(function(use, item)
+-- 	if use == "InstallNet" then
+-- 		module.HasNet = true
+-- 		inventory:RemoveItem(item.Name)
+-- 	end
+-- end)
 
 currentActivePoint.Changed:Connect(function(point)
 	hidePointPromt(lastActivePoint)

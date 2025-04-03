@@ -132,7 +132,7 @@ local function lerpToDistance(value: UDim2, goal: UDim2, alpha: number, pixelMag
 	return value:Lerp(goal, alpha)
 end
 
-local function handleGamepadSelection(changedProperty)
+local function handleGamepadSelection()
 	local object = GuiService.SelectedObject
 
 	if object then
@@ -199,9 +199,19 @@ end
 
 UserInputService.InputBegan:Connect(setInputType)
 UserInputService.InputChanged:Connect(setInputType)
---GuiService.Changed:Connect(handleGamepadSelection)
 
-RunService.RenderStepped:Connect(handleGamepadSelection)
+local stepped
+GuiService.Changed:Connect(function()
+	if GuiService.SelectedObject then
+		if not stepped then
+			stepped = RunService.RenderStepped:Connect(handleGamepadSelection)
+		end
+	elseif stepped then
+		stepped:Disconnect()
+		stepped = nil
+		handleGamepadSelection()
+	end
+end)
 
 Player:WaitForChild("PlayerGui").SelectionImageObject = selectionUi.HideSelection
 selectionUi.Parent = Player.PlayerGui

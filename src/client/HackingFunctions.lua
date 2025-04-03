@@ -38,7 +38,7 @@ local module = {
 	Memory_Wipe = function(object: Model)
 		local data = require(object.Data)
 
-		data.Dialogue.StartGame = data.StartGame
+		data.Dialogue.Start = data.Start
 	end,
 
 	Activate = interact.UseObject,

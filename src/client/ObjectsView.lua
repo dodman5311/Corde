@@ -10,6 +10,8 @@ local globalInputService = require(client.GlobalInputService)
 local inventory = require(client.Inventory)
 local util = require(client.Util)
 
+local player = Players.LocalPlayer
+
 local objectsFolder = ReplicatedStorage.Assets.Models["3DObjects"]
 local HUD
 local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, 0, true)
@@ -26,9 +28,9 @@ function module:EnterView(object: Instance)
 	end
 	acts:createAct("InObjectView")
 
-	globalInputService.inputs["Walk"]:Disable()
 	globalInputService.inputs["ToggleFire"]:Disable()
 	globalInputService.inputs.Interact:Disable()
+	player:SetAttribute("MovementEnabled", false)
 
 	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
 		module.exitInput:Enable()
@@ -60,8 +62,7 @@ function module:ExitView()
 	end, Enum.PlaybackState.Completed)
 
 	module.exitInput:Disable()
-
-	globalInputService.inputs["Walk"]:Enable()
+	player:SetAttribute("MovementEnabled", true)
 
 	task.wait(TRANSITION_INFO.Time)
 	acts:removeAct("InObjectView")

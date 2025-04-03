@@ -68,6 +68,25 @@ local objectFunctions = {
 		util.tween(platform, ti, { CFrame = platform.CFrame * CFrame.new(0, 0, platform.Size.Z) }, true)
 		object.Hitbox:Destroy()
 	end,
+
+	BigDoor = function(object: Model)
+		local door = object.BigDoor
+
+		local ti = TweenInfo.new(12, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut)
+		local leftDoor = door.LeftDoor
+		local rightDoor = door.RightDoor
+
+		object:RemoveTag("Interactable")
+
+		util.PlaySound(assets.Sounds.MassiveDoor)
+		task.wait(1.5)
+		util.PlaySound(assets.Sounds.HydrolicMovement, script, 0, 10)
+
+		util.tween(leftDoor, ti, { CFrame = leftDoor.CFrame * CFrame.new(0, 0, leftDoor.Size.Z) })
+		util.tween(rightDoor, ti, { CFrame = rightDoor.CFrame * CFrame.new(0, 0, rightDoor.Size.Z) })
+
+		object:SetAttribute("Open", true)
+	end,
 }
 
 return objectFunctions

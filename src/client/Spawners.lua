@@ -12,6 +12,10 @@ end
 
 function module.StartGame()
 	for _, spawner: Part in ipairs(CollectionService:GetTagged("SpawnPoint")) do
+		if not spawner:FindFirstAncestor("Workspace") then
+			continue
+		end
+
 		local gui = spawner:FindFirstChildOfClass("SurfaceGui")
 		if gui then
 			gui:Destroy()

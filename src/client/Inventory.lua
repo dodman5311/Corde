@@ -112,29 +112,8 @@ function Inventory:GetFirstEmptySlot(): string -- returns slot index, (String)
 	end
 end
 
-function Inventory:CombineSlots(slot, slotToCombineWith)
-	local item: item = self[slot]
-	local itemToCombine: item = self[slotToCombineWith]
-
-	if not item or not slotToCombineWith or not itemToCombine or item == itemToCombine then
-		return
-	end
-
-	local combineData = item.CombineData[itemToCombine.Name]
-
-	if not combineData then
-		combineData = itemToCombine.CombineData[item.Name]
-
-		local preItem = item -- switch primary and secondary items
-		item = itemToCombine
-		itemToCombine = preItem
-
-		if not combineData then
-			return
-		end
-	end
-
-	if combineData.Action == "AddValue" then
+local combineActions = {
+	AddValue = function(item: item, itemToCombine: item, combineData)
 		if item.InUse or itemToCombine.InUse then
 			return
 		end
@@ -149,7 +128,9 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 		end
 
 		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
-	elseif combineData.Action == "AddItem" then
+	end,
+
+	AddItem = function(item: item, itemToCombine: item, combineData)
 		if item.InUse or itemToCombine.InUse then
 			return
 		end
@@ -157,22 +138,50 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 		Inventory:AddItem(itemsList[combineData.Item])
 
 		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
+	end,
+	Remove = function(item: item)
+		Inventory:RemoveItem(item.Name)
+	end,
+	RemoveOnEmpty = function(item: item)
+		if item.Value <= 0 then
+			Inventory:RemoveItem(item.Name)
+		end
+	end,
+	RemoveAll = function(item: item, itemToCombine: item)
+		Inventory:RemoveItem(item.Name)
+		Inventory:RemoveItem(itemToCombine.Name)
+	end,
+}
+
+function Inventory:CombineSlots(slot, slotToCombineWith)
+	local item: item = self[slot]
+	local itemToCombine: item = self[slotToCombineWith]
+
+	if not item or not slotToCombineWith or not itemToCombine or item == itemToCombine then
+		return
 	end
+
+	local combineData = item["CombineData"] and item.CombineData[itemToCombine.Name]
+
+	if not combineData then
+		combineData = itemToCombine["CombineData"] and itemToCombine.CombineData[item.Name]
+
+		local preItem = item -- switch primary and secondary items
+		item = itemToCombine
+		itemToCombine = preItem
+
+		if not combineData then
+			return
+		end
+	end
+
+	combineActions[combineData.Action](item, itemToCombine, combineData)
 
 	if not combineData["Result"] then
 		return true
 	end
 
-	if combineData.Result == "Remove" then
-		Inventory:RemoveItem(item.Name)
-	elseif combineData.Result == "RemoveOnEmpty" then
-		if item.Value <= 0 then
-			Inventory:RemoveItem(item.Name)
-		end
-	elseif combineData.Result == "RemoveAll" then
-		Inventory:RemoveItem(item.Name)
-		Inventory:RemoveItem(itemToCombine.Name)
-	end
+	combineActions[combineData.Result](item, itemToCombine, combineData)
 
 	return true
 end
@@ -656,12 +665,13 @@ local function slotUiHovered(slotUi)
 
 	util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
 
+	task.wait()
+
 	if item.Use == "EquipWeapon" then
 		UI.Inventory.WeaponCompare.Visible = true
 		compareWeapon(item)
 	end
 
-	task.wait()
 	showItemDesciption(item)
 end
 
@@ -968,7 +978,10 @@ function Inventory.OpenInventory()
 
 	Inventory.InventoryInteract:Enable()
 
-	camera.followViewDistance.current = 1
+	if not acts:checkAct("InDialogue") then
+		camera.followViewDistance.current = 1
+	end
+
 	util.PlaySound(sounds.InventoryOpen)
 	sounds.InventoryAmbience:Play()
 
@@ -1004,7 +1017,10 @@ function Inventory.CloseInventory()
 	Inventory.InventoryInteract:Disable()
 	closeNote()
 
-	camera.followViewDistance.current = camera.followViewDistance.default
+	if not acts:checkAct("InDialogue") then
+		camera.followViewDistance.current = camera.followViewDistance.default
+	end
+
 	util.PlaySound(sounds.InventoryClose)
 	sounds.InventoryAmbience:Stop()
 

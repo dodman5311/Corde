@@ -324,8 +324,13 @@ local function reload(itemToUse)
 
 	util.PlaySound(reloadSound)
 
+	local frames = 24
+	if currentWeapon.Value.Type == 2 then
+		frames = 16
+	end
+
 	torso.UI.Fire.Visible = false
-	uiAnimationService.PlayAnimation(torso.UI.Reload, reloadTime / 24).OnEnded:Once(function()
+	uiAnimationService.PlayAnimation(torso.UI.Reload, reloadTime / frames).OnEnded:Once(function()
 		torso.UI.Fire.Visible = true
 	end)
 
