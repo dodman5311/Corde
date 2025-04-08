@@ -6,7 +6,10 @@ export type item = {
 	Use: "Eat" | "Read" | "EquipWeapon" | "Reload",
 	InUse: boolean,
 	CombineData: {},
+	CanArchive: boolean?,
 }
+
+--// Services
 
 local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
@@ -18,11 +21,23 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Inventory = {
 	InventoryOpen = false,
+	DROPPED_ITEM_LIFETIME = 30,
 } -- {Name = "", Desc = "", Value = 1, InUse = false, Use = "Action"}
 
+--// Instances
 local player = Players.LocalPlayer
-
 local client = script.Parent
+
+local assets = ReplicatedStorage.Assets
+local models = assets.Models
+local gui = assets.Gui
+local sounds = assets.Sounds
+
+local UITemplate = gui.Inventory
+local UI
+local currentSelectedSlot
+
+--// Modules
 local signal = require(ReplicatedStorage.Packages.Signal)
 local UIAnimationService = require(client.UIAnimationService)
 local util = require(client.Util)
@@ -31,16 +46,18 @@ local mouseOver = require(client.MouseOver)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
-
 local itemsList = require(ReplicatedStorage.Shared.Items)
 
-local assets = ReplicatedStorage.Assets
-local models = assets.Models
-local gui = assets.Gui
-local sounds = assets.Sounds
-
+--// Values
 local currentNoteIndex = 0
 local currentNoteItem: item
+local rng = Random.new()
+local inAction = false
+local holdingObject = {
+	Action = "",
+	Object = nil,
+	Connection = nil,
+}
 
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
@@ -50,23 +67,20 @@ Inventory.InvetoryToggled = signal.new()
 
 Inventory.statusPumpTimer = timer:new("HealthPump", 1)
 
-local rng = Random.new()
-
-local UITemplate = gui.Inventory
-local UI
-
-function Inventory:ShowNotification(itemName, notificationMessage)
+--// Functions
+function Inventory:ShowNotification(itemName: string, notificationMessage: string, color: Color3?)
 	local newNotification = gui.Notification:Clone()
 	newNotification.Parent = player.PlayerGui.HUD.Notifications
 
 	newNotification.Text = itemName .. " " .. notificationMessage
+	newNotification.TextColor3 = color or Color3.fromRGB(255, 175, 45)
 	Debris:AddItem(newNotification, 6)
 
 	local ti = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 3)
 	util.tween(newNotification, ti, { TextTransparency = 1 })
 end
 
-function Inventory:SearchForItem(itemName)
+function Inventory:SearchForItem(itemName: string)
 	if not itemName then
 		return
 	end
@@ -84,7 +98,10 @@ function Inventory:SearchForItem(itemName)
 	end
 end
 
-function Inventory:CheckSlot(slot)
+function Inventory:CheckSlot(slot: string | number)
+	if tonumber(slot) then
+		slot = "slot_" .. slot
+	end
 	return self[slot]
 end
 
@@ -98,29 +115,8 @@ function Inventory:GetFirstEmptySlot(): string -- returns slot index, (String)
 	end
 end
 
-function Inventory:CombineSlots(slot, slotToCombineWith)
-	local item: item = self[slot]
-	local itemToCombine: item = self[slotToCombineWith]
-
-	if not item or not slotToCombineWith or not itemToCombine or item == itemToCombine then
-		return
-	end
-
-	local combineData = item.CombineData[itemToCombine.Name]
-
-	if not combineData then
-		combineData = itemToCombine.CombineData[item.Name]
-
-		local preItem = item -- switch primary and secondary items
-		item = itemToCombine
-		itemToCombine = preItem
-
-		if not combineData then
-			return
-		end
-	end
-
-	if combineData.Action == "AddValue" then
+local combineActions = {
+	AddValue = function(item: item, itemToCombine: item, combineData)
 		if item.InUse or itemToCombine.InUse then
 			return
 		end
@@ -134,31 +130,61 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 			item.Value -= 1
 		end
 
-		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
-	elseif combineData.Action == "AddItem" then
+		util.PlaySound(sounds.LoadBullets, nil, 0.1, 0.9)
+	end,
+
+	AddItem = function(item: item, itemToCombine: item, combineData)
 		if item.InUse or itemToCombine.InUse then
 			return
 		end
 
 		Inventory:AddItem(itemsList[combineData.Item])
 
-		util.PlaySound(sounds.LoadBullets, script, 0.1, 0.9)
+		util.PlaySound(sounds.LoadBullets, nil, 0.1, 0.9)
+	end,
+	Remove = function(item: item)
+		Inventory:RemoveItem(item.Name)
+	end,
+	RemoveOnEmpty = function(item: item)
+		if item.Value <= 0 then
+			Inventory:RemoveItem(item.Name)
+		end
+	end,
+	RemoveAll = function(item: item, itemToCombine: item)
+		Inventory:RemoveItem(item.Name)
+		Inventory:RemoveItem(itemToCombine.Name)
+	end,
+}
+
+function Inventory:CombineSlots(slot, slotToCombineWith)
+	local item: item = self[slot]
+	local itemToCombine: item = self[slotToCombineWith]
+
+	if not item or not slotToCombineWith or not itemToCombine or item == itemToCombine then
+		return
 	end
+
+	local combineData = item["CombineData"] and item.CombineData[itemToCombine.Name]
+
+	if not combineData then
+		combineData = itemToCombine["CombineData"] and itemToCombine.CombineData[item.Name]
+
+		local preItem = item -- switch primary and secondary items
+		item = itemToCombine
+		itemToCombine = preItem
+
+		if not combineData then
+			return
+		end
+	end
+
+	combineActions[combineData.Action](item, itemToCombine, combineData)
 
 	if not combineData["Result"] then
 		return true
 	end
 
-	if combineData.Result == "Remove" then
-		Inventory:RemoveItem(item.Name)
-	elseif combineData.Result == "RemoveOnEmpty" then
-		if item.Value <= 0 then
-			Inventory:RemoveItem(item.Name)
-		end
-	elseif combineData.Result == "RemoveAll" then
-		Inventory:RemoveItem(item.Name)
-		Inventory:RemoveItem(itemToCombine.Name)
-	end
+	combineActions[combineData.Result](item, itemToCombine, combineData)
 
 	return true
 end
@@ -187,19 +213,20 @@ end
 
 function Inventory:AddItem(item: item)
 	local slotToAddTo = self:GetFirstEmptySlot()
-	local newItem = table.clone(item)
 
-	if slotToAddTo then
-		self:ShowNotification(item.Name, "Added to inventory")
-
-		self[slotToAddTo] = newItem
-		self.ItemAdded:Fire(newItem, slotToAddTo)
-		self.SlotValueChanged:Fire(slotToAddTo, self[slotToAddTo])
-
-		return true
-	else
-		self:DropItem(newItem)
+	if not slotToAddTo then
+		self:ShowNotification("", "INVENTORY FULL", Color3.new(1))
+		return
 	end
+
+	local newItem = table.clone(item)
+	self:ShowNotification(item.Name, "Added to inventory")
+
+	self[slotToAddTo] = newItem
+	self.ItemAdded:Fire(newItem, slotToAddTo)
+	self.SlotValueChanged:Fire(slotToAddTo, self[slotToAddTo])
+
+	return newItem
 end
 
 function Inventory:RemoveItem(ItemNameOrSlot)
@@ -234,15 +261,19 @@ function Inventory:DropItem(index) -- index can be an item table, item name, or 
 	end
 
 	local item: item
+	local slot
 
 	if typeof(index) == "table" then
 		item = index
 	else
-		item = self:RemoveItem(index)
-		if not item then
-			return
-		end
+		item, slot = self:SearchForItem(index)
 	end
+
+	if not item or item.CanArchive then
+		return
+	end
+
+	self:RemoveItem(slot)
 
 	local droppedItem = models.DroppedItem:Clone()
 	local character = player.Character
@@ -254,8 +285,11 @@ function Inventory:DropItem(index) -- index can be an item table, item name, or 
 	droppedItem.Parent = workspace
 	droppedItem.Name = item.Name
 	droppedItem.CFrame = character:GetPivot()
-	droppedItem.AssemblyLinearVelocity = (character:GetPivot() * CFrame.Angles(0, math.rad(rng:NextNumber(-20, 20)), 0)).LookVector
-		* rng:NextNumber(10, 20)
+	droppedItem.AssemblyLinearVelocity = (character:GetPivot() * CFrame.Angles(0, math.rad(rng:NextNumber(-30, 30)), 0)).LookVector
+		* rng:NextNumber(30, 60)
+	droppedItem:SetAttribute("DroppedAt", os.clock())
+
+	Debris:AddItem(droppedItem, Inventory.DROPPED_ITEM_LIFETIME)
 end
 
 function Inventory:pickupFromContainer(object)
@@ -263,15 +297,20 @@ function Inventory:pickupFromContainer(object)
 		return
 	end
 
-	util.PlaySound(sounds.ItemAdded, script, 0.05)
-
 	local containerData = require(object.Container)
 
 	local toRemove = {}
 
 	for _, v in ipairs(containerData) do
-		self:AddItem(v)
+		if not self:AddItem(v) then
+			util.PlaySound(sounds.InventoryFull)
+			break
+		end
 		table.insert(toRemove, v)
+	end
+
+	if #toRemove > 0 then
+		util.PlaySound(sounds.ItemAdded, nil, 0.05)
 	end
 
 	for _, v in ipairs(toRemove) do
@@ -283,7 +322,17 @@ function Inventory:pickupFromContainer(object)
 	end
 end
 
-local function setUpSlots()
+local function assignItemColor(slotUi, item)
+	if item.InUse then
+		slotUi.Value.TextColor3 = Color3.fromRGB(255, 185, 35)
+		slotUi.ItemName.TextColor3 = Color3.fromRGB(255, 185, 35)
+	else
+		slotUi.Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+		slotUi.ItemName.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+end
+
+local function setUpSlots(isOpening)
 	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
 		if not slotUi:IsA("Frame") then
 			continue
@@ -291,26 +340,29 @@ local function setUpSlots()
 
 		local item: item = Inventory[slotUi.Name]
 
+		if isOpening then
+			slotUi.Select.Visible = false
+			slotUi.Glow.Visible = false
+			slotUi.Size = UDim2.fromScale(0.9, 0.075)
+		end
+
 		if item then
-			slotUi.Frame.Image.Image = item.Icon
+			slotUi:SetAttribute("ImageId", item.Icon)
 			slotUi.ItemName.Text = item.Name
 			slotUi.ItemName.TextTransparency = 0
 
 			slotUi.Value.Text = typeof(item.Value) == "number" and item.Value or ""
 
-			if item.InUse then
-				slotUi.Value.TextColor3 = Color3.fromRGB(255, 185, 35)
-			else
-				slotUi.Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+			if slotUi.Select.Visible then
+				continue
 			end
 
-			--slotUi.Button.Visible = true
+			assignItemColor(slotUi, item)
 		else
-			slotUi.Frame.Image.Image = ""
+			slotUi:SetAttribute("ImageId", "")
 			slotUi.ItemName.Text = "Vacant"
 			slotUi.ItemName.TextTransparency = 0.7
 			slotUi.Value.Text = ""
-			--slotUi.Button.Visible = false
 		end
 	end
 end
@@ -418,7 +470,7 @@ local function compareWeapon(baseWeapon: item)
 		accuracy.Bar.BackgroundColor3 = Color3.new(1, 1, 1)
 	end
 
-	damage.Bar.Size = UDim2.fromScale(baseWeaponData.Damage * baseWeaponData.BulletCount / 100, 1)
+	damage.Bar.Size = UDim2.fromScale((baseWeaponData.Damage * baseWeaponData.BulletCount) / 100, 1)
 	if baseWeaponData.Damage * baseWeaponData.BulletCount > weaponData.Damage * weaponData.BulletCount then
 		damage.Bar.BackgroundColor3 = Color3.new(0, 1)
 	elseif baseWeaponData.Damage * baseWeaponData.BulletCount < weaponData.Damage * weaponData.BulletCount then
@@ -479,7 +531,7 @@ local function nextNotePage(note: item, indexChange: number)
 
 	local noteUi = UI.Note
 	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
-	util.PlaySound(sounds.Paper, script, 0.075)
+	util.PlaySound(sounds.Paper, nil, 0.075)
 
 	if currentNoteIndex > #note.Value.Message then
 		closeNote()
@@ -531,13 +583,36 @@ local function openNote(note: item)
 	end
 end
 
-local function refreshGui()
-	setUpSlots()
+local function hideDescription()
+	local infoFrame = UI.Inventory.Info
+
+	infoFrame.Visible = false
+	UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
+	UI.Inventory.WeaponCompare.Visible = false
+end
+
+local function refreshGui(isOpening)
+	setUpSlots(isOpening)
 	setUpWeapon()
 	UI.Inventory.WeaponCompare.Visible = false
 end
 
+local function emptyWeaponSlot()
+	if acts:checkAct("Reloading") then
+		return
+	end
+
+	util.PlaySound(sounds.Unequip, player.Character)
+
+	Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
+	refreshGui()
+end
+
 local function useItem(slotUi)
+	if slotUi.Name == "Weapon" then
+		emptyWeaponSlot()
+		return
+	end
 	local item: item = Inventory[slotUi.Name]
 
 	if not item or acts:checkAct("Reloading") then
@@ -572,15 +647,300 @@ local function createGuiSlots()
 	end
 end
 
-local function initGui()
-	local step
-	local originalSlot
+local function showFrameDescription(frame)
+	local infoFrame = UI.Inventory.Info
 
+	infoFrame.Visible = true
+	infoFrame.BackgroundImage.Visible = false
+
+	infoFrame.DescriptionIndex.Text = frame.Name
+	infoFrame.Description.Text = frame:GetAttribute("Description")
+end
+
+local function showItemDesciption(item: item)
+	if not item then
+		return
+	end
+	local infoFrame = UI.Inventory.Info
+	infoFrame.Visible = true
+
+	infoFrame.DescriptionIndex.Text = item.Name
+	infoFrame.Description.Text = item.Desc
+
+	infoFrame.BackgroundImage.Visible = true
+	infoFrame.BackgroundImage.Image.Image = item.Icon
+	UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
+end
+
+local function slotUiHovered(slotUi)
+	local item: item = Inventory[slotUi.Name]
+	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
+
+	if not item then
+		return
+	end
+
+	util.PlaySound(sounds.InventoryHover)
+
+	slotUi.Select.Visible = true
+	slotUi.Glow.Visible = true
+	slotUi.ItemName.TextColor3 = Color3.new()
+	slotUi.Value.TextColor3 = Color3.new()
+
+	util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
+
+	task.wait()
+
+	if item.Use == "EquipWeapon" then
+		UI.Inventory.WeaponCompare.Visible = true
+		compareWeapon(item)
+	end
+
+	showItemDesciption(item)
+end
+
+local function slotUiExited(slotUi)
+	hideDescription()
+	slotUi.Select.Visible = false
+	slotUi.Glow.Visible = false
+	slotUi.ItemName.TextColor3 = Color3.new(1, 1, 1)
+
+	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+	util.tween(slotUi, ti, { Size = UDim2.fromScale(0.9, 0.075) })
+
+	local item: item = Inventory[slotUi.Name]
+	if item then
+		assignItemColor(slotUi, item)
+	end
+end
+
+local function holdSlot(slotUi: Frame, action: "Move" | "Combine")
+	if holdingObject.Connection then
+		holdingObject.Connection:Disconnect()
+	end
+
+	holdingObject.Action = action
+	holdingObject.Object = slotUi
+
+	UI.MoveObject.Image.Image = slotUi:GetAttribute("ImageId")
+	UIAnimationService.PlayAnimation(UI.MoveObject, 0.075, true)
+	UI.MoveObject.Visible = true
+
+	holdingObject.Connection = RunService.RenderStepped:Connect(function()
+		local mousePosition = UserInputService:GetMouseLocation()
+
+		UI.MoveObject.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
+
+		if UI.Enabled then
+			return
+		end
+
+		UIAnimationService.StopAnimation(UI.MoveObject)
+		UI.MoveObject.Visible = false
+	end)
+end
+
+local optionFunctions = {
+	Use = function(slotUi)
+		useItem(slotUi)
+	end,
+	Drop = function(slotUi)
+		Inventory:DropItem(slotUi.ItemName.Text)
+		refreshGui()
+	end,
+	Move = function(slotUi)
+		holdSlot(slotUi, "Move")
+	end,
+	Combine = function(slotUi)
+		holdSlot(slotUi, "Combine")
+	end,
+}
+
+local function closeOptionsMenu()
+	if not currentSelectedSlot then
+		return
+	end
+	inAction = false
+
+	currentSelectedSlot.ZIndex = 1
+	local ti = TweenInfo.new(0.3, Enum.EasingStyle.Quart)
+
+	local actionsFrame = currentSelectedSlot:FindFirstChild("ActionsFrame")
+	if not actionsFrame then
+		return
+	end
+
+	util.tween(actionsFrame.Actions, ti, { Position = UDim2.fromScale(0, -1) }, false, function()
+		actionsFrame:Destroy()
+	end)
+
+	currentSelectedSlot = nil
+end
+
+local function openOptionsMenu(slotUi)
+	if currentSelectedSlot == slotUi then
+		closeOptionsMenu()
+		return
+	else
+		closeOptionsMenu()
+	end
+
+	if not Inventory[slotUi.Name] then
+		return
+	end
+
+	local actionsFrame = gui.ActionsFrame:Clone()
+	local enterAction, leaveAction = mouseOver.MouseEnterLeaveEvent(actionsFrame)
+	local item: item = Inventory[slotUi.Name]
+
+	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
+	local ti_0 = TweenInfo.new(0.1, Enum.EasingStyle.Quart)
+	local ti_1 = TweenInfo.new(0.25, Enum.EasingStyle.Quint)
+	local slotNumber = tonumber(string.sub(slotUi.Name, 6, -1))
+
+	actionsFrame.Parent = slotUi
+	currentSelectedSlot = slotUi
+	slotUi.ZIndex = 2
+	slotUi.Button.NextSelectionDown = actionsFrame.Actions.Use
+	actionsFrame.Actions.Use.NextSelectionUp = slotUi.Button
+	util.tween(actionsFrame.Actions, ti, { Position = UDim2.fromScale(0, 0) })
+	actionsFrame.Actions.Drop.Visible = not item.CanArchive
+
+	enterAction:Connect(function()
+		inAction = true
+	end)
+
+	leaveAction:Connect(function()
+		inAction = false
+	end)
+
+	for _, optionButton: ImageButton in ipairs(actionsFrame.Actions:GetChildren()) do
+		if not optionButton:IsA("ImageButton") then
+			continue
+		end
+
+		local mouseEnterOption, mouseLeaveOption = mouseOver.MouseEnterLeaveEvent(optionButton)
+		mouseEnterOption:Connect(function()
+			local sound = util.PlaySound(sounds.OptionClick)
+			sound.PlaybackSpeed = 0.65
+			sound.Volume = 0.1
+			optionButton.ImageColor3 = Color3.fromRGB(255, 240, 193)
+			util.tween(optionButton, ti_0, { Size = UDim2.fromScale(1.05, 0.25) })
+		end)
+
+		mouseLeaveOption:Connect(function()
+			optionButton.ImageColor3 = Color3.new(1, 1, 1)
+			util.tween(optionButton, ti_1, { Size = UDim2.fromScale(1, 0.235) })
+		end)
+
+		optionButton.MouseButton1Click:Connect(function()
+			if acts:checkAct("Reloading") then
+				return
+			end
+
+			util.PlaySound(sounds.OptionClick)
+			closeOptionsMenu()
+			optionFunctions[optionButton.Name](slotUi)
+		end)
+	end
+
+	local slot_1 = UI.Inventory.Slots:FindFirstChild("slot_" .. slotNumber + 1)
+	local slot_2 = UI.Inventory.Slots:FindFirstChild("slot_" .. slotNumber + 2)
+	local slot_3 = UI.Inventory.Slots:FindFirstChild("slot_" .. slotNumber + 3)
+
+	actionsFrame.Actions.Use.NextSelectionRight = slotUi.Button
+	actionsFrame.Actions.Move.NextSelectionRight = slot_1 and slot_1.Button
+	actionsFrame.Actions.Combine.NextSelectionRight = slot_2 and slot_2.Button
+	actionsFrame.Actions.Drop.NextSelectionRight = slot_3 and slot_3.Button
+end
+
+local function connectSlotButton(slotUi)
+	if not slotUi:IsA("Frame") then
+		return
+	end
+
+	local button: ImageButton = slotUi.Button
+
+	button.MouseEnter:Connect(function()
+		if inAction then
+			return
+		end
+		slotUiHovered(slotUi)
+	end)
+
+	button.MouseLeave:Connect(function()
+		slotUiExited(slotUi)
+	end)
+
+	button.SelectionGained:Connect(function()
+		if inAction then
+			return
+		end
+		slotUiHovered(slotUi)
+	end)
+
+	button.SelectionLost:Connect(function()
+		slotUiExited(slotUi)
+	end)
+
+	local button: TextButton = slotUi.Button
+
+	button.MouseButton2Click:Connect(function()
+		useItem(slotUi)
+		closeOptionsMenu()
+	end)
+
+	button.MouseButton1Click:Connect(function()
+		UIAnimationService.StopAnimation(UI.MoveObject)
+		UI.MoveObject.Visible = false
+
+		if holdingObject.Connection then
+			holdingObject.Connection:Disconnect()
+		end
+
+		if not holdingObject.Object then
+			openOptionsMenu(slotUi)
+
+			return
+		end
+
+		if holdingObject.Action == "Move" then
+			util.PlaySound(sounds.OptionClick).PlaybackSpeed = 0.8
+			Inventory:ChangeSlot(holdingObject.Object.Name, slotUi.Name)
+		elseif holdingObject.Action == "Combine" then
+			if Inventory:CombineSlots(holdingObject.Object.Name, slotUi.Name) then
+				util.PlaySound(sounds.Confirm)
+			else
+				util.PlaySound(sounds.Deny)
+			end
+		end
+
+		holdingObject = {}
+		refreshGui()
+	end)
+
+	button.InputBegan:Connect(function(input)
+		if acts:checkAct("Reloading") then
+			return
+		end
+
+		if input.KeyCode == Enum.KeyCode.Q then
+			Inventory:DropItem(slotUi.ItemName.Text)
+			refreshGui()
+		end
+
+		if input.KeyCode == Enum.KeyCode.Return then
+			useItem(slotUi)
+		end
+
+		refreshGui()
+	end)
+end
+
+local function initGui()
 	UI = UITemplate
 	UI.Parent = player.PlayerGui
 	UI.Enabled = false
-
-	local infoFrame = UI.Inventory.Info
 
 	createGuiSlots()
 
@@ -590,6 +950,7 @@ local function initGui()
 	local nextButton: TextButton = UI.Note.Next
 	local prevButton: TextButton = UI.Note.Prev
 	local exitButton: TextButton = UI.Note.Exit
+	local weaponDisplay = UI.Inventory.Weapon.WeaponDisplay
 
 	nextButton.MouseButton1Click:Connect(function()
 		nextNotePage(currentNoteItem, 1)
@@ -599,155 +960,37 @@ local function initGui()
 		nextNotePage(currentNoteItem, -1)
 	end)
 
-	exitButton.MouseButton1Click:Connect(function()
-		closeNote()
+	exitButton.MouseButton1Click:Connect(closeNote)
+
+	weaponDisplay.MouseButton2Click:Connect(emptyWeaponSlot)
+	weaponDisplay.MouseEnter:Connect(function()
+		util.PlaySound(sounds.InventoryHover)
+		task.wait(0.05)
+		showItemDesciption(Inventory:CheckSlot(13))
 	end)
 
-	UI.Inventory.Weapon.WeaponDisplay.MouseButton2Click:Connect(function()
-		if acts:checkAct("Reloading") then
-			return
-		end
+	weaponDisplay.MouseLeave:Connect(hideDescription)
 
-		Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
-		refreshGui()
-		--UI.Inventory.Weapon.WeaponDisplay.Visible = false
+	weaponDisplay.SelectionGained:Connect(function()
+		util.PlaySound(sounds.InventoryHover)
+		task.wait(0.05)
+		showItemDesciption(Inventory:CheckSlot(13))
 	end)
+
+	weaponDisplay.SelectionLost:Connect(hideDescription)
 
 	for _, frame: Frame in ipairs(CollectionService:GetTagged("DescriptionFrame")) do
 		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(frame)
 
 		mouseEnter:Connect(function()
-			infoFrame.Visible = true
-			infoFrame.BackgroundImage.Visible = false
-
-			infoFrame.DescriptionIndex.Text = frame.Name
-			infoFrame.Description.Text = frame:GetAttribute("Description")
+			showFrameDescription(frame)
 		end)
 
-		mouseLeave:Connect(function()
-			infoFrame.Visible = false
-		end)
+		mouseLeave:Connect(hideDescription)
 	end
 
 	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
-		if not slotUi:IsA("Frame") then
-			continue
-		end
-
-		local mouseEnter, mouseLeave = mouseOver.MouseEnterLeaveEvent(slotUi.Button)
-
-		mouseEnter:Connect(function()
-			local item: item = Inventory[slotUi.Name]
-
-			if not item then
-				return
-			end
-
-			util.PlaySound(sounds.InventoryHover)
-
-			infoFrame.Visible = true
-
-			infoFrame.DescriptionIndex.Text = slotUi.ItemName.Text
-			infoFrame.Description.Text = item.Desc
-
-			infoFrame.BackgroundImage.Visible = true
-			infoFrame.BackgroundImage.Image.Image = slotUi.Frame.Image.Image
-			UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
-
-			slotUi.Select.Visible = true
-			slotUi.Glow.Visible = true
-			slotUi.ItemName.TextColor3 = Color3.new()
-			slotUi.Value.TextColor3 = Color3.new()
-
-			local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
-			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.925, 0.1) })
-
-			if item.Use == "EquipWeapon" then
-				UI.Inventory.WeaponCompare.Visible = true
-				compareWeapon(item)
-			end
-		end)
-
-		mouseLeave:Connect(function()
-			UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
-			UI.Inventory.Info.Visible = false
-			UI.Inventory.WeaponCompare.Visible = false
-
-			slotUi.Select.Visible = false
-			slotUi.Glow.Visible = false
-			slotUi.ItemName.TextColor3 = Color3.new(1, 1, 1)
-			slotUi.Value.TextColor3 = Color3.new(1, 1, 1)
-
-			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
-			util.tween(slotUi, ti, { Size = UDim2.fromScale(0.9, 0.075) })
-		end)
-
-		local button: TextButton = slotUi.Button
-
-		button.MouseButton2Click:Connect(function()
-			useItem(slotUi)
-		end)
-
-		button.MouseButton1Down:Connect(function()
-			originalSlot = slotUi
-
-			if step then
-				step:Disconnect()
-			end
-
-			UI.MoveObject.Image.Image = slotUi.Frame.Image.Image
-			UIAnimationService.PlayAnimation(UI.MoveObject, 0.075, true)
-			UI.MoveObject.Visible = true
-
-			step = RunService.RenderStepped:Connect(function()
-				local mousePosition = UserInputService:GetMouseLocation()
-
-				UI.MoveObject.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
-
-				if UI.Enabled then
-					return
-				end
-
-				step:Disconnect()
-				UIAnimationService.StopAnimation(UI.MoveObject)
-				UI.MoveObject.Visible = false
-			end)
-		end)
-
-		button.MouseButton1Up:Connect(function()
-			UIAnimationService.StopAnimation(UI.MoveObject)
-			UI.MoveObject.Visible = false
-
-			if step then
-				step:Disconnect()
-			end
-
-			if not originalSlot then
-				return
-			end
-
-			if not Inventory:CombineSlots(originalSlot.Name, slotUi.Name) then
-				Inventory:ChangeSlot(originalSlot.Name, slotUi.Name)
-			end
-
-			refreshGui()
-		end)
-
-		button.InputBegan:Connect(function(input)
-			if acts:checkAct("Reloading") then
-				return
-			end
-
-			if input.KeyCode == Enum.KeyCode.Q then
-				Inventory:DropItem(slotUi.ItemName.Text)
-			end
-
-			if input.KeyCode == Enum.KeyCode.Return then
-				useItem(slotUi)
-			end
-
-			refreshGui()
-		end)
+		connectSlotButton(slotUi)
 	end
 end
 
@@ -759,8 +1002,12 @@ function Inventory.OpenInventory()
 
 	Inventory.InventoryInteract:Enable()
 
-	camera.followViewDistance.current = 1
+	if not acts:checkAct("InDialogue") then
+		camera.followViewDistance.current = 1
+	end
+
 	util.PlaySound(sounds.InventoryOpen)
+	sounds.InventoryAmbience:Play()
 
 	acts:createAct("InventoryOpening")
 	Inventory.InventoryOpen = true
@@ -768,7 +1015,7 @@ function Inventory.OpenInventory()
 	local ti = TweenInfo.new(0.25)
 	local ti_0 = TweenInfo.new(0.75, Enum.EasingStyle.Quint)
 
-	refreshGui()
+	refreshGui(true)
 
 	UI.Inventory.Size = UDim2.fromScale(0.925, 0.925)
 	UI.Inventory.Visible = false
@@ -777,7 +1024,7 @@ function Inventory.OpenInventory()
 	util.tween(Lighting.InventoryBlur, ti, { Size = 18 })
 
 	--task.wait(0.2)
-	util.tween(UI.Inventory, ti_0, { Size = UDim2.fromScale(1, 1) })
+	util.tween(UI.Inventory, ti_0, { Size = UDim2.fromScale(0.975, 0.975) })
 	util.flickerUi(UI.Inventory, 0.01, 6)
 
 	acts:removeAct("InventoryOpening")
@@ -794,8 +1041,12 @@ function Inventory.CloseInventory()
 	Inventory.InventoryInteract:Disable()
 	closeNote()
 
-	camera.followViewDistance.current = camera.followViewDistance.default
+	if not acts:checkAct("InDialogue") then
+		camera.followViewDistance.current = camera.followViewDistance.default
+	end
+
 	util.PlaySound(sounds.InventoryClose)
+	sounds.InventoryAmbience:Stop()
 
 	local ti = TweenInfo.new(0.5)
 
@@ -807,6 +1058,15 @@ function Inventory.CloseInventory()
 
 	Inventory.InventoryOpen = false
 	Inventory.InvetoryToggled:Fire(false)
+
+	closeOptionsMenu()
+
+	if holdingObject.Connection then
+		holdingObject.Connection:Disconnect()
+	end
+
+	holdingObject = {}
+	UI.MoveObject.Visible = false
 end
 
 local function noteNavigationInput(state, input)
@@ -827,8 +1087,16 @@ local function noteNavigationInput(state, input)
 	end
 end
 
-local function toggleInventoryKey(state)
+local function toggleInventoryKey(state, input)
 	if state ~= Enum.UserInputState.Begin or acts:checkAct("InventoryOpening") then
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.ButtonB then
+		if not Inventory.InventoryOpen then
+			return
+		end
+		Inventory.CloseInventory()
 		return
 	end
 
@@ -846,10 +1114,13 @@ local function inventoryInteract(state, input)
 
 	if input.KeyCode == Enum.KeyCode.ButtonB then
 		Inventory:DropItem(GuiService.SelectedObject.Parent.Name)
+		refreshGui()
+		closeOptionsMenu()
 	end
 
 	if input.KeyCode == Enum.KeyCode.ButtonX then
 		useItem(GuiService.SelectedObject.Parent)
+		closeOptionsMenu()
 	end
 
 	if acts:checkAct("Reloading") then
@@ -873,6 +1144,7 @@ local function pumpHealthStatus()
 	healthDisplay.ImageTransparency = 0
 	util.tween(healthDisplay, ti, { ImageTransparency = 0.5 })
 end
+
 local function updatePlayerStatus()
 	local character = player.Character
 	if not character or not Inventory.InventoryOpen then
@@ -917,15 +1189,16 @@ function Inventory.Init()
 		Enum.KeyCode.DPadLeft,
 		Enum.KeyCode.DPadRight
 	)
-	Inventory.InventoryInteract = globalInputService.CreateNewInput(
-		"InventoryInteraction",
-		inventoryInteract,
-		Enum.KeyCode.ButtonB,
-		Enum.KeyCode.ButtonX
-	)
+	Inventory.InventoryInteract =
+		globalInputService.CreateNewInput("InventoryInteraction", inventoryInteract, Enum.KeyCode.ButtonX)
 
-	Inventory.ToggleInventoryInput =
-		globalInputService.CreateNewInput("ToggleInventory", toggleInventoryKey, Enum.KeyCode.E, Enum.KeyCode.ButtonY)
+	Inventory.ToggleInventoryInput = globalInputService.CreateNewInput(
+		"ToggleInventory",
+		toggleInventoryKey,
+		Enum.KeyCode.E,
+		Enum.KeyCode.ButtonY,
+		Enum.KeyCode.ButtonB
+	)
 
 	Inventory.InventoryInteract:Disable()
 	Inventory.noteNavigation:Disable()
@@ -934,6 +1207,7 @@ function Inventory.Init()
 	initGui()
 end
 
+--// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus
 UserInputService.InputBegan:Connect(updatePrompts)
 RunService.Heartbeat:Connect(updatePlayerStatus)

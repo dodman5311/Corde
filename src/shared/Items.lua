@@ -28,45 +28,50 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://74163431732494",
 		Use = "EquipWeapon",
+
+		CanArchive = true,
 	},
 
-	AK_74 = {
-		Name = "AK-74",
-		Desc = "Heavy Assault Rifle",
+	SGM600 = {
+		Name = "SGM-600",
+		Desc = "Heavy Battle Rifle designed to combat UAE's. Fires 2 rounds each shot.", -- unidentified anomalous entities
 		Value = {
 			Type = 1,
-			RateOfFire = 600,
-			FireSound = "rbxassetid://799916696",
-			Volume = 1,
-			ReloadSound = "rbxassetid://6669540958",
-			ReloadTime = 3.5,
+			RateOfFire = 420,
+			FireSound = "rbxassetid://113459455743841",
+			Volume = 1.25,
+			ReloadSound = "rbxassetid://75178331995986",
+			ReloadTime = 3,
 			Damage = 20,
-			BulletCount = 1,
+			UseAmmoForBulletCount = true,
+			BulletCount = 2,
 			CurrentMag = nil,
-			FireMode = 2,
-			Spread = 7,
-			StoppingPower = 0.3,
+			FireMode = 1,
+			Spread = 2,
+			StoppingPower = 0.75,
 
-			Recoil = 65,
+			Recoil = 70,
 			DisplayImage = "rbxassetid://133886120497836",
 		},
 		InUse = false,
 		Icon = "",
 		Use = "EquipWeapon",
+
+		CanArchive = true,
 	},
 
 	Mag_Rag = {
 		Name = "Mag-Rag™ 12",
-		Desc = "Mag fed shotgun.",
+		Desc = "Magazine fed shotgun.",
 		Value = {
 			Type = 3,
-			RateOfFire = 80,
+			RateOfFire = 100,
 			FireSound = "rbxassetid://115097223835358",
 			Volume = 2.5,
 			ReloadSound = "rbxassetid://6669540958",
 			ReloadTime = 3.5,
-			Damage = 8,
-			BulletCount = 8,
+			Damage = 11,
+			BulletCount = 6,
 			CurrentMag = nil,
 			FireMode = 1,
 			Spread = 18,
@@ -78,6 +83,8 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://109720113275520",
 		Use = "EquipWeapon",
+
+		CanArchive = true,
 	},
 
 	M45A1 = {
@@ -86,8 +93,8 @@ Items = {
 		Value = {
 			Type = 2,
 			RateOfFire = 400,
-			FireSound = "rbxassetid://5108454724",
-			Volume = 0.25,
+			FireSound = "rbxassetid://4527561460",
+			Volume = 0.75,
 			ReloadSound = "rbxassetid://8989486210",
 			ReloadTime = 2,
 			Damage = 15,
@@ -103,19 +110,21 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://94406546559401",
 		Use = "EquipWeapon",
+
+		CanArchive = true,
 	},
 
-	Bull = {
-		Name = "Bull",
-		Desc = "A bullpup 45. Caliber Pistol, designed for CQB.",
+	CP_45 = {
+		Name = "CP-32",
+		Desc = "A bullpup pistol, designed for CQB against armored aponents.",
 		Value = {
 			Type = 2,
 			RateOfFire = 325,
-			FireSound = "rbxassetid://4527561460",
-			Volume = 0.75,
+			FireSound = "rbxassetid://77759027041140",
+			Volume = 1,
 			ReloadSound = "rbxassetid://75533251991749",
 			ReloadTime = 2.4,
-			Damage = 22,
+			Damage = 30,
 			BulletCount = 1,
 			CurrentMag = nil,
 			FireMode = 1,
@@ -128,6 +137,8 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://96910840102644",
 		Use = "EquipWeapon",
+
+		CanArchive = true,
 	},
 
 	--// Ammo
@@ -203,8 +214,8 @@ Items = {
 		Name = "Cat Food",
 		Desc = [[Canned, wet, cat food.
 		
-+10 Hunger
-+5 Health]],
+<b>+10 Hunger</b>
+<b>+5 Health</b>]],
 		Value = {
 			Hunger = 10,
 			Health = 5,
@@ -212,6 +223,151 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://125543981396297",
 		Use = "Eat",
+	},
+
+	Can_Of_Nuts = {
+		Name = "Can of Nuts",
+		Desc = [[Can of assorted nuts.
+		
+<b>+8 Hunger</b>]],
+		Value = {
+			Hunger = 8,
+		},
+		InUse = false,
+		Icon = "rbxassetid://125543981396297",
+		Use = "Eat",
+	},
+
+	Spam = {
+		Name = "Spam",
+		Desc = [[Canned pork product.
+		
+<b>+20 Hunger</b>
+<b>+5 Health</b>]],
+		Value = {
+			Hunger = 20,
+			Health = 5,
+		},
+		InUse = false,
+		Icon = "rbxassetid://125543981396297",
+		Use = "Eat",
+	},
+
+	Stemc = {
+		Name = "S.T.E.M.C",
+		Desc = [[<b>S</b>tem
+<b>T</b>herapy &
+<b>E</b>lectro
+<b>M</b>echanical
+<b>C</b>orrection
+
+<b>+20 Health</b>]],
+		Value = {
+			Health = 20,
+		},
+		InUse = false,
+		Icon = "rbxassetid://106365304733869",
+		Use = "Heal",
+		CombineData = {
+			["S.T.E.M.C"] = {
+				Action = "RemoveAll",
+				Item = "Stemb",
+				Result = "AddItem",
+			},
+		},
+	},
+
+	StemcInjector = {
+		Name = "S.T.E.M.C Injector",
+		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
+		
+When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% health</b>
+
+<b>+15 Health</b>]],
+		Value = {
+			ActivateValue = 50,
+			Health = 15,
+		},
+		InUse = false,
+		Icon = "rbxassetid://107682922166577",
+		Use = "EquipStem",
+		CombineData = {},
+	},
+
+	Stemb = {
+		Name = "S.T.E.M.B",
+		Desc = [[<b>S</b>.T.E.M.C. 
+<b>T</b>atcial
+<b>E</b>dition for
+<b>M</b>ilitary
+<b>B</b>iomechanics
+
+<b>+45 Health</b>]],
+		Value = {
+			Health = 45,
+		},
+		InUse = false,
+		Icon = "rbxassetid://98624220766754",
+		Use = "Heal",
+
+		CombineData = {
+			["S.T.E.M.B"] = {
+				Action = "RemoveAll",
+				Item = "Stema",
+				Result = "AddItem",
+			},
+		},
+	},
+
+	StembInjector = {
+		Name = "S.T.E.M.B Injector",
+		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
+		
+When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% health</b>
+
+<b>+35 Health</b>]],
+		Value = {
+			ActivateValue = 25,
+			Health = 35,
+		},
+		InUse = false,
+		Icon = "rbxassetid://107682922166577",
+		Use = "EquipStem",
+		CombineData = {},
+	},
+
+	Stema = {
+		Name = "S.T.E.M.A",
+		Desc = [[<b>S</b>.T.E.M.B, 
+<b>T</b>echnology with
+<b>E</b>xperimental
+<b>M</b>edical
+<b>A</b>dvancements
+
+<b>+100 Health</b>]],
+		Value = {
+			Health = 100,
+		},
+		InUse = false,
+		Icon = "rbxassetid://78681397230063",
+		Use = "Heal",
+	},
+
+	StemaInjector = {
+		Name = "S.T.E.M.A Injector",
+		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
+		
+When equipped, will use the loaded S.T.E.M.A automatically <b>just before death</b>
+
+<b>+85 Health</b>]],
+		Value = {
+			ActivateValue = 0,
+			Health = 85,
+		},
+		InUse = false,
+		Icon = "rbxassetid://107682922166577",
+		Use = "EquipStem",
+		CombineData = {},
 	},
 
 	--// Keys
@@ -222,6 +378,7 @@ Items = {
 		Icon = "rbxassetid://122322561802092",
 		Use = nil,
 		InUse = false,
+		CanArchive = true,
 	},
 
 	Screwdriver = {
@@ -231,6 +388,7 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://138234409072848",
 		Use = nil,
+		CanArchive = true,
 	},
 
 	Armory_Key = {
@@ -240,6 +398,7 @@ Items = {
 		Icon = "rbxassetid://77384355406607",
 		Use = nil,
 		InUse = false,
+		CanArchive = true,
 	},
 
 	Room_103_Key = {
@@ -249,6 +408,7 @@ Items = {
 		Icon = "rbxassetid://77384355406607",
 		Use = nil,
 		InUse = false,
+		CanArchive = true,
 	},
 
 	Console_Key = {
@@ -258,18 +418,20 @@ Items = {
 		Icon = "rbxassetid://77384355406607",
 		Use = nil,
 		InUse = false,
+		CanArchive = true,
 	},
 
 	--// Tools
-	LoadedInjector = {
-		Name = "Loaded Module Injector",
-		Desc = [[A device used to install Bio Modules. 
-(N.E.T Module)]],
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = "InstallNet",
-	},
+	-- 	LoadedInjector = {
+	-- 		Name = "Loaded Module Injector",
+	-- 		Desc = [[A device used to install Bio Modules.
+	-- (N.E.T Module)]],
+	-- 		Value = nil,
+	-- 		InUse = false,
+	-- 		Icon = "rbxassetid://107682922166577",
+	-- 		Use = "InstallNet",
+	-- 		CanArchive = true,
+	-- 	},
 
 	Flashlight = {
 		Name = "Flashlight",
@@ -278,16 +440,18 @@ Items = {
 		InUse = false,
 		Icon = "rbxassetid://125778243412139",
 		Use = "ToggleFlashlight",
+		CanArchive = true,
 	},
 
 	--// Notes
 	PersonalNote = {
 		Name = "Personal Note",
 		Desc = "A small scuffed note.",
-		Value = { Message = require(notes.PersonalNote), Image = "rbxassetid://133550222984676" },
+		Value = { Message = require(notes.PersonalNote), Image = "rbxassetid://126027788326937" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
+		CanArchive = true,
 	},
 
 	RationsPoster = {
@@ -299,31 +463,53 @@ Items = {
 		InUse = false,
 	},
 
+	MysteriousJournal = {
+		Name = "Journal",
+		Desc = "A journal.",
+		Value = { Message = require(notes.RationsPoster), Image = "rbxassetid://111890673888434" },
+		Icon = "rbxassetid://82487541380359",
+		Use = "Read",
+		InUse = false,
+	},
+
 	--// Misc
 	NetModule = {
 		Name = "N.E.T Module",
-		Desc = [[Neural 
-Extention 
-Transmitter. 
+		Desc = [[<b>N</b>eural 
+<b>E</b>xtention 
+<b>T</b>ransmitter. 
 
 A Bio Module that connects the user to nearby devices.]],
 		Value = nil,
 		InUse = false,
 		Icon = "rbxassetid://110962933996937",
-		Use = nil,
+		Use = "InstallNet",
+		CanArchive = true,
 	},
 
 	Injector = {
-		Name = "Module Injector",
-		Desc = "A device used to install Bio Modules.",
+		Name = "S.T.E.M Injector",
+		Desc = "Assists with the injection S.T.E.Ms for quicker application. <b>Unloaded</b>",
 		Value = nil,
 		InUse = false,
 		Icon = "rbxassetid://107682922166577",
 		Use = nil,
 		CombineData = {
-			["N.E.T Module"] = {
+			["S.T.E.M.C"] = {
 				Action = "RemoveAll",
-				Item = "LoadedInjector",
+				Item = "StemcInjector",
+				Result = "AddItem",
+			},
+
+			["S.T.E.M.B"] = {
+				Action = "RemoveAll",
+				Item = "StembInjector",
+				Result = "AddItem",
+			},
+
+			["S.T.E.M.A"] = {
+				Action = "RemoveAll",
+				Item = "StemaInjector",
 				Result = "AddItem",
 			},
 		},
@@ -343,6 +529,7 @@ A Bio Module that connects the user to nearby devices.]],
 				Action = "AddItem",
 			},
 		},
+		CanArchive = true,
 	},
 }
 

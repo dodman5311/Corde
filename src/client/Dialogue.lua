@@ -22,6 +22,7 @@ local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local sequences = require(client.Sequences)
 local signal = require(ReplicatedStorage.Packages.Signal)
+local items = require(ReplicatedStorage.Shared.Items)
 
 local currentNpcModule
 local currentNpc
@@ -77,8 +78,24 @@ local actionsFunctions = {
 		inventory:AddItem(currentNpcModule.ObjectToGive)
 	end,
 
+	PlaySound = function(parameters)
+		util.PlaySound(sounds[parameters[1]])
+	end,
+
 	RemoveItem = function(parameters)
 		return inventory:RemoveItem(parameters[1])
+	end,
+
+	AddItem = function(parameters)
+		inventory:AddItem(items[parameters[1]])
+	end,
+
+	DisableInteract = function()
+		if not currentNpc then
+			return
+		end
+
+		currentNpc:RemoveTag("Interactable")
 	end,
 
 	CheckForItem = function(parameters)

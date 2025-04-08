@@ -89,6 +89,12 @@ local function setGamepadType(lastInput)
 end
 
 local function setInputType(lastInput)
+	if lastInput.KeyCode == Enum.KeyCode.Thumbstick1 or lastInput.KeyCode == Enum.KeyCode.Thumbstick2 then
+		if lastInput.Position.Magnitude < 0.25 then
+			return
+		end
+	end
+
 	if lastInput.KeyCode == Enum.UserInputType.Touch then
 		module.inputType = "Mobile"
 		return

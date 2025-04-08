@@ -75,10 +75,10 @@ local function checkSightLine(npc, target, maxSightAngle)
 	return not workspace:Raycast(position, targetPosition - position, rp)
 end
 
-local function checkEarshot(npc, target, distance)
-	for sound: Sound, playing in pairs(util.PlayingSounds) do
-		if distance <= sound.RollOffMaxDistance and playing and checkSightLine(npc, target, 400) then
-			return true
+local function checkEarshot(npc, distance)
+	for sound: Sound, object in pairs(util.PlayingSounds) do
+		if distance <= sound.RollOffMaxDistance and object and checkSightLine(npc, object, 400) then
+			return object
 		end
 	end
 end
@@ -346,8 +346,8 @@ module.actions = {
 		local deathSound = util.getRandomChild(deathSoundList)
 		local bloodSound = util.getRandomChild(sounds.Blood)
 
-		util.PlaySound(deathSound, script, 0.05, 0.2)
-		util.PlaySound(bloodSound, script, 0.15)
+		util.PlaySound(deathSound, nil, 0.05, 0.2)
+		util.PlaySound(bloodSound, nil, 0.15)
 	end,
 
 	SearchForTarget = function(npc: Npc, maxDistance: number, maxSightAngle: number?)
@@ -360,13 +360,12 @@ module.actions = {
 
 		if
 			npc:GetState() == "Dead"
-			or not target
-			or not checkEarshot(npc, target, distance)
-				and (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle))
+			or not target and (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle))
 		then
 			target = nil
 		end
 
+		target = checkEarshot(npc, distance)
 		npc.MindTarget.Value = target
 
 		if target ~= nil then
@@ -529,7 +528,7 @@ RunService.Heartbeat:Connect(function()
 			heartbeatFunction()
 		end
 
-		if npc:GetTarget() then
+		if npc:GetTarget() == Players.LocalPlayer.Character then
 			inCombat = true
 		end
 	end

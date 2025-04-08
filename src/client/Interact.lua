@@ -19,6 +19,7 @@ local sounds = assets.Sounds
 local camera = workspace.CurrentCamera
 
 local cursorUi
+local objectPlacedAt
 
 local Client = player.PlayerScripts.Client
 local uiAnimationService = require(Client.UIAnimationService)
@@ -51,6 +52,9 @@ local function checkSightline(object: Instance): boolean
 	local characterPosition = character:GetPivot().Position
 	local objectPosition = object:GetPivot().Position
 
+	characterPosition = Vector3.new(characterPosition.X, 4, characterPosition.Z)
+	objectPosition = Vector3.new(objectPosition.X, 4, objectPosition.Z)
+
 	local rp = RaycastParams.new()
 	rp.FilterDescendantsInstances = { character, object }
 
@@ -77,6 +81,26 @@ function module:GetMouseHit()
 	module.MouseHitLocation = raycast.Position
 
 	return module.MouseHitLocation, module.MouseHit
+end
+
+local function updateRadialProgress(cursor: Frame, progress: number)
+	local left = cursor.RemoveDelayLeft
+	local right = cursor.RemoveDelayRight
+
+	local fullRotation = progress * 360
+
+	left.Image.UIGradient.Rotation = math.clamp(fullRotation, 0, 180)
+	right.Image.UIGradient.Rotation = math.clamp(fullRotation, 180, 360) - 180
+end
+
+local function hideRadial(cursor)
+	cursor.RemoveDelayLeft.Visible = false
+	cursor.RemoveDelayRight.Visible = false
+end
+
+local function showRadial(cursor)
+	cursor.RemoveDelayLeft.Visible = true
+	cursor.RemoveDelayRight.Visible = true
 end
 
 local function showInteract(object, cursor)
@@ -166,16 +190,26 @@ local function checkMouseTargetInteractable(value)
 		return
 	end
 
-	local interactUi = cursorUi.Cursor.Interact
-	local interestUi = cursorUi.Cursor.Interest
+	local cursorFrame = cursorUi.Cursor
+	local interactUi = cursorFrame.Interact
+	local interestUi = cursorFrame.Interest
 
 	if value and value:HasTag("Interactable") and checkSightline(value) then
+		objectPlacedAt = value:GetAttribute("DroppedAt")
+
+		if objectPlacedAt then
+			showRadial(cursorFrame)
+		end
+
 		if value:HasTag("Interest") then
 			showInterest(interestUi)
 		else
 			showInteract(value, interactUi)
 		end
 	else
+		objectPlacedAt = nil
+
+		hideRadial(cursorFrame)
 		hideInteract(interactUi)
 		hideInterest(interestUi)
 	end
@@ -219,7 +253,7 @@ local function attemptInteract(object: Instance)
 
 		local key = object:GetAttribute("Key")
 		if key and (key == "" or inventory:RemoveItem(key)) then
-			util.PlaySound(sounds.Unlock)
+			util.PlaySound(sounds.Unlock, object)
 			object:SetAttribute("Locked", false)
 
 			showInteract(object, cursorUi.Cursor.Interact)
@@ -229,13 +263,13 @@ local function attemptInteract(object: Instance)
 		util.PlaySound(sounds.Locked)
 		showLocked(cursorUi.Cursor.Interact)
 	else
-		util.PlaySound(sounds.Interacting, script, 0.05, 0.5)
+		util.PlaySound(sounds.Interacting, player.Character, 0.05, 0.5)
 		runTimer("Interacting", 0.5, module.UseObject, object)
 	end
 end
 
 local function pickupContainer()
-	util.PlaySound(sounds.Collecting, script, 0.05, 0.5)
+	util.PlaySound(sounds.Collecting, player.Character, 0.05, 0.5)
 	runTimer("Collecting", 0.5, function()
 		inventory:pickupFromContainer(mouseTarget.Value)
 	end)
@@ -278,6 +312,15 @@ local function processCrosshair()
 		mouseTarget.Value = nil
 	else
 		mouseTarget.Value = target and (target:FindFirstAncestorOfClass("Model") or target)
+
+		if objectPlacedAt then
+			print(
+				os.clock() - objectPlacedAt,
+				inventory.DROPPED_ITEM_LIFETIME,
+				(os.clock() - objectPlacedAt) / inventory.DROPPED_ITEM_LIFETIME
+			)
+			updateRadialProgress(cursorUi.Cursor, (os.clock() - objectPlacedAt) / inventory.DROPPED_ITEM_LIFETIME)
+		end
 	end
 end
 

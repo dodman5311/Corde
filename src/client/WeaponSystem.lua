@@ -129,7 +129,7 @@ function module.toggleHolstered(value)
 		showWeapon(currentWeapon.Value.Type)
 
 		globalInputService.inputs.ToggleFire:Enable()
-		util.PlaySound(sounds.Unholster, script, 0.075)
+		util.PlaySound(sounds.Unholster, character, 0.075)
 
 		acts:createTempAct("Holstering", function()
 			task.wait(0.2)
@@ -138,7 +138,7 @@ function module.toggleHolstered(value)
 		showWeapon(0)
 
 		globalInputService.inputs.ToggleFire:Disable()
-		util.PlaySound(sounds.Holster, script, 0.075)
+		util.PlaySound(sounds.Holster, character, 0.075)
 
 		acts:createTempAct("Holstering", function()
 			task.wait(0.1)
@@ -169,8 +169,6 @@ function module.unequipWeapon()
 
 	currentWeapon = nil
 	acts:removeAct("Firing")
-
-	--util.PlaySound(sounds.GunEquip, script, 0.15)
 end
 
 function module.equipWeapon(weapon)
@@ -204,7 +202,7 @@ function module.equipWeapon(weapon)
 		weaponData.CurrentMag.InUse = true
 	end
 
-	util.PlaySound(sounds.GunEquip, script, 0.15)
+	util.PlaySound(sounds.GunEquip, character, 0.15)
 end
 
 local function processCrosshair()
@@ -247,7 +245,15 @@ local function useAmmo()
 		return
 	end
 
-	weaponData.CurrentMag.Value -= 1
+	local logBulletCount = weaponData.BulletCount
+	if weaponData.UseAmmoForBulletCount then
+		weaponData.BulletCount = math.clamp(logBulletCount, 0, weaponData.CurrentMag.Value)
+		task.defer(function()
+			weaponData.BulletCount = logBulletCount
+		end)
+	end
+
+	weaponData.CurrentMag.Value -= weaponData.UseAmmoForBulletCount and weaponData.BulletCount or 1
 
 	return true
 end
@@ -296,7 +302,7 @@ local function unload()
 		weaponData.CurrentMag = nil
 	end
 
-	util.PlaySound(sounds.Unload, script, 0.1)
+	util.PlaySound(sounds.Unload, nil, 0.1)
 end
 
 local function reload(itemToUse)
@@ -322,7 +328,7 @@ local function reload(itemToUse)
 
 	acts:createAct("Reloading", "Interacting")
 
-	util.PlaySound(reloadSound)
+	util.PlaySound(reloadSound, player.Character)
 
 	local frames = 24
 	if currentWeapon.Value.Type == 2 then
@@ -480,7 +486,7 @@ local function fireWeapon(input)
 		torso.UI.Reload.Visible = true
 	end)
 
-	util.PlaySound(fireSound, script, 0.1)
+	util.PlaySound(fireSound, player.Character, 0.1)
 
 	torso.Muzzle.Flash.Enabled = true
 	task.delay(0.04, function()
@@ -585,7 +591,7 @@ function module.fireKeyToggle(state, input)
 		end
 
 		if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
-			util.PlaySound(sounds.GunClick)
+			util.PlaySound(sounds.GunClick, player.Character)
 		end
 	elseif state == Enum.UserInputState.End then
 		fireKeyDown = false

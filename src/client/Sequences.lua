@@ -203,7 +203,7 @@ function module.keyhole(object: Model)
 
 	for _ = 1, 3 do
 		task.wait(1.25)
-		util.PlaySound(sequenceSounds.MetalBang, script, 0.25)
+		util.PlaySound(sequenceSounds.MetalBang, nil, 0.25)
 	end
 
 	task.wait(1)
@@ -225,27 +225,27 @@ function module.noMercy()
 
 	task.wait(3)
 
-	util.PlaySound(sequenceSounds.Distortion_0, script, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(2)
 
-	util.PlaySound(sequenceSounds.Distortion_0, script, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(1)
 
-	util.PlaySound(sequenceSounds.Distortion_0, script, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(0.25)
-	util.PlaySound(sequenceSounds.Distortion_0, script, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false

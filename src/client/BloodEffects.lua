@@ -1,15 +1,10 @@
 local module = {}
 --// Services
 local REPLICATED_STORAGE = game:GetService("ReplicatedStorage")
-local SERVER_STORAGE = game:GetService("ServerStorage")
-local RUN_SERVICE = game:GetService("RunService")
-local PLAYERS = game:GetService("Players")
-local DEBRIS = game:GetService("Debris")
 
 --// Instances
 local assets = REPLICATED_STORAGE.Assets
 
-local player = PLAYERS.LocalPlayer
 local goreEffects = assets.GoreEffects
 
 local map = workspace.Map

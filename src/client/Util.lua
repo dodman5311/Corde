@@ -352,14 +352,14 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, parent: Instance?, range: number?, stopTime: number?)
+function util.PlaySound(sound: Sound, playOverObject: Instance?, range: number?, stopTime: number?)
 	if not sound then
 		return
 	end
 
 	local soundClone = sound:Clone()
 	--soundClone.Name = "SoundPlaying"
-	soundClone.Parent = parent or script
+	soundClone.Parent = script
 	if range then
 		soundClone.PlaybackSpeed += rng:NextNumber(-range, range)
 	end
@@ -367,7 +367,7 @@ function util.PlaySound(sound: Sound, parent: Instance?, range: number?, stopTim
 	soundClone:Play()
 
 	if soundClone.SoundGroup == SoundService.SoundEffects then
-		util.PlayingSounds[soundClone] = true
+		util.PlayingSounds[soundClone] = playOverObject
 	end
 
 	if stopTime then

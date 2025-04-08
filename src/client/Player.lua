@@ -47,6 +47,7 @@ HUD.Parent = player.PlayerGui
 local cursor = gui.Cursor
 cursor.Parent = player.PlayerGui
 
+local currentStimEquipped
 local logHealth = 0
 local logLv = Vector3.zero
 local logMousePos = Vector3.zero
@@ -66,6 +67,25 @@ local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
 local WALK_SPEED = 2.75
 local SPRINT_SPEED = 3.75
+
+local function checkEquippedStem(healthPercent: number)
+	if not healthPercent then
+		return
+	end
+
+	healthPercent *= 100
+
+	if not currentStimEquipped or not currentStimEquipped.InUse then
+		return
+	end
+
+	if healthPercent > currentStimEquipped.Value.ActivateValue then
+		return
+	end
+
+	currentStimEquipped.InUse = false
+	module.ConsumeItem(currentStimEquipped, "Heal")
+end
 
 local function playerDamaged(character, healthPercent)
 	local damageUi = HUD.DamageEffects
@@ -88,9 +108,9 @@ local function playerDamaged(character, healthPercent)
 		damageSoundFolder = sounds.DamageSounds.LowHealth
 	end
 
-	util.PlaySound(util.getRandomChild(sounds.Pain))
-	util.PlaySound(util.getRandomChild(sounds.Blood), script, 0.1).Volume = invertedHealthPercent
-	util.PlaySound(util.getRandomChild(damageSoundFolder), script, 0.1)
+	util.PlaySound(util.getRandomChild(sounds.Pain), character)
+	util.PlaySound(util.getRandomChild(sounds.Blood), character, 0.1).Volume = invertedHealthPercent
+	util.PlaySound(util.getRandomChild(damageSoundFolder), character, 0.1)
 
 	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(invertedHealthPercent * 10, 25, 0, timeScale / 1.5)
 	damageShakeInstance.PositionInfluence = Vector3.one * 0.5
@@ -125,6 +145,66 @@ local function playerDamaged(character, healthPercent)
 	if not character.Parent then
 		return
 	end
+
+	checkEquippedStem(healthPercent)
+end
+
+local function playerHealed(character, healthPercent)
+	if not character.Parent then
+		return
+	end
+
+	local healUi = HUD.HealEffect
+	local damageUi = HUD.DamageEffects
+
+	local ti = TweenInfo.new(0.1)
+	local ti_0 = TweenInfo.new(2, Enum.EasingStyle.Quart)
+	local ti2 = TweenInfo.new(3, Enum.EasingStyle.Quart)
+
+	util.tween(healUi, ti, { ImageTransparency = 0 }, false, function()
+		util.tween(healUi, ti_0, { ImageTransparency = 1 })
+	end)
+
+	util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = healthPercent + 0.5 })
+	util.tween(sounds.Heartbeat, ti2, { Volume = 0 })
+end
+
+local function placePlayerBody(character)
+	local newBody = models.DeadNpc:Clone()
+	newBody.Parent = workspace
+	newBody:PivotTo(character:GetPivot())
+
+	local body: Part = newBody.Body
+	body.AssemblyLinearVelocity = body.CFrame.LookVector * -50
+
+	local deathSound = util.getRandomChild(sounds.Female_Death)
+	local bloodSound = util.getRandomChild(sounds.Blood)
+
+	util.PlaySound(deathSound, character, 0.05, 0.2)
+	util.PlaySound(bloodSound, character, 0.15)
+end
+
+local function playerDied(character)
+	if currentStimEquipped and currentStimEquipped.Value.ActivateValue == 0 then
+		return
+	end
+
+	character:SetAttribute("Health", 0)
+
+	module.toggleSprint(false)
+	placePlayerBody(character)
+
+	player.Character = nil
+	sounds.Steps:Stop()
+	character:Destroy()
+end
+
+local function getHealthPercentage(character)
+	if not character then
+		return
+	end
+
+	return character:GetAttribute("Health") / character:GetAttribute("MaxHealth")
 end
 
 function module.spawnCharacter()
@@ -137,19 +217,20 @@ function module.spawnCharacter()
 	logHealth = character:GetAttribute("Health")
 
 	character:GetAttributeChangedSignal("Health"):Connect(function()
-		if character:GetAttribute("Health") <= 0 then
-			character:SetAttribute("Health", 0)
-
-			module.toggleSprint(false)
-			player.Character = nil
-			character:Destroy()
+		local health = character:GetAttribute("Health")
+		if health <= 0 then
+			playerDied(character)
 		end
+
+		local healthPercent = getHealthPercentage(character)
 
 		if character:GetAttribute("Health") < logHealth then
-			playerDamaged(character, character:GetAttribute("Health") / character:GetAttribute("MaxHealth"))
+			playerDamaged(character, healthPercent)
+		elseif character:GetAttribute("Health") > logHealth then
+			playerHealed(character, healthPercent)
 		end
 
-		logHealth = character:GetAttribute("Health")
+		logHealth = health
 	end)
 
 	return character
@@ -168,22 +249,42 @@ function module:ChangePlayerHealth(amount: number, changeType: "Set" | "Add" | "
 	elseif changeType == "Subtract" then
 		player.Character:SetAttribute("Health", math.clamp(currentHealth - amount, 0, maxHealth))
 	end
+
 	return player.Character:GetAttribute("Health")
 end
 
 function module:DamagePlayer(damage: number, damageType: string)
+	if player:GetAttribute("GodMode") then
+		return
+	end
+
 	if player.Character:GetAttribute("Hunger") <= 0 then
 		damage *= 2
 	end
 
 	self:ChangePlayerHealth(damage, "Subtract")
-
-	player.Character:SetAttribute("Health", player.Character:GetAttribute("Health") - damage)
 	player.Character:SetAttribute("LastDamageType", damageType)
 end
 
 function module:EnableHacking()
 	hacking.HasNet = true
+end
+
+function module.ConsumeItem(item, use)
+	if not player.Character then
+		return
+	end
+
+	if item.Value.Hunger then
+		player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value.Hunger)
+	end
+
+	if item.Value.Health then
+		module:ChangePlayerHealth(item.Value.Health, "Add")
+	end
+
+	util.PlaySound(sounds[use], nil, 0.15)
+	inventory:RemoveItem(item.Name)
 end
 
 local function updateCursorUi(cursorLocation)
@@ -301,7 +402,7 @@ local function updatePlayerDirection()
 
 	local difference = (logLv - character:GetPivot().LookVector).Magnitude
 	if difference >= 0.3 then
-		util.PlaySound(util.getRandomChild(sounds.Movement), script, 0.1)
+		util.PlaySound(util.getRandomChild(sounds.Movement), character, 0.1)
 	end
 
 	logPlayerDirection = yOrientation
@@ -522,21 +623,10 @@ RunService.Heartbeat:Connect(function()
 	lastHeartbeat = os.clock()
 end)
 
-local function eatItem(item, slot)
-	player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value.Hunger)
-	module:ChangePlayerHealth(item.Value.Health, "Add")
-	util.PlaySound(sounds.Eat, script, 0.15)
-	inventory[slot] = nil
-end
-
-inventory.ItemUsed:Connect(function(use, item, slot)
-	if not player.Character then
-		return
-	end
-
-	if use == "Eat" then
-		eatItem(item, slot)
-	elseif use == "ToggleFlashlight" then
+local itemFunctions = {
+	Eat = module.ConsumeItem,
+	Heal = module.ConsumeItem,
+	ToggleFlashlight = function(item)
 		item.InUse = not item.InUse
 
 		if item.InUse then
@@ -546,7 +636,37 @@ inventory.ItemUsed:Connect(function(use, item, slot)
 		end
 
 		player.Character:FindFirstChild("Flashlight", true).Enabled = item.InUse
+	end,
+	InstallNet = function(item)
+		if areas.currentArea and areas.currentArea.Name == "MirrorArea" then
+			module:EnableHacking()
+			inventory:RemoveItem(item.Name)
+			sequences:beginSequence("UseInjector")
+		else
+			dialogue:SayFromPlayer("I need a *mirror to use this correctly.")
+		end
+	end,
+	EquipStem = function(item)
+		if currentStimEquipped then
+			currentStimEquipped.InUse = false
+		end
+
+		currentStimEquipped = item
+		currentStimEquipped.InUse = true
+
+		checkEquippedStem(getHealthPercentage(player.Character))
+	end,
+}
+
+inventory.ItemUsed:Connect(function(use, item)
+	if not player.Character then
+		return
 	end
+
+	if not use or not itemFunctions[use] then
+		return
+	end
+	itemFunctions[use](item, use)
 end)
 
 inventory.InvetoryToggled:Connect(function(value)
@@ -569,18 +689,6 @@ weapons.onWeaponToggled:Connect(function(value)
 	uiAnimationService.StopAnimation(character.Legs.UI.Frame)
 
 	updateDirection()
-end)
-
-inventory.ItemUsed:Connect(function(use, item)
-	if use == "InstallNet" then
-		if areas.currentArea.Name == "MirrorArea" then
-			module:EnableHacking()
-			inventory:RemoveItem(item.Name)
-			sequences:beginSequence("UseInjector")
-		else
-			dialogue:SayFromPlayer("I need a *mirror to use this correctly.")
-		end
-	end
 end)
 
 dialogue.DialogueActionSignal:Connect(function(actionName, ...)
