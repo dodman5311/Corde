@@ -23,6 +23,14 @@ local util = require(Client.Util)
 local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
 
+local function changePropertyForTable(list: {}, propertyTable: {})
+	for _, object: Instance in ipairs(list) do
+		for property, value in pairs(propertyTable) do
+			object[property] = value
+		end
+	end
+end
+
 function module:beginSequence(sequenceName, ...)
 	if not module[sequenceName] then
 		warn(sequenceName .. " is not a valid sequence.")
@@ -326,7 +334,98 @@ function module.noMercy()
 	musicService:ReturnToLastTrack()
 end
 
+local function deathScreenUi()
+	local sequenceFrame = loadSequence("DeathScreen")
+	sequenceFrame.Background.Visible = false
+	sequenceFrame.ScreenText.Visible = false
+	sequenceFrame.Visible = true
+
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.04, true)
+
+	local step = RunService.RenderStepped:Connect(function()
+		for _, child in ipairs(sequenceFrame.ScreenText:GetChildren()) do
+			if child.Name == "Main" then
+				child.Position = UDim2.fromOffset(math.random(-1, 1), math.random(-1, 1))
+				continue
+			end
+
+			child.Position = UDim2.fromOffset(math.random(-10, 10), math.random(-10, 10))
+		end
+
+		sequenceFrame.Vax.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
+	end)
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "You feel your bones crush" }
+	)
+	task.wait(3.5)
+
+	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
+	sequenceFrame.Background.Visible = true
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(1.5)
+
+	sequenceFrame.Background.Visible = false
+	sequenceFrame.ScreenText.Visible = false
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.fromRGB(207, 142, 141), Text = "I feel my bones crush" }
+	)
+	task.wait(3.5)
+
+	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
+	sequenceFrame.Background.Visible = true
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(1.5)
+
+	sequenceFrame.Background.Visible = false
+	sequenceFrame.ScreenText.Visible = false
+
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "Witness" })
+	task.wait(3.5)
+
+	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
+	sequenceFrame.Background.Visible = true
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(1)
+	sequenceFrame.ScreenText.Visible = false
+
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Eternity" })
+
+	sequenceFrame.Eye.Visible = true
+	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.1)
+
+	animation:OnFrameRached(8):Once(function()
+		animation:Pause()
+		sequenceFrame.ScreenText.Visible = true
+		sequenceFrame.Eye.Visible = false
+		task.wait(0.25)
+		sequenceFrame.ScreenText.Visible = false
+		sequenceFrame.Eye.Visible = true
+		animation:Resume()
+	end)
+
+	animation.OnEnded:Once(function()
+		sequenceFrame.Eye.Visible = false
+		sequenceFrame.Vax.Visible = true
+		task.wait(1)
+		uiAnimationService.PlayAnimation(sequenceFrame.Vax, 0.04, false, true).OnEnded:Wait()
+		sequenceFrame.Vax.Visible = false
+		--task.wait(1)
+		--sequenceFrame.Visible = false
+
+		step:Disconnect()
+	end)
+end
+
 function module.deathScreen()
+	task.spawn(deathScreenUi)
+
 	local snds = soundsFolder.Death
 	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 14)
 	local ti_2 = TweenInfo.new(4, Enum.EasingStyle.Linear)
@@ -342,7 +441,6 @@ function module.deathScreen()
 	task.wait(1)
 
 	util.PlaySound(snds.SpawnAmb)
-
 	util.tween(util.PlaySound(snds.EtherialVoices), ti, { Volume = 0 })
 
 	task.wait(10)
