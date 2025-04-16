@@ -87,14 +87,7 @@ function NpcService.new(npcName: string): Npc
 		end,
 
 		GetTarget = function(self: Npc)
-			local targetValue = self.Instance:FindFirstChild("Target")
-			if not targetValue then
-				return
-			end
-
-			local target = targetValue.Value
-
-			return target
+			return self.MindTarget.Value or false
 		end,
 
 		GetTimer = function(self: Npc, timerName: string)

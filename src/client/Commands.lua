@@ -33,6 +33,18 @@ local commands = {
 			end,
 		},
 
+		Take_Damage = {
+			Parameters = function()
+				return {
+					{ Name = "Amount", Options = { "_input" } },
+				}
+			end,
+
+			Execute = function(self, Value)
+				require(script.Parent.Player):DamagePlayer(Value, "god")
+			end,
+		},
+
 		Enable_Hacking = {
 			Parameters = function()
 				return {

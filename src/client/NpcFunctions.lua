@@ -48,6 +48,9 @@ local module = {
 	npcs = {},
 }
 local function checkSightLine(npc, target, maxSightAngle)
+	if not target then
+		return
+	end
 	local rp = RaycastParams.new()
 
 	rp.FilterType = Enum.RaycastFilterType.Include

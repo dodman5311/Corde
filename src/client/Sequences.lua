@@ -17,20 +17,19 @@ local UI = gui.Sequences
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
-local world = require(Client.World)
 local uiAnimationService = require(Client.UIAnimationService)
 local acts = require(Client.Acts)
 local util = require(Client.Util)
 local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
 
-function module:beginSequence(sequenceName, object)
+function module:beginSequence(sequenceName, ...)
 	if not module[sequenceName] then
 		warn(sequenceName .. " is not a valid sequence.")
 		return
 	end
 
-	task.spawn(acts.createTempAct, acts, "InSequence", module[sequenceName], nil, object)
+	task.spawn(acts.createTempAct, acts, "InSequence", module[sequenceName], nil, ...)
 end
 
 local function loadSequence(sequence): Frame
@@ -325,6 +324,41 @@ function module.noMercy()
 	sequenceSounds.Ambience_0:Stop()
 
 	musicService:ReturnToLastTrack()
+end
+
+function module.deathScreen()
+	local snds = soundsFolder.Death
+	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 14)
+	local ti_2 = TweenInfo.new(4, Enum.EasingStyle.Linear)
+	local ti_3 = TweenInfo.new(0.25)
+
+	musicService:PlayTrack("Silence")
+	util.tween(soundsFolder.Heartbeat, TweenInfo.new(0.1), { Volume = 0 })
+
+	util.PlaySound(snds.Event)
+	local static = util.PlaySound(snds.Static)
+	util.tween(static, ti, { Volume = 0.05 })
+
+	task.wait(1)
+
+	util.PlaySound(snds.SpawnAmb)
+
+	util.tween(util.PlaySound(snds.EtherialVoices), ti, { Volume = 0 })
+
+	task.wait(10)
+
+	local corde = util.PlaySound(snds.Corde)
+	corde.Volume = 0
+	local breath = util.PlaySound(snds.Breathing)
+	breath.Volume = 0
+
+	util.tween(corde, ti_2, { Volume = 0.5 })
+	util.tween(breath, ti_2, { Volume = 0.5 })
+
+	task.wait(9)
+	util.tween(static, ti_2, { Volume = 0 })
+	util.tween(corde, ti_3, { Volume = 0 })
+	util.tween(breath, ti_3, { Volume = 0 })
 end
 
 return module

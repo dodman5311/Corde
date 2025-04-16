@@ -79,7 +79,7 @@ workspace:GetAttributeChangedSignal("InCombat"):Connect(function()
 	if workspace:GetAttribute("InCombat") then
 		musicService:PlayTrack("SuddenDeath")
 	else
-		print(musicService:ReturnToLastTrack())
+		musicService:ReturnToLastTrack()
 	end
 end)
 

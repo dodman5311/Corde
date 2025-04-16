@@ -4,6 +4,8 @@ local module = {
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 	ThumbstickSnapPower = 0.5,
+
+	Stats = {},
 }
 
 local CollectionService = game:GetService("CollectionService")
@@ -170,7 +172,7 @@ local function playerHealed(character, healthPercent)
 end
 
 local function placePlayerBody(character)
-	local newBody = models.DeadNpc:Clone()
+	local newBody = models.DeadPlayer:Clone()
 	newBody.Parent = workspace
 	newBody:PivotTo(character:GetPivot())
 
@@ -190,9 +192,12 @@ local function playerDied(character)
 	end
 
 	character:SetAttribute("Health", 0)
+	cameraService.followViewDistance.current = 0
 
 	module.toggleSprint(false)
 	placePlayerBody(character)
+
+	sequences:beginSequence("deathScreen")
 
 	player.Character = nil
 	sounds.Steps:Stop()
@@ -218,16 +223,16 @@ function module.spawnCharacter()
 
 	character:GetAttributeChangedSignal("Health"):Connect(function()
 		local health = character:GetAttribute("Health")
-		if health <= 0 then
-			playerDied(character)
-		end
-
 		local healthPercent = getHealthPercentage(character)
 
-		if character:GetAttribute("Health") < logHealth then
+		if health < logHealth then
 			playerDamaged(character, healthPercent)
-		elseif character:GetAttribute("Health") > logHealth then
+		elseif health > logHealth then
 			playerHealed(character, healthPercent)
+		end
+
+		if health <= 0 then
+			playerDied(character)
 		end
 
 		logHealth = health
@@ -561,7 +566,9 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.StartGame() end
+function module.StartGame()
+	cameraService.followViewDistance.current = cameraService.followViewDistance.default
+end
 
 function module.Init()
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)

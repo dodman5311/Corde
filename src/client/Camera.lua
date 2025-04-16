@@ -65,7 +65,7 @@ function module.Init()
 end
 
 RunService:BindToRenderStep("RunCamera", Enum.RenderPriority.Camera.Value, function()
-	local character = player.Character
+	local character = player.Character or workspace:FindFirstChild("DeadPlayer")
 	if not character then
 		return
 	end
