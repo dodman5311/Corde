@@ -3,7 +3,7 @@ local module = {}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local ContentProvider = game:GetService("ContentProvider")
 local player = Players.LocalPlayer
 
 local assets = ReplicatedStorage.Assets
@@ -22,6 +22,7 @@ local acts = require(Client.Acts)
 local util = require(Client.Util)
 local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
+local CameraService = require(Client.Camera)
 
 local function changePropertyForTable(list: {}, propertyTable: {})
 	for _, object: Instance in ipairs(list) do
@@ -210,7 +211,7 @@ function module.keyhole(object: Model)
 
 	for _ = 1, 3 do
 		task.wait(1.25)
-		util.PlaySound(sequenceSounds.MetalBang, nil, 0.25)
+		util.PlaySound(sequenceSounds.MetalBang, 0.25)
 	end
 
 	task.wait(1)
@@ -232,27 +233,27 @@ function module.noMercy()
 
 	task.wait(3)
 
-	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(2)
 
-	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(1)
 
-	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
 
 	task.wait(0.25)
-	util.PlaySound(sequenceSounds.Distortion_0, nil, 0, 0.1)
+	util.PlaySound(sequenceSounds.Distortion_0, 0, 0.1)
 	sequenceFrame.Visible = true
 	task.wait(0.1)
 	sequenceFrame.Visible = false
@@ -334,6 +335,52 @@ function module.noMercy()
 	musicService:ReturnToLastTrack()
 end
 
+local deathDialogue = {
+	{
+		"You feel your bones crush.",
+		"I feel my bones crush.",
+	},
+
+	{
+		"You watch your flesh tear.",
+		"I watch my flesh tear.",
+	},
+
+	{
+		"You regret this.",
+		"I regret this.",
+	},
+
+	{
+		"Maybe this time",
+		"I'll know.",
+	},
+
+	{
+		"Do you see it now?",
+		"Not yet.",
+	},
+
+	{
+		"You see your light fade.",
+		"I see my light fade.",
+	},
+
+	{
+		"Let him go.",
+		"Let him go.",
+	},
+
+	{
+		"Your mind begins to fade",
+		"My mind begins to fade",
+	},
+}
+
+local function Lerp(num, goal, i)
+	return num + (goal - num) * i
+end
+
 local function deathScreenUi()
 	local sequenceFrame = loadSequence("DeathScreen")
 	sequenceFrame.Background.Visible = false
@@ -341,6 +388,10 @@ local function deathScreenUi()
 	sequenceFrame.Visible = true
 
 	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.04, true)
+	ContentProvider:PreloadAsync({ sequenceFrame.Eye.Image })
+
+	local start = os.clock()
+	local startFov = camera.FieldOfView
 
 	local step = RunService.RenderStepped:Connect(function()
 		for _, child in ipairs(sequenceFrame.ScreenText:GetChildren()) do
@@ -353,58 +404,54 @@ local function deathScreenUi()
 		end
 
 		sequenceFrame.Vax.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
+
+		camera.FieldOfView = Lerp(startFov, startFov + 2, (os.clock() - start) / 20)
 	end)
 
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "You feel your bones crush" }
-	)
+	local dialogue = deathDialogue[math.random(1, #deathDialogue)]
+
 	task.wait(3.5)
 
-	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
-	sequenceFrame.Background.Visible = true
-	sequenceFrame.ScreenText.Visible = true
+	local playerTalking = false
+	for _, text in ipairs(dialogue) do
+		changePropertyForTable(
+			sequenceFrame.ScreenText:GetChildren(),
+			{ TextColor3 = playerTalking and Color3.fromRGB(207, 142, 141) or Color3.new(1), Text = text }
+		)
 
-	task.wait(1.5)
+		playerTalking = not playerTalking
+		task.wait(2)
 
-	sequenceFrame.Background.Visible = false
-	sequenceFrame.ScreenText.Visible = false
+		sequenceFrame.Background.Visible = true
+		sequenceFrame.ScreenText.Visible = true
 
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.fromRGB(207, 142, 141), Text = "I feel my bones crush" }
-	)
-	task.wait(3.5)
+		task.wait(1)
 
-	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
-	sequenceFrame.Background.Visible = true
-	sequenceFrame.ScreenText.Visible = true
+		sequenceFrame.Background.Visible = false
+		sequenceFrame.ScreenText.Visible = false
+	end
 
-	task.wait(1.5)
-
-	sequenceFrame.Background.Visible = false
-	sequenceFrame.ScreenText.Visible = false
+	task.wait(2)
 
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "Witness" })
-	task.wait(3.5)
 
-	util.PlaySound(soundsFolder.Death.Hit, nil, 0.075)
+	util.PlaySound(soundsFolder.Death.Hit, 0.075)
 	sequenceFrame.Background.Visible = true
 	sequenceFrame.ScreenText.Visible = true
 
-	task.wait(1)
+	task.wait(1.25)
 	sequenceFrame.ScreenText.Visible = false
 
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Eternity" })
 
 	sequenceFrame.Eye.Visible = true
-	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.1)
+	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.125)
 
 	animation:OnFrameRached(8):Once(function()
 		animation:Pause()
 		sequenceFrame.ScreenText.Visible = true
 		sequenceFrame.Eye.Visible = false
-		task.wait(0.25)
+		task.wait(1.25)
 		sequenceFrame.ScreenText.Visible = false
 		sequenceFrame.Eye.Visible = true
 		animation:Resume()
@@ -413,7 +460,7 @@ local function deathScreenUi()
 	animation.OnEnded:Once(function()
 		sequenceFrame.Eye.Visible = false
 		sequenceFrame.Vax.Visible = true
-		task.wait(1)
+		task.wait(0.75)
 		uiAnimationService.PlayAnimation(sequenceFrame.Vax, 0.04, false, true).OnEnded:Wait()
 		sequenceFrame.Vax.Visible = false
 		--task.wait(1)
@@ -424,6 +471,7 @@ local function deathScreenUi()
 end
 
 function module.deathScreen()
+	task.wait(0.1)
 	task.spawn(deathScreenUi)
 
 	local snds = soundsFolder.Death

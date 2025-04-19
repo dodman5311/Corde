@@ -47,7 +47,7 @@ export type Npc = {
 local module = {
 	npcs = {},
 }
-local function checkSightLine(npc, target, maxSightAngle)
+local function checkSightLine(npc, target: Instance, maxSightAngle)
 	if not target then
 		return
 	end
@@ -75,11 +75,15 @@ local function checkSightLine(npc, target, maxSightAngle)
 		return
 	end
 
-	return not workspace:Raycast(position, targetPosition - position, rp)
+	local result = workspace:Raycast(position, targetPosition - position, rp)
+
+	return not result or target:IsDescendantOf(result.Instance)
 end
 
-local function checkEarshot(npc, distance)
+local function checkEarshot(npc)
 	for sound: Sound, object in pairs(util.PlayingSounds) do
+		local distance = (object:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
+
 		if distance <= sound.RollOffMaxDistance and object and checkSightLine(npc, object, 400) then
 			return object
 		end
@@ -349,8 +353,8 @@ module.actions = {
 		local deathSound = util.getRandomChild(deathSoundList)
 		local bloodSound = util.getRandomChild(sounds.Blood)
 
-		util.PlaySound(deathSound, nil, 0.05, 0.2)
-		util.PlaySound(bloodSound, nil, 0.15)
+		util.PlaySound(deathSound, 0.05, 0.2)
+		util.PlaySound(bloodSound, 0.15)
 	end,
 
 	SearchForTarget = function(npc: Npc, maxDistance: number, maxSightAngle: number?)
@@ -361,14 +365,11 @@ module.actions = {
 			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 		end
 
-		if
-			npc:GetState() == "Dead"
-			or not target and (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle))
-		then
+		if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
 			target = nil
 		end
 
-		target = checkEarshot(npc, distance)
+		target = checkEarshot(npc) or target
 		npc.MindTarget.Value = target
 
 		if target ~= nil then

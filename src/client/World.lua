@@ -89,16 +89,16 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
-globalInputService.CreateNewInput("PauseGame", function(state)
-	if state ~= Enum.UserInputState.Begin then
-		return
-	end
+-- globalInputService.CreateNewInput("PauseGame", function(state)
+-- 	if state ~= Enum.UserInputState.Begin then
+-- 		return
+-- 	end
 
-	if acts:checkAct("Paused") then
-		module:resume()
-	else
-		module:pause()
-	end
-end, Enum.KeyCode.P)
+-- 	if acts:checkAct("Paused") then
+-- 		module:resume()
+-- 	else
+-- 		module:pause()
+-- 	end
+-- end, Enum.KeyCode.P)
 
 return module

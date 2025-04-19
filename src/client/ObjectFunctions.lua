@@ -16,7 +16,7 @@ local objectFunctions = {
 		if instant then
 			ti = TweenInfo.new(0)
 		else
-			util.PlaySound(assets.Sounds.QuickOpen, object)
+			util.PlayFrom(object, assets.Sounds.QuickOpen)
 		end
 
 		util.tween(door, ti, { CFrame = door.CFrame * CFrame.new(0, 0, -door.Size.Z) }, true)
@@ -34,9 +34,9 @@ local objectFunctions = {
 		if instant then
 			ti = TweenInfo.new(0)
 		else
-			util.PlaySound(assets.Sounds.DoorsOpening, object)
+			util.PlayFrom(object, assets.Sounds.DoorsOpening)
 			task.wait(1.1)
-			util.PlaySound(assets.Sounds.Open, object)
+			util.PlayFrom(object, assets.Sounds.Open)
 			object.LeftEmit.ParticleEmitter.Enabled = true
 			object.RightEmit.ParticleEmitter.Enabled = true
 
@@ -73,7 +73,7 @@ local objectFunctions = {
 		if instant then
 			ti = TweenInfo.new(0)
 		else
-			util.PlaySound(assets.Sounds.Platform, object)
+			util.PlayFrom(object, assets.Sounds.Platform)
 			task.wait(0.5)
 		end
 
@@ -95,9 +95,9 @@ local objectFunctions = {
 		if instant then
 			ti = TweenInfo.new(0)
 		else
-			util.PlaySound(assets.Sounds.MassiveDoor, object)
+			util.PlayFrom(object, assets.Sounds.MassiveDoor)
 			task.wait(1.5)
-			util.PlaySound(assets.Sounds.HydrolicMovement, object, 0, 10)
+			util.PlayFrom(object, assets.Sounds.HydrolicMovement, 0, 10)
 		end
 
 		util.tween(leftDoor, ti, { CFrame = leftDoor.CFrame * CFrame.new(0, 0, leftDoor.Size.Z) })

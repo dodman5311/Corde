@@ -130,7 +130,7 @@ local combineActions = {
 			item.Value -= 1
 		end
 
-		util.PlaySound(sounds.LoadBullets, nil, 0.1, 0.9)
+		util.PlaySound(sounds.LoadBullets, 0.1, 0.9)
 	end,
 
 	AddItem = function(item: item, itemToCombine: item, combineData)
@@ -140,7 +140,7 @@ local combineActions = {
 
 		Inventory:AddItem(itemsList[combineData.Item])
 
-		util.PlaySound(sounds.LoadBullets, nil, 0.1, 0.9)
+		util.PlaySound(sounds.LoadBullets, 0.1, 0.9)
 	end,
 	Remove = function(item: item)
 		Inventory:RemoveItem(item.Name)
@@ -310,7 +310,7 @@ function Inventory:pickupFromContainer(object)
 	end
 
 	if #toRemove > 0 then
-		util.PlaySound(sounds.ItemAdded, nil, 0.05)
+		util.PlaySound(sounds.ItemAdded, 0.05)
 	end
 
 	for _, v in ipairs(toRemove) do
@@ -531,7 +531,7 @@ local function nextNotePage(note: item, indexChange: number)
 
 	local noteUi = UI.Note
 	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
-	util.PlaySound(sounds.Paper, nil, 0.075)
+	util.PlaySound(sounds.Paper, 0.075)
 
 	if currentNoteIndex > #note.Value.Message then
 		closeNote()
@@ -602,7 +602,7 @@ local function emptyWeaponSlot()
 		return
 	end
 
-	util.PlaySound(sounds.Unequip, player.Character)
+	util.PlayFrom(player.Character, sounds.Unequip)
 
 	Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
 	refreshGui()

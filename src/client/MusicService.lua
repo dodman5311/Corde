@@ -67,6 +67,8 @@ function musicService:ReturnToLastTrack(): Sound?
 	if not lastTrack then
 		return
 	end
+
+	print(lastTrack)
 	return self:PlayTrack(lastTrack.Name)
 end
 

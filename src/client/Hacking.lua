@@ -63,7 +63,7 @@ local function showPointPromt(point: BillboardGui)
 		return
 	end
 
-	util.PlaySound(sounds.Select, nil, 0.025)
+	util.PlaySound(sounds.Select, 0.025)
 
 	local hackUi = point.HackPrompt
 	local ti = TweenInfo.new(0.25)
@@ -364,11 +364,11 @@ local function checkKeystrokeInput(state, input)
 	end
 
 	if character:GetAttribute("RAM") < object:GetAttribute("RamUsage") then
-		util.PlaySound(sounds.LowRam, nil, 0.025)
+		util.PlaySound(sounds.LowRam, 0.025)
 		return
 	end
 
-	util.PlaySound(sounds.HackInput, nil, 0.05)
+	util.PlaySound(sounds.HackInput, 0.05)
 
 	keystrokeLabel.TextColor3 = Color3.new(1, 1, 1)
 
@@ -415,7 +415,7 @@ function module:ExitNetMode()
 	actionPrompt.hideEnergyUsage()
 	clearNetPoints()
 
-	util.PlaySound(sounds.NetClose, nil, 0, 0.25)
+	util.PlaySound(sounds.NetClose, 0, 0.25)
 
 	util.tween(Lighting.NETColor, ti, {
 		TintColor = Color3.new(1, 1, 1),

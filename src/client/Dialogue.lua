@@ -207,7 +207,7 @@ local letterEffects = {
 
 	PlaySound = {
 		Function = function(_, sounds: Sound)
-			util.PlaySound(sounds, script, 0.01)
+			util.PlaySound(sounds, 0.01)
 		end,
 	},
 

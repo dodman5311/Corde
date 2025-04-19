@@ -110,9 +110,9 @@ local function playerDamaged(character, healthPercent)
 		damageSoundFolder = sounds.DamageSounds.LowHealth
 	end
 
-	util.PlaySound(util.getRandomChild(sounds.Pain), character)
-	util.PlaySound(util.getRandomChild(sounds.Blood), character, 0.1).Volume = invertedHealthPercent
-	util.PlaySound(util.getRandomChild(damageSoundFolder), character, 0.1)
+	util.PlayFrom(character, util.getRandomChild(sounds.Pain))
+	util.PlayFrom(character, util.getRandomChild(sounds.Blood), 0.1).Volume = invertedHealthPercent
+	util.PlayFrom(character, util.getRandomChild(damageSoundFolder), 0.1)
 
 	local damageShakeInstance = cameraShaker.CameraShakeInstance.new(invertedHealthPercent * 10, 25, 0, timeScale / 1.5)
 	damageShakeInstance.PositionInfluence = Vector3.one * 0.5
@@ -182,8 +182,8 @@ local function placePlayerBody(character)
 	local deathSound = util.getRandomChild(sounds.Female_Death)
 	local bloodSound = util.getRandomChild(sounds.Blood)
 
-	util.PlaySound(deathSound, character, 0.05, 0.2)
-	util.PlaySound(bloodSound, character, 0.15)
+	util.PlayFrom(character, deathSound, 0.05, 0.2)
+	util.PlayFrom(character, bloodSound, 0.15)
 end
 
 local function playerDied(character)
@@ -288,7 +288,7 @@ function module.ConsumeItem(item, use)
 		module:ChangePlayerHealth(item.Value.Health, "Add")
 	end
 
-	util.PlaySound(sounds[use], nil, 0.15)
+	util.PlaySound(sounds[use], 0.15)
 	inventory:RemoveItem(item.Name)
 end
 
@@ -407,7 +407,7 @@ local function updatePlayerDirection()
 
 	local difference = (logLv - character:GetPivot().LookVector).Magnitude
 	if difference >= 0.3 then
-		util.PlaySound(util.getRandomChild(sounds.Movement), character, 0.1)
+		util.PlayFrom(character, util.getRandomChild(sounds.Movement), 0.1)
 	end
 
 	logPlayerDirection = yOrientation
@@ -446,10 +446,10 @@ local function updateDirection(vector)
 			uiAnimationService.PlayAnimation(arms, 0.5 / character:GetAttribute("Walkspeed"), true)
 		end
 
-		util.PlayingSounds[sounds.Steps] = true
+		util.PlayingSounds[sounds.Steps] = character
 		sounds.Steps:Resume()
 	else
-		util.PlayingSounds[sounds.Steps] = false
+		util.PlayingSounds[sounds.Steps] = nil
 		sounds.Steps:Pause()
 		uiAnimationService.StopAnimation(frame)
 
@@ -573,7 +573,6 @@ end
 function module.Init()
 	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
 	UserInputService.InputChanged:Connect(updateCursorData)
-	util.PlayingSounds[sounds.Steps] = true
 
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
 		HUD.Glitch.Visible = math.random(1, 2) ~= 1

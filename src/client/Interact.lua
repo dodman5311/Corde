@@ -146,12 +146,18 @@ end
 
 local INTEREST_ICON_SPEED = 0.045
 
-local function showInterest(cursor)
+local function showInterest(cursor, broken)
 	cursor.Parent.Center.Visible = false
 	cursor.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorBlue.Image.Position = UDim2.fromScale(0, 0)
 	cursor.CursorRed.Image.Position = UDim2.fromScale(0, 0)
 	cursor.Visible = true
+
+	if broken then
+		cursor.Image.Image = "rbxassetid://72573463104170"
+	else
+		cursor.Image.Image = "rbxassetid://73262552996850"
+	end
 
 	local a1 = uiAnimationService.PlayAnimation(cursor, INTEREST_ICON_SPEED)
 	local a2 = uiAnimationService.PlayAnimation(cursor.CursorBlue, INTEREST_ICON_SPEED)
@@ -202,7 +208,7 @@ local function checkMouseTargetInteractable(value)
 		end
 
 		if value:HasTag("Interest") then
-			showInterest(interestUi)
+			showInterest(interestUi, value.Name == "BrokenDoor")
 		else
 			showInteract(value, interactUi)
 		end
@@ -253,7 +259,7 @@ local function attemptInteract(object: Instance)
 
 		local key = object:GetAttribute("Key")
 		if key and (key == "" or inventory:RemoveItem(key)) then
-			util.PlaySound(sounds.Unlock, object)
+			util.PlayFrom(object, sounds.Unlock)
 			object:SetAttribute("Locked", false)
 
 			showInteract(object, cursorUi.Cursor.Interact)
@@ -263,13 +269,14 @@ local function attemptInteract(object: Instance)
 		util.PlaySound(sounds.Locked)
 		showLocked(cursorUi.Cursor.Interact)
 	else
-		util.PlaySound(sounds.Interacting, player.Character, 0.05, 0.5)
+		util.PlayFrom(player.Character, sounds.Interacting, 0.05, 0.5)
+
 		runTimer("Interacting", 0.5, module.UseObject, object)
 	end
 end
 
 local function pickupContainer()
-	util.PlaySound(sounds.Collecting, player.Character, 0.05, 0.5)
+	util.PlayFrom(player.Character, sounds.Collecting, 0.05, 0.5)
 	runTimer("Collecting", 0.5, function()
 		inventory:pickupFromContainer(mouseTarget.Value)
 	end)

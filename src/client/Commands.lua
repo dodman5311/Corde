@@ -11,8 +11,6 @@ local function convertToArray(dictionary)
 		table.insert(array, name)
 	end
 
-	print(array)
-
 	return array
 end
 
@@ -76,6 +74,9 @@ local commands = {
 				local inventory = require(script.Parent.Inventory)
 
 				for _, itemName in ipairs(ItemsToAdd) do
+					if not items[itemName] then
+						continue
+					end
 					inventory:AddItem(items[itemName])
 				end
 			end,

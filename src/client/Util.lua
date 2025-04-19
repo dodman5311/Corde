@@ -352,7 +352,7 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, playOverObject: Instance?, range: number?, stopTime: number?)
+function util.PlaySound(sound: Sound, range: number?, stopTime: number?)
 	if not sound then
 		return
 	end
@@ -366,21 +366,29 @@ function util.PlaySound(sound: Sound, playOverObject: Instance?, range: number?,
 
 	soundClone:Play()
 
-	if soundClone.SoundGroup == SoundService.SoundEffects then
-		util.PlayingSounds[soundClone] = playOverObject
-	end
-
 	if stopTime then
 		task.delay(stopTime, function()
-			util.PlayingSounds[soundClone] = nil
 			soundClone:Destroy()
 		end)
 	else
 		soundClone.Ended:Once(function()
-			util.PlayingSounds[soundClone] = nil
 			soundClone:Destroy()
 		end)
 	end
+
+	return soundClone
+end
+
+function util.PlayFrom(object: Instance, sound: Sound, range: number?, stopTime: number?)
+	local soundClone = util.PlaySound(sound, range, stopTime)
+
+	if soundClone.SoundGroup == SoundService.SoundEffects then
+		soundClone.Destroying:Once(function()
+			util.PlayingSounds[soundClone] = nil
+		end)
+		util.PlayingSounds[soundClone] = object
+	end
+
 	return soundClone
 end
 
