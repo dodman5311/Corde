@@ -1,6 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local assets = ReplicatedStorage.Assets
-local notes = assets.StoredData
+local storedData = require(ReplicatedStorage.Shared.StoredData)
 
 Items = {
 
@@ -447,7 +446,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	PersonalNote = {
 		Name = "Personal Note",
 		Desc = "A small scuffed note.",
-		Value = { Message = require(notes.PersonalNote), Image = "rbxassetid://126027788326937" },
+		Value = { Message = storedData:GetData("PersonalNote"), Image = "rbxassetid://126027788326937" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
@@ -457,7 +456,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	RationsPoster = {
 		Name = "Rations Poster",
 		Desc = "A poster about rations and hunger.",
-		Value = { Message = require(notes.RationsPoster), Image = "rbxassetid://111890673888434" },
+		Value = { Message = storedData:GetData("RationsPoster"), Image = "rbxassetid://111890673888434" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
@@ -466,7 +465,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	MysteriousJournal = {
 		Name = "Journal",
 		Desc = "A journal.",
-		Value = { Message = require(notes.RationsPoster), Image = "rbxassetid://111890673888434" },
+		Value = { Message = storedData:GetData("Journal"), Image = "rbxassetid://94886205976075" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
