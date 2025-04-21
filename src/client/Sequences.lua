@@ -460,7 +460,7 @@ local function deathScreenUi()
 	animation.OnEnded:Once(function()
 		sequenceFrame.Eye.Visible = false
 		sequenceFrame.Vax.Visible = true
-		task.wait(0.75)
+		task.wait(1)
 		uiAnimationService.PlayAnimation(sequenceFrame.Vax, 0.04, false, true).OnEnded:Wait()
 		sequenceFrame.Vax.Visible = false
 		--task.wait(1)
