@@ -524,6 +524,36 @@ local function closeNote()
 	end
 end
 
+local function clearKeyPrompts()
+	for _, child in ipairs(UI.Note.Message:GetChildren()) do -- clear previous prompts
+		if child:IsA("ImageLabel") then
+			child:Destroy()
+		end
+	end
+end
+
+local function showNoteKeyprompts(note: item)
+	if not note.Value.Message.KeyPrompts then
+		return
+	end
+
+	for _, prompt in ipairs(note.Value.Message.KeyPrompts) do
+		if prompt.Index ~= currentNoteIndex then
+			continue
+		end
+
+		local newPrompt: ImageLabel = gui.Keyprompt:Clone()
+		newPrompt:AddTag("KeyPrompt")
+		newPrompt:SetAttribute("Key", prompt.Key)
+		newPrompt:SetAttribute("Button", prompt.Button)
+		newPrompt.Parent = UI.Note.Message
+
+		newPrompt.Position = prompt.Position
+	end
+
+	globalInputService:CheckKeyPrompts()
+end
+
 local function nextNotePage(note: item, indexChange: number)
 	if not note then
 		return
@@ -532,6 +562,8 @@ local function nextNotePage(note: item, indexChange: number)
 	local noteUi = UI.Note
 	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
 	util.PlaySound(sounds.Paper, 0.075)
+
+	clearKeyPrompts()
 
 	if currentNoteIndex > #note.Value.Message then
 		closeNote()
@@ -561,6 +593,7 @@ local function nextNotePage(note: item, indexChange: number)
 	end
 
 	noteUi.Message.Text = note.Value.Message[currentNoteIndex]
+	showNoteKeyprompts(note)
 end
 
 local function openNote(note: item)
@@ -628,15 +661,6 @@ local function useItem(slotUi)
 	end
 
 	task.delay(0.05, refreshGui)
-end
-
-local function updatePrompts()
-	local inventoryUi = UI.Inventory
-	local note = UI.Note
-
-	inventoryUi.ActionPrompt.Visible = globalInputService.inputType == "Keyboard"
-	inventoryUi.ActionPromptGamepad.Visible = globalInputService.inputType == "Gamepad"
-	note.ActionPromptGamepad.Visible = globalInputService.inputType == "Gamepad"
 end
 
 local function createGuiSlots()
@@ -999,6 +1023,7 @@ function Inventory.OpenInventory()
 
 	globalInputService.inputs.OpenNET:Disable()
 	globalInputService.inputs.ToggleReady:Disable()
+	globalInputService.inputs.Interact:Disable()
 
 	Inventory.InventoryInteract:Enable()
 
@@ -1037,6 +1062,7 @@ end
 function Inventory.CloseInventory()
 	globalInputService.inputs.OpenNET:Enable()
 	globalInputService.inputs.ToggleReady:Enable()
+	globalInputService.inputs.Interact:Enable()
 
 	Inventory.InventoryInteract:Disable()
 	closeNote()
@@ -1209,7 +1235,6 @@ end
 
 --// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus
-UserInputService.InputBegan:Connect(updatePrompts)
 RunService.Heartbeat:Connect(updatePlayerStatus)
 
 return Inventory

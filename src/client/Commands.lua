@@ -1,7 +1,6 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 local items = require(ReplicatedStorage.Shared.Items)
 
 local function convertToArray(dictionary)
@@ -26,7 +25,7 @@ local commands = {
 				}
 			end,
 
-			Execute = function(self, Value)
+			Execute = function(_, Value)
 				Players.LocalPlayer:SetAttribute("GodMode", Value)
 			end,
 		},
@@ -38,7 +37,7 @@ local commands = {
 				}
 			end,
 
-			Execute = function(self, Value)
+			Execute = function(_, Value)
 				require(script.Parent.Player):DamagePlayer(Value, "god")
 			end,
 		},
@@ -50,8 +49,8 @@ local commands = {
 				}
 			end,
 
-			Execute = function(self, Value)
-				require(script.Parent.Hacking).HasNet = Value
+			Execute = function(_, Value)
+				Players.LocalPlayer.Character:SetAttribute("HasNet", Value)
 			end,
 		},
 	},
@@ -69,7 +68,7 @@ local commands = {
 				return optionsTable
 			end,
 
-			Execute = function(self, ...)
+			Execute = function(_, ...)
 				local ItemsToAdd = { ... }
 				local inventory = require(script.Parent.Inventory)
 
@@ -91,7 +90,7 @@ local commands = {
 				}
 			end,
 
-			Execute = function(self, area)
+			Execute = function(_, area)
 				Players.LocalPlayer.Character:PivotTo(area.CFrame)
 			end,
 		},
@@ -103,7 +102,7 @@ local commands = {
 				}
 			end,
 
-			Execute = function(self, npcToSpawn)
+			Execute = function(_, npcToSpawn)
 				if not npcToSpawn then
 					return
 				end

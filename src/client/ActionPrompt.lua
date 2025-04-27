@@ -13,7 +13,6 @@ local signals = require(ReplicatedStorage.Packages.Signal)
 module.ActionBegun = signals.new()
 
 local ti_0 = TweenInfo.new(0.075, Enum.EasingStyle.Linear)
-
 local ti_1 = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
 function module.showActionPrompt(actionTitle: string)

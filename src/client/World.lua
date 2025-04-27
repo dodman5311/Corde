@@ -52,7 +52,7 @@ end
 
 function module.StartGame()
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
-		shadowPart.Transparency = 0.747
+		shadowPart.Transparency = -math.huge
 		shadowPart.Material = Enum.Material.ForceField
 	end
 end

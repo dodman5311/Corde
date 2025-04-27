@@ -1,11 +1,13 @@
 make saving / loading --
 
-Security robots
+make map
 
-Death screen
+Security robots
 
 bad food / purifiers (deals damage)
 
-sanity meter (lower luck number, lower sanity when taking damage) ()
-
-sanity pills, photo to look at ()
+add prompt to exit 3d view
+More ambient sounds
+Make map direct player (Direct to first door, direct to exit) (Blinking light)
+Change dialogue box input type
+fade music slower

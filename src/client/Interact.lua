@@ -33,6 +33,7 @@ local globalInputService = require(Client.GlobalInputService)
 local objectsView = require(Client.ObjectsView)
 local objectFunctions = require(Client.ObjectFunctions)
 local sequences = require(Client.Sequences)
+local castTo = require(Client.CastTo)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
@@ -52,13 +53,10 @@ local function checkSightline(object: Instance): boolean
 	local characterPosition = character:GetPivot().Position
 	local objectPosition = object:GetPivot().Position
 
-	characterPosition = Vector3.new(characterPosition.X, 4, characterPosition.Z)
-	objectPosition = Vector3.new(objectPosition.X, 4, objectPosition.Z)
-
 	local rp = RaycastParams.new()
 	rp.FilterDescendantsInstances = { character, object }
 
-	local raycast = workspace:Raycast(characterPosition, objectPosition - characterPosition, rp)
+	local raycast = castTo.checkCast(characterPosition, objectPosition, rp)
 
 	return not raycast
 end
@@ -122,9 +120,6 @@ local function showInteract(object, cursor)
 		cursor.ItemNameRed.Visible = true
 		cursor.ItemNameBlue.Visible = true
 	end)
-
-	cursor.KeyPrompt.Visible = globalInputService.inputType == "Gamepad"
-	cursor.KeyPrompt.Image = globalInputService.inputIcons[globalInputService.gamepadType].ButtonA
 
 	cursor.Locked.Visible = object:GetAttribute("Locked")
 end
@@ -331,10 +326,7 @@ local function processCrosshair()
 	end
 end
 
-function module.Init()
-	cursorUi = player.PlayerGui.Cursor
-	RunService.RenderStepped:Connect(processCrosshair)
-
+function module.StartGame()
 	globalInputService.CreateNewInput("Interact", function(state)
 		local object = mouseTarget.Value
 
@@ -344,6 +336,11 @@ function module.Init()
 
 		InteractiWithObject(object)
 	end, Enum.KeyCode.F, Enum.KeyCode.ButtonA)
+end
+
+function module.Init()
+	cursorUi = player.PlayerGui.Cursor
+	RunService.RenderStepped:Connect(processCrosshair)
 end
 
 interactTimer.OnEnded:Connect(function()

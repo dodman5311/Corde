@@ -1,6 +1,4 @@
-local module = {
-	HasNet = false,
-}
+local module = {}
 
 local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
@@ -32,30 +30,101 @@ local inventory = require(Client.Inventory)
 local ti = TweenInfo.new(0.25)
 
 local currentInputIndex = 1
+local currentInput = ""
+
+local dpadIcons = {
+	globalInputService.inputIcons.Misc.Up,
+	globalInputService.inputIcons.Misc.Left,
+	globalInputService.inputIcons.Misc.Down,
+	globalInputService.inputIcons.Misc.Right,
+}
+
+local keyboard = {
+	Enum.KeyCode.One,
+	Enum.KeyCode.Two,
+	Enum.KeyCode.Three,
+	Enum.KeyCode.Four,
+}
+local gamepad = {
+	Enum.KeyCode.DPadUp,
+	Enum.KeyCode.DPadLeft,
+	Enum.KeyCode.DPadDown,
+	Enum.KeyCode.DPadRight,
+}
 
 local function getKeyCodeFromNumber(number: number | string)
-	if tonumber(number) == 1 then
-		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.One or Enum.KeyCode.DPadUp
-	elseif tonumber(number) == 2 then
-		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Two or Enum.KeyCode.DPadLeft
-	elseif tonumber(number) == 3 then
-		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Three or Enum.KeyCode.DPadDown
-	elseif tonumber(number) == 4 then
-		return globalInputService.inputType ~= "Gamepad" and Enum.KeyCode.Four or Enum.KeyCode.DPadRight
+	number = tonumber(number)
+	if not number then
+		return
 	end
+
+	return globalInputService.inputType == "Gamepad" and gamepad[number] or keyboard[number]
+end
+
+local function getNumberFromKeyCode(keycode: Enum.KeyCode)
+	local list = globalInputService.inputType == "Gamepad" and gamepad or keyboard
+	return table.find(list, keycode)
+end
+
+local function deregisterPoint(point: BillboardGui)
+	point:RemoveTag("ActiveNetPoint")
+	point.HackPrompt.Visible = true
+	point.NetLine.Enabled = false
 end
 
 local function completePoint(point: BillboardGui)
 	local hackUi = point.HackPrompt
 	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
 
-	point:RemoveTag("ActiveNetPoint")
-	hackUi.Visible = true
-	point.NetLine.Enabled = false
+	util.PlaySound(sounds.HackSuccess)
+
+	deregisterPoint(point)
 
 	util.tween(hackUi, ti, { Size = UDim2.fromScale(1.2, 1.2), GroupTransparency = 1 }, false, function()
 		point:Destroy()
 	end)
+end
+
+local function failNetPoint(point: BillboardGui)
+	local hackUi = point.HackPrompt
+	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
+	local ti_0 = TweenInfo.new(0.5, Enum.EasingStyle.Elastic)
+
+	util.PlaySound(sounds.HackFailure)
+
+	deregisterPoint(point)
+
+	hackUi.Position = UDim2.fromScale(0.4, 0.5)
+
+	util.tween(hackUi, ti_0, { Position = UDim2.fromScale(0.5, 0.5) })
+	util.tween(hackUi, ti, { GroupTransparency = 1 }, false, function()
+		point:Destroy()
+	end)
+end
+
+local function setUpKeyLabel(keyLabel: TextLabel, point: BillboardGui)
+	if not string.match(keyLabel.Name, "Keystroke_") then
+		return
+	end
+	local index = tonumber(string.sub(keyLabel.Name, 11))
+	local key = tonumber(string.sub(point:GetAttribute("Sequence"), index, index))
+
+	keyLabel:SetAttribute("Key", key)
+	keyLabel.TextTransparency = 1
+
+	keyLabel.Text = globalInputService.inputType == "Gamepad" and "" or key
+
+	if point:GetAttribute("SequenceHidden") then
+		keyLabel.Text = "?"
+	end
+
+	keyLabel.Size = UDim2.fromScale(0.1, 0.075)
+	keyLabel.TextColor3 = Color3.new(1, 1, 1)
+
+	keyLabel.Prompt.ImageTransparency = 1
+	keyLabel.Prompt.Visible = globalInputService.inputType == "Gamepad" and not point:GetAttribute("SequenceHidden")
+
+	keyLabel.Prompt.Image = dpadIcons[key]
 end
 
 local function showPointPromt(point: BillboardGui)
@@ -69,46 +138,24 @@ local function showPointPromt(point: BillboardGui)
 	local ti = TweenInfo.new(0.25)
 
 	currentInputIndex = 1
+	currentInput = ""
 
 	hackUi.ActionName.Visible = false
 	hackUi.ItemName.Visible = false
 	hackUi.ActionName.Text = `Action: <font color="rgb(255,240,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
 	hackUi.ItemName.Text = point.Adornee.Name
 
-	for _, v in ipairs(hackUi:GetChildren()) do
-		if string.match(v.Name, "Keystroke_") then
-			local key = math.random(1, 4)
-			v:SetAttribute("Key", key)
-			v.TextTransparency = 1
-
-			v.Text = globalInputService.inputType == "Gamepad" and "" or key
-
-			v.Size = UDim2.fromScale(0.1, 0.075)
-			v.TextColor3 = Color3.new(1, 1, 1)
-
-			v.Prompt.ImageTransparency = 1
-			v.Prompt.Visible = globalInputService.inputType == "Gamepad"
-
-			if key == 1 then
-				v.Prompt.Image = globalInputService.inputIcons.Misc.Up
-			elseif key == 2 then
-				v.Prompt.Image = globalInputService.inputIcons.Misc.Left
-			elseif key == 3 then
-				v.Prompt.Image = globalInputService.inputIcons.Misc.Down
-			elseif key == 4 then
-				v.Prompt.Image = globalInputService.inputIcons.Misc.Right
-			end
-		end
+	for _, keyLabel: TextLabel in ipairs(hackUi:GetChildren()) do
+		setUpKeyLabel(keyLabel, point)
 	end
 
 	hackUi.Keystroke_1.TextColor3 = Color3.fromRGB(255, 240, 0)
 	hackUi.Keystroke_1.Prompt.ImageTransparency = 1
-
 	hackUi.Image.Position = UDim2.fromScale(0, 0)
 
 	local animation = uiAnimationService.PlayAnimation(hackUi, 0.045, false, true)
 
-	animation:OnFrameRached(4):Connect(function()
+	animation:OnFrameRached(4):Once(function()
 		if not hackUi.Parent then
 			return
 		end
@@ -161,6 +208,19 @@ local function placeNetPoint(object: Instance)
 	newNetPoint.Parent = object --player.PlayerGui
 	newNetPoint:AddTag("ActiveNetPoint")
 	newNetPoint.Adornee = object
+
+	if object:GetAttribute("Sequence") then
+		newNetPoint:SetAttribute("Sequence", object:GetAttribute("Sequence"))
+		newNetPoint:SetAttribute("SequenceHidden", true)
+	else
+		local sequence = ""
+
+		for _ = 1, 4 do
+			sequence = sequence .. tostring(math.random(1, 4))
+		end
+
+		newNetPoint:SetAttribute("Sequence", sequence)
+	end
 
 	newNetPoint.Enabled = true
 end
@@ -320,7 +380,6 @@ local function doHackAction(object, point: BillboardGui)
 
 	local hackFunction = hackingFunctions[object:GetAttribute("HackAction")]
 
-	util.PlaySound(sounds.HackSuccess)
 	completePoint(point)
 
 	if hackFunction then
@@ -333,6 +392,12 @@ end
 local function checkHackGate(point: BillboardGui)
 	local object = point.Adornee
 
+	if point:GetAttribute("Sequence") ~= currentInput then
+		failNetPoint(point)
+		refreshNetPoints()
+		return
+	end
+
 	if object:GetAttribute("HackType") ~= "Prompt" then
 		-- gate
 		return
@@ -341,25 +406,22 @@ local function checkHackGate(point: BillboardGui)
 	doHackAction(object, point)
 end
 
-local function checkKeystrokeInput(state, input)
+local function enterKeyStroke(point: BillboardGui, input: InputObject)
 	local character = player.Character
-	local point = currentActivePoint.Value
 
-	if
-		state ~= Enum.UserInputState.Begin
-		or acts:checkAct("Paused")
-		or not character
-		or not point
-		or not point.Parent
-	then
+	if not character then
 		return
 	end
 
 	local object = point.Adornee
 	local hackUi = currentActivePoint.Value.HackPrompt
-	local keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
+	local keystrokeLabel: TextLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
+	local number = getNumberFromKeyCode(input.KeyCode)
 
-	if not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Key")) then
+	if
+		not point:GetAttribute("SequenceHidden")
+		and (not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Key")))
+	then
 		return
 	end
 
@@ -371,11 +433,16 @@ local function checkKeystrokeInput(state, input)
 	util.PlaySound(sounds.HackInput, 0.05)
 
 	keystrokeLabel.TextColor3 = Color3.new(1, 1, 1)
+	keystrokeLabel.Text = globalInputService.inputType == "Gamepad" and "" or number
+
+	keystrokeLabel.Prompt.Visible = globalInputService.inputType == "Gamepad"
+	keystrokeLabel.Prompt.Image = dpadIcons[number]
 
 	util.tween(keystrokeLabel, TweenInfo.new(0.25), { Size = UDim2.fromScale(0.15, 0.15), TextTransparency = 1 })
 	util.tween(keystrokeLabel.Prompt, TweenInfo.new(0.25), { ImageTransparency = 1 })
 
 	currentInputIndex += 1
+	currentInput ..= number
 
 	keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
 	if not keystrokeLabel then
@@ -386,8 +453,18 @@ local function checkKeystrokeInput(state, input)
 	keystrokeLabel.Prompt.ImageTransparency = 0
 end
 
+local function checkKeystrokeInput(state, input)
+	local point = currentActivePoint.Value
+
+	if state ~= Enum.UserInputState.Begin or acts:checkAct("Paused") or not point or not point.Parent then
+		return
+	end
+
+	enterKeyStroke(point, input)
+end
+
 function module:EnterNetMode()
-	if not module.HasNet then
+	if not player.Character or not player.Character:GetAttribute("HasNet") then
 		return
 	end
 
@@ -429,7 +506,7 @@ function module.Init()
 	RunService.RenderStepped:Connect(processNet)
 end
 
-local function pressNeyKey(state)
+local function pressNetKey(state)
 	if acts:checkAct("Paused") then
 		return
 	end
@@ -442,7 +519,7 @@ local function pressNeyKey(state)
 end
 
 module.ToggleNetInput =
-	globalInputService.CreateNewInput("OpenNET", pressNeyKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
+	globalInputService.CreateNewInput("OpenNET", pressNetKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
 globalInputService.CreateNewInput(
 	"EnterHackingInput",
 	checkKeystrokeInput,

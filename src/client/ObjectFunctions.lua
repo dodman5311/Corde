@@ -1,9 +1,16 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 local util = require(client.Util)
 local sequences = require(client.Sequences)
+local acts = require(client.Acts)
+local globalInputService = require(client.GlobalInputService)
 
 local assets = ReplicatedStorage.Assets
+local HUD
+local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, 0, true)
+
+local player = Players.LocalPlayer
 
 local objectFunctions = {
 	Door = function(object: Model, instant: boolean?)
@@ -105,6 +112,27 @@ local objectFunctions = {
 
 		object:SetAttribute("Used", true)
 	end,
+
+	Teleport = function(object: Model)
+		local teleportTo = object.TeleportTo.Value
+		local character = player.Character
+
+		globalInputService.inputs.Interact:Disable()
+		player:SetAttribute("MovementEnabled", false)
+
+		util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
+			globalInputService.inputs.Interact:Enable()
+			player:SetAttribute("MovementEnabled", true)
+		end, Enum.PlaybackState.Completed)
+
+		task.delay(TRANSITION_INFO.Time, function()
+			character:PivotTo(teleportTo:GetPivot())
+		end)
+	end,
 }
+
+function objectFunctions.Init()
+	HUD = Players.LocalPlayer.PlayerGui.HUD
+end
 
 return objectFunctions

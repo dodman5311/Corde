@@ -1,6 +1,6 @@
 local module = {
-	HUNGER_RATE = 0.2,
-	SPRINTING_HUNGER_MULT = 2,
+	HUNGER_RATE = 0.065,
+	SPRINTING_HUNGER_MULT = 2.5,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 	ThumbstickSnapPower = 0.5,
@@ -33,10 +33,10 @@ local cameraShaker = require(Client.CameraShaker)
 local haptics = require(Client.Haptics)
 local globalInputService = require(Client.GlobalInputService)
 local controller = require(player.PlayerScripts.PlayerModule):GetControls()
-local hacking = require(Client.Hacking)
 local areas = require(Client.Areas)
 local dialogue = require(Client.Dialogue)
 local sequences = require(Client.Sequences)
+local net = require(ReplicatedStorage.Packages.Net)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -198,6 +198,9 @@ local function playerDied(character)
 	placePlayerBody(character)
 
 	sequences:beginSequence("deathScreen")
+	sequences.OnEnded:Once(function()
+		net:RemoteEvent("RejoinPlace"):FireServer()
+	end)
 
 	player.Character = nil
 	sounds.Steps:Stop()
@@ -272,7 +275,9 @@ function module:DamagePlayer(damage: number, damageType: string)
 end
 
 function module:EnableHacking()
-	hacking.HasNet = true
+	if player.Character then
+		player.Character:SetAttribute("HasNet", true)
+	end
 end
 
 function module.ConsumeItem(item, use)
@@ -647,7 +652,7 @@ local itemFunctions = {
 		if areas.currentArea and areas.currentArea.Name == "MirrorArea" then
 			module:EnableHacking()
 			inventory:RemoveItem(item.Name)
-			sequences:beginSequence("UseInjector")
+			sequences:beginSequence("InstallModule")
 		else
 			dialogue:SayFromPlayer("I need a *mirror to use this correctly.")
 		end

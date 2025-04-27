@@ -421,16 +421,15 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	},
 
 	--// Tools
-	-- 	LoadedInjector = {
-	-- 		Name = "Loaded Module Injector",
-	-- 		Desc = [[A device used to install Bio Modules.
-	-- (N.E.T Module)]],
-	-- 		Value = nil,
-	-- 		InUse = false,
-	-- 		Icon = "rbxassetid://107682922166577",
-	-- 		Use = "InstallNet",
-	-- 		CanArchive = true,
-	-- 	},
+	AccessPad = {
+		Name = "Access-Pad",
+		Desc = [[A device used to connect to and access various VAX technology that isn't registered in the N.E.T system. ]],
+		Value = nil,
+		InUse = false,
+		Icon = "rbxassetid://107682922166577",
+		Use = "UsePad",
+		CanArchive = true,
+	},
 
 	Flashlight = {
 		Name = "Flashlight",
@@ -443,6 +442,16 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	},
 
 	--// Notes
+	BrokenPhone = {
+		Name = "Broken Phone",
+		Desc = "A phone with the screen cracked.",
+		Value = { Message = storedData:GetData("BrokenPhone"), Image = "rbxassetid://126027788326937" },
+		Icon = "rbxassetid://82487541380359",
+		Use = "Read",
+		InUse = false,
+		CanArchive = true,
+	},
+
 	PersonalNote = {
 		Name = "Personal Note",
 		Desc = "A small scuffed note.",

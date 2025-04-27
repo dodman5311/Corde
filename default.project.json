@@ -12,6 +12,12 @@
       }
     },
 
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/Server"
+      }
+    },
+
     "ReplicatedStorage": {
       "Packages": {
         "$path": "src/Packages"

@@ -23,6 +23,9 @@ local util = require(Client.Util)
 local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
 local CameraService = require(Client.Camera)
+local signal = require(ReplicatedStorage.Packages.Signal)
+
+module.OnEnded = signal.new()
 
 local function changePropertyForTable(list: {}, propertyTable: {})
 	for _, object: Instance in ipairs(list) do
@@ -38,7 +41,12 @@ function module:beginSequence(sequenceName, ...)
 		return
 	end
 
-	task.spawn(acts.createTempAct, acts, "InSequence", module[sequenceName], nil, ...)
+	local params = { ... }
+
+	task.spawn(function()
+		acts:createTempAct("InSequence", module[sequenceName], nil, table.unpack(params))
+		module.OnEnded:Fire(sequenceName)
+	end)
 end
 
 local function loadSequence(sequence): Frame
@@ -209,14 +217,14 @@ function module.keyhole(object: Model)
 	musicService:PlayTrack("ItsPlaytime")
 	musicService:PlayTrack("SuddenDeath")
 
-	for _ = 1, 3 do
+	for i = 0.25, 1.25, 0.25 do
 		task.wait(1.25)
-		util.PlaySound(sequenceSounds.MetalBang, 0.25)
+		util.PlayFrom(player.Character, sequenceSounds.MetalBang, 0.25).Volume = i
 	end
 
 	task.wait(1)
 	object:Destroy()
-	util.PlaySound(sequenceSounds.MetalBreak)
+	util.PlayFrom(player.Character, sequenceSounds.MetalBreak)
 end
 
 function module.noMercy()
@@ -460,7 +468,7 @@ local function deathScreenUi()
 	animation.OnEnded:Once(function()
 		sequenceFrame.Eye.Visible = false
 		sequenceFrame.Vax.Visible = true
-		task.wait(1)
+		task.wait(0.5)
 		uiAnimationService.PlayAnimation(sequenceFrame.Vax, 0.04, false, true).OnEnded:Wait()
 		sequenceFrame.Vax.Visible = false
 		--task.wait(1)

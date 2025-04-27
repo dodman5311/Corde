@@ -102,6 +102,10 @@ local actionsFunctions = {
 		return inventory:SearchForItem(parameters[1])
 	end,
 
+	HasNet = function()
+		return player.Character and player.Character:GetAttribute("HasNet")
+	end,
+
 	SetStart = function(parameters)
 		local path = string.split(parameters[1], ".")
 		local container, index = path[1], path[2]
@@ -405,6 +409,10 @@ function startDialogue(dialogue)
 	end
 
 	for _, messageData in ipairs(dialogue) do
+		if messageData.Condition and not doAction(messageData.Condition) then
+			continue
+		end
+
 		if not messageData.Message then
 			endMessage(messageData)
 			continue

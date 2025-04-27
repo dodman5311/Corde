@@ -25,11 +25,37 @@ local module = {
 			ButtonX = "rbxassetid://122062730815411",
 			ButtonA = "rbxassetid://99222140491626",
 			ButtonB = "rbxassetid://139151046418306",
+			ButtonY = "rbxassetid://124498431294550",
+
+			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
+			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
+			ButtonR1 = "rbxassetid://84450330851971",
+			ButtonR2 = "rbxassetid://70730301952026",
 		},
 		Xbox = {
 			ButtonX = "rbxassetid://122267119998385",
 			ButtonA = "rbxassetid://121295530666976",
 			ButtonB = "rbxassetid://97330447691033",
+			ButtonY = "rbxassetid://73181495754569",
+
+			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
+			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
+			ButtonR1 = "rbxassetid://84450330851971",
+			ButtonR2 = "rbxassetid://70730301952026",
+		},
+		Keyboard = {
+			MouseButton1 = "rbxassetid://126289574845573",
+			MouseButton2 = "rbxassetid://124094151580145",
+			MouseButton3 = "rbxassetid://95452537473335",
+			Scroll = "rbxassetid://129056272209004",
+			F = "rbxassetid://74228350755401",
+			One = "rbxassetid://87310485799989",
+			Two = "rbxassetid://104360287893229",
+			Three = "rbxassetid://108142578535176",
+			Four = "rbxassetid://131238976336903",
+			Tab = "rbxassetid://116362922317477",
+			LeftShift = "rbxassetid://77318620414643",
+			Shift = "rbxassetid://77318620414643",
 		},
 		Misc = {
 			Dpad = "rbxassetid://104088083610808",
@@ -39,6 +65,7 @@ local module = {
 			Up = "rbxassetid://112547970720772",
 			Down = "rbxassetid://136246329210868",
 			Vertical = "rbxassetid://81470201795928",
+			Unknown = "rbxassetid://136342675608310",
 		},
 	},
 
@@ -88,6 +115,28 @@ local function setGamepadType(lastInput)
 	end
 end
 
+function module:CheckKeyPrompts()
+	for _, image: ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
+		local iconKey = module.inputType == "Gamepad" and image:GetAttribute("Button") or image:GetAttribute("Key")
+		if not iconKey then
+			image.Visible = false
+			continue
+		end
+
+		image.Visible = true
+
+		if module.inputIcons.Misc[iconKey] then
+			image.Image = module.inputIcons.Misc[iconKey]
+			continue
+		end
+
+		local list = module.inputType == "Gamepad" and module.inputIcons[module.gamepadType]
+			or module.inputIcons.Keyboard
+
+		image.Image = list[iconKey]
+	end
+end
+
 local function setInputType(lastInput)
 	if lastInput.KeyCode == Enum.KeyCode.Thumbstick1 or lastInput.KeyCode == Enum.KeyCode.Thumbstick2 then
 		if lastInput.Position.Magnitude < 0.25 then
@@ -108,16 +157,7 @@ local function setInputType(lastInput)
 		module.inputType = "Keyboard"
 	end
 
-	for _, image: ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
-		local iconKey = image:GetAttribute("Key")
-
-		if module.inputIcons.Misc[iconKey] then
-			image.Image = module.inputIcons.Misc[iconKey]
-			continue
-		end
-
-		image.Image = module.inputIcons[module.gamepadType][iconKey]
-	end
+	module:CheckKeyPrompts()
 end
 
 local function Lerp(num, goal, i)
@@ -176,18 +216,49 @@ function module.CreateNewInput(inputName: string, func: () -> any?, ...)
 		KeyInputs = { ... },
 		Callback = func,
 
-		Enable = function(self)
+		Enable = function(self, priority: number?)
 			local callback = self.Callback
-			ContextActionService:BindAction(self.Name, function(_, inputState: Enum.UserInputState, input: InputObject)
-				if acts:checkAct("Paused") then -- pause inputs
-					return
-				end
-				return callback(inputState, input)
-			end, false, table.unpack(self.KeyInputs))
+
+			if priority then
+				ContextActionService:BindActionAtPriority(
+					self.Name,
+					function(_, inputState: Enum.UserInputState, input: InputObject)
+						if acts:checkAct("Paused") then -- pause inputs
+							return
+						end
+						return callback(inputState, input)
+					end,
+					false,
+					priority,
+					table.unpack(self.KeyInputs)
+				)
+			else
+				ContextActionService:BindAction(
+					self.Name,
+					function(_, inputState: Enum.UserInputState, input: InputObject)
+						if acts:checkAct("Paused") then -- pause inputs
+							return
+						end
+						return callback(inputState, input)
+					end,
+					false,
+					table.unpack(self.KeyInputs)
+				)
+			end
 		end,
 
 		Disable = function(self)
 			ContextActionService:UnbindAction(self.Name)
+		end,
+
+		SetPriority = function(self, priority: number | Enum.ContextActionPriority)
+			self:Disable()
+
+			if tonumber(priority) then
+				self:Enable(priority)
+			else
+				self:Enable(priority.Value)
+			end
 		end,
 	}
 
