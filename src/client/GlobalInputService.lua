@@ -44,8 +44,8 @@ local module = {
 			ButtonR2 = "rbxassetid://70730301952026",
 		},
 		Keyboard = {
-			MouseButton1 = "rbxassetid://126289574845573",
-			MouseButton2 = "rbxassetid://124094151580145",
+			MouseButton1 = "rbxassetid://115777151252419",
+			MouseButton2 = "rbxassetid://126344159018792",
 			MouseButton3 = "rbxassetid://95452537473335",
 			Scroll = "rbxassetid://129056272209004",
 			F = "rbxassetid://74228350755401",

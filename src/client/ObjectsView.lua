@@ -34,6 +34,7 @@ function module:EnterView(object: Instance)
 
 	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
 		module.exitInput:Enable()
+		HUD.Leave3DViewPrompt.Visible = true
 		globalInputService.inputs.Interact:Enable()
 	end, Enum.PlaybackState.Completed)
 
@@ -62,6 +63,7 @@ function module:ExitView()
 	end, Enum.PlaybackState.Completed)
 
 	module.exitInput:Disable()
+	HUD.Leave3DViewPrompt.Visible = false
 	player:SetAttribute("MovementEnabled", true)
 
 	task.wait(TRANSITION_INFO.Time)
