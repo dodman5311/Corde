@@ -518,19 +518,12 @@ local function pressNetKey(state)
 	end
 end
 
-module.ToggleNetInput =
-	globalInputService.CreateNewInput("OpenNET", pressNetKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
+module.ToggleNetInput = globalInputService.CreateNewInput("N.E.T", pressNetKey, Enum.KeyCode.Tab, Enum.KeyCode.ButtonL1)
 globalInputService.CreateNewInput(
 	"EnterHackingInput",
 	checkKeystrokeInput,
-	Enum.KeyCode.One,
-	Enum.KeyCode.Two,
-	Enum.KeyCode.Three,
-	Enum.KeyCode.Four,
-	Enum.KeyCode.DPadDown,
-	Enum.KeyCode.DPadLeft,
-	Enum.KeyCode.DPadRight,
-	Enum.KeyCode.DPadUp
+	{ Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four },
+	{ Enum.KeyCode.DPadDown, Enum.KeyCode.DPadLeft, Enum.KeyCode.DPadRight, Enum.KeyCode.DPadUp }
 )
 
 inventory.InvetoryToggled:Connect(function(value)

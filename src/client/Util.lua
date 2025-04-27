@@ -6,6 +6,7 @@ local SoundService = game:GetService("SoundService")
 local ts = game:GetService("TweenService")
 
 local rng = Random.new()
+local gameSettings = require(script.Parent.GameSettings)
 
 local function flicker(frame, speed, amnt)
 	for _ = 0, amnt do
@@ -15,6 +16,14 @@ local function flicker(frame, speed, amnt)
 
 		task.wait(speed)
 		frame.Visible = not frame.Visible
+	end
+end
+
+function util.getSetting(group, name)
+	for _, setting in ipairs(gameSettings[group]) do
+		if setting.Name == name then
+			return setting.Value
+		end
 	end
 end
 

@@ -576,7 +576,12 @@ function module.StartGame()
 end
 
 function module.Init()
-	globalInputService.CreateNewInput("Sprint", updateSprinting, Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonR2)
+	globalInputService.CreateNewInput(
+		"Sprint",
+		updateSprinting,
+		util.getSetting("Keybinds", "Sprint"),
+		util.getSetting("Gamepad", "Sprint")
+	)
 	UserInputService.InputChanged:Connect(updateCursorData)
 
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()

@@ -327,6 +327,13 @@ local function processCrosshair()
 end
 
 function module.StartGame()
+	globalInputService.inputs.Interact:Refresh()
+end
+
+function module.Init()
+	cursorUi = player.PlayerGui.Cursor
+	RunService.RenderStepped:Connect(processCrosshair)
+
 	globalInputService.CreateNewInput("Interact", function(state)
 		local object = mouseTarget.Value
 
@@ -335,12 +342,7 @@ function module.StartGame()
 		end
 
 		InteractiWithObject(object)
-	end, Enum.KeyCode.F, Enum.KeyCode.ButtonA)
-end
-
-function module.Init()
-	cursorUi = player.PlayerGui.Cursor
-	RunService.RenderStepped:Connect(processCrosshair)
+	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"))
 end
 
 interactTimer.OnEnded:Connect(function()

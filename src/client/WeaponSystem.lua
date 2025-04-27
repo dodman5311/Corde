@@ -128,7 +128,7 @@ function module.toggleHolstered(value)
 
 		showWeapon(currentWeapon.Value.Type)
 
-		globalInputService.inputs.ToggleFire:Enable()
+		globalInputService.inputs["Fire Weapon"]:Enable()
 		util.PlayFrom(character, sounds.Unholster, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -137,7 +137,7 @@ function module.toggleHolstered(value)
 	elseif not readyKeyDown and not module.weaponUnequipped then
 		showWeapon(0)
 
-		globalInputService.inputs.ToggleFire:Disable()
+		globalInputService.inputs["Fire Weapon"]:Disable()
 		util.PlayFrom(character, sounds.Holster, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -629,15 +629,25 @@ local function reloadInput(state)
 	reload()
 end
 
-globalInputService.CreateNewInput("Reload", reloadInput, Enum.KeyCode.R, Enum.KeyCode.ButtonR1)
+globalInputService.CreateNewInput(
+	"Reload",
+	reloadInput,
+	util.getSetting("Keybinds", "Reload"),
+	util.getSetting("Gamepad", "Reload")
+)
 globalInputService
-	.CreateNewInput("ToggleFire", module.fireKeyToggle, Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1)
+	.CreateNewInput(
+		"Fire Weapon",
+		module.fireKeyToggle,
+		util.getSetting("Keybinds", "Fire Weapon"),
+		util.getSetting("Gamepad", "Fire Weapon")
+	)
 	:Disable()
 globalInputService.CreateNewInput(
-	"ToggleReady",
+	"Ready Weapon",
 	module.readyKeyToggle,
-	Enum.KeyCode.ButtonL2,
-	Enum.UserInputType.MouseButton2
+	util.getSetting("Keybinds", "Ready Weapon"),
+	util.getSetting("Gamepad", "Ready Weapon")
 )
 
 RunService.Heartbeat:Connect(function()

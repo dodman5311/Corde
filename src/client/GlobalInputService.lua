@@ -1,3 +1,23 @@
+export type Input = {
+	Name: string,
+	KeyInputs: {
+		Keyboard: { InputObject },
+		Gamepad: { InputObject },
+	},
+	Callback: () -> any?,
+	Priority: number?,
+	IsEnabled: () -> boolean,
+
+	Enable: (self: Input) -> nil,
+	Disable: (self: Input) -> nil,
+	Refresh: (self: Input) -> nil,
+	SetPriority: (self: Input, priority: number | Enum.ContextActionPriority) -> nil,
+	SetKeybinds: (self: Input, bindGroup: "Gamepad" | "Keyboard", T...) -> nil,
+	AddKeybinds: (self: Input, bindGroup: "Gamepad" | "Keyboard", T...) -> nil,
+	RemoveKeybinds: (self: Input, bindGroup: "Gamepad" | "Keyboard", T...) -> nil,
+	ReplaceKeybinds: (self: Input, bindGroup: "Gamepad" | "Keyboard", keybindsTable: { InputObject }) -> nil,
+}
+
 local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
@@ -16,6 +36,7 @@ local acts = require(script.Parent.Acts)
 
 local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
 
+local inputs: { Input } = {}
 local module = {
 	inputType = "Keyboard",
 	gamepadType = "Xbox",
@@ -69,9 +90,12 @@ local module = {
 		},
 	},
 
-	inputs = {},
+	inputs = inputs,
 	LastGamepadInput = nil,
 }
+
+local lastInputType
+local lastGamepadType
 
 local ps4Keys = {
 	"ButtonCross",
@@ -117,7 +141,24 @@ end
 
 function module:CheckKeyPrompts()
 	for _, image: ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
-		local iconKey = module.inputType == "Gamepad" and image:GetAttribute("Button") or image:GetAttribute("Key")
+		local iconKey
+
+		if image:GetAttribute("InputName") and module.inputs[image:GetAttribute("InputName")] then
+			iconKey = module.inputs[image:GetAttribute("InputName")].KeyInputs[module.inputType][1].Name
+
+			print(iconKey, module.inputs[image:GetAttribute("InputName")].KeyInputs)
+		end
+
+		local KEY = image:GetAttribute("Key")
+		local BUTTON = image:GetAttribute("Button")
+		local INPUT_NAME = image:GetAttribute("InputName")
+
+		if (module.inputType == "Gamepad" and BUTTON) or (module.inputType == "Keyboard" and KEY) then
+			iconKey = module.inputType == "Gamepad" and BUTTON or KEY
+		elseif INPUT_NAME and module.inputs[INPUT_NAME] then
+			iconKey = module.inputs[INPUT_NAME].KeyInputs[module.inputType][1].Name
+		end
+
 		if not iconKey then
 			image.Visible = false
 			continue
@@ -138,10 +179,11 @@ function module:CheckKeyPrompts()
 end
 
 local function setInputType(lastInput)
-	if lastInput.KeyCode == Enum.KeyCode.Thumbstick1 or lastInput.KeyCode == Enum.KeyCode.Thumbstick2 then
-		if lastInput.Position.Magnitude < 0.25 then
-			return
-		end
+	if
+		(lastInput.KeyCode == Enum.KeyCode.Thumbstick1 or lastInput.KeyCode == Enum.KeyCode.Thumbstick2)
+		and lastInput.Position.Magnitude < 0.25
+	then
+		return
 	end
 
 	if lastInput.KeyCode == Enum.UserInputType.Touch then
@@ -157,7 +199,12 @@ local function setInputType(lastInput)
 		module.inputType = "Keyboard"
 	end
 
-	module:CheckKeyPrompts()
+	if lastInputType ~= module.inputType or lastGamepadType ~= module.gamepadType then
+		module:CheckKeyPrompts()
+	end
+
+	lastInputType = module.inputType
+	lastGamepadType = module.gamepadType
 end
 
 local function Lerp(num, goal, i)
@@ -210,16 +257,39 @@ local function handleGamepadSelection()
 	end
 end
 
-function module.CreateNewInput(inputName: string, func: () -> any?, ...)
-	local newInput = {
+function module.CreateNewInput(
+	inputName: string,
+	func: () -> any?,
+	keyboardInputs: { InputObject } | InputObject,
+	gamepadInputs: { InputObject } | InputObject
+): Input
+	if typeof(keyboardInputs) ~= "table" then
+		keyboardInputs = { keyboardInputs }
+	end
+
+	if typeof(gamepadInputs) ~= "table" then
+		gamepadInputs = { gamepadInputs }
+	end
+
+	local inputIsEnabled = false
+	local newInput: Input = {
 		Name = inputName,
-		KeyInputs = { ... },
+		KeyInputs = {
+			Keyboard = keyboardInputs,
+			Gamepad = gamepadInputs,
+		},
 		Callback = func,
+		Priority = nil,
 
-		Enable = function(self, priority: number?)
+		IsEnabled = function()
+			return inputIsEnabled
+		end,
+
+		Enable = function(self: Input)
 			local callback = self.Callback
+			inputIsEnabled = true
 
-			if priority then
+			if self.Priority then
 				ContextActionService:BindActionAtPriority(
 					self.Name,
 					function(_, inputState: Enum.UserInputState, input: InputObject)
@@ -229,8 +299,9 @@ function module.CreateNewInput(inputName: string, func: () -> any?, ...)
 						return callback(inputState, input)
 					end,
 					false,
-					priority,
-					table.unpack(self.KeyInputs)
+					self.Priority,
+					table.unpack(self.KeyInputs.Keyboard),
+					table.unpack(self.KeyInputs.Gamepad)
 				)
 			else
 				ContextActionService:BindAction(
@@ -242,23 +313,65 @@ function module.CreateNewInput(inputName: string, func: () -> any?, ...)
 						return callback(inputState, input)
 					end,
 					false,
-					table.unpack(self.KeyInputs)
+					table.unpack(self.KeyInputs.Keyboard),
+					table.unpack(self.KeyInputs.Gamepad)
 				)
 			end
 		end,
 
-		Disable = function(self)
+		Disable = function(self: Input)
+			inputIsEnabled = false
 			ContextActionService:UnbindAction(self.Name)
 		end,
 
-		SetPriority = function(self, priority: number | Enum.ContextActionPriority)
-			self:Disable()
-
-			if tonumber(priority) then
-				self:Enable(priority)
-			else
-				self:Enable(priority.Value)
+		Refresh = function(self: Input)
+			if not inputIsEnabled then
+				return
 			end
+
+			self:Disable()
+			self:Enable()
+		end,
+
+		SetPriority = function(self: Input, priority: number | Enum.ContextActionPriority)
+			self.Priority = tonumber(priority) and priority or priority.Value
+			self:Refresh()
+		end,
+
+		SetKeybinds = function(self: Input, bindGroup: "Gamepad" | "Keyboard", ...)
+			self.KeyInputs[bindGroup] = { ... }
+			self:Refresh()
+		end,
+		AddKeybinds = function(self: Input, bindGroup: "Gamepad" | "Keyboard", ...)
+			local keybinds = { ... }
+			for _, keybind: Enum.KeyCode | Enum.UserInputType in ipairs(keybinds) do
+				table.insert(self.KeyInputs[bindGroup], keybind)
+			end
+			self:Refresh()
+		end,
+		RemoveKeybinds = function(self: Input, bindGroup: "Gamepad" | "Keyboard", ...)
+			local keybinds = { ... }
+			for _, keybind in ipairs(keybinds) do
+				local keybindIndex = table.find(self.KeyInputs[bindGroup], keybind)
+				if not keybindIndex then
+					continue
+				end
+
+				table.remove(self.KeyInputs[bindGroup], keybindIndex)
+			end
+			self:Refresh()
+		end,
+		ReplaceKeybinds = function(self: Input, bindGroup: "Gamepad" | "Keyboard", keybindsTable: { InputObject })
+			for toReplace, keybind in pairs(keybindsTable) do
+				local keybindIndex = table.find(self.KeyInputs[bindGroup], toReplace)
+				if not keybindIndex then
+					continue
+				end
+
+				self.KeyInputs[bindGroup][keybindIndex] = keybind
+			end
+
+			self:Refresh()
 		end,
 	}
 

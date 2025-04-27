@@ -28,7 +28,7 @@ function module:EnterView(object: Instance)
 	end
 	acts:createAct("InObjectView")
 
-	globalInputService.inputs["ToggleFire"]:Disable()
+	globalInputService.inputs["Fire Weapon"]:Disable()
 	globalInputService.inputs.Interact:Disable()
 	player:SetAttribute("MovementEnabled", false)
 
@@ -82,12 +82,10 @@ end
 
 function module.Init()
 	module.exitInput = globalInputService.CreateNewInput(
-		"ExitView",
+		"Exit First Person View",
 		exitViewInput,
-		Enum.KeyCode.ButtonB,
-		Enum.UserInputType.MouseButton2,
-		Enum.KeyCode.Backspace,
-		Enum.KeyCode.Space
+		{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Backspace, Enum.KeyCode.Space },
+		util.getSetting("Gamepad", "Exit First Person View")
 	)
 	module.exitInput:Disable()
 

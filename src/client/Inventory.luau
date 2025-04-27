@@ -1021,8 +1021,8 @@ end
 function Inventory.OpenInventory()
 	Inventory.InvetoryToggled:Fire(true)
 
-	globalInputService.inputs.OpenNET:Disable()
-	globalInputService.inputs.ToggleReady:Disable()
+	globalInputService.inputs["N.E.T"]:Disable()
+	globalInputService.inputs["Ready Weapon"]:Disable()
 	globalInputService.inputs.Interact:Disable()
 
 	Inventory.InventoryInteract:Enable()
@@ -1060,8 +1060,8 @@ function Inventory.OpenInventory()
 end
 
 function Inventory.CloseInventory()
-	globalInputService.inputs.OpenNET:Enable()
-	globalInputService.inputs.ToggleReady:Enable()
+	globalInputService.inputs["N.E.T"]:Enable()
+	globalInputService.inputs["Ready Weapon"]:Enable()
 	globalInputService.inputs.Interact:Enable()
 
 	Inventory.InventoryInteract:Disable()
@@ -1210,20 +1210,17 @@ function Inventory.Init()
 	Inventory.noteNavigation = globalInputService.CreateNewInput(
 		"NoteNavigation",
 		noteNavigationInput,
-		Enum.KeyCode.DPadDown,
-		Enum.KeyCode.DPadUp,
-		Enum.KeyCode.DPadLeft,
-		Enum.KeyCode.DPadRight
+		{ Enum.KeyCode.Down, Enum.KeyCode.Up, Enum.KeyCode.Left, Enum.KeyCode.Right },
+		{ Enum.KeyCode.DPadDown, Enum.KeyCode.DPadUp, Enum.KeyCode.DPadLeft, Enum.KeyCode.DPadRight }
 	)
 	Inventory.InventoryInteract =
 		globalInputService.CreateNewInput("InventoryInteraction", inventoryInteract, Enum.KeyCode.ButtonX)
 
 	Inventory.ToggleInventoryInput = globalInputService.CreateNewInput(
-		"ToggleInventory",
+		"Inventory",
 		toggleInventoryKey,
-		Enum.KeyCode.E,
-		Enum.KeyCode.ButtonY,
-		Enum.KeyCode.ButtonB
+		util.getSetting("Keybinds", "Inventory"),
+		{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB }
 	)
 
 	Inventory.InventoryInteract:Disable()
