@@ -47,22 +47,12 @@ local module = {
 			ButtonA = "rbxassetid://99222140491626",
 			ButtonB = "rbxassetid://139151046418306",
 			ButtonY = "rbxassetid://124498431294550",
-
-			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
-			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
-			ButtonR1 = "rbxassetid://84450330851971",
-			ButtonR2 = "rbxassetid://70730301952026",
 		},
 		Xbox = {
 			ButtonX = "rbxassetid://122267119998385",
 			ButtonA = "rbxassetid://121295530666976",
 			ButtonB = "rbxassetid://97330447691033",
 			ButtonY = "rbxassetid://73181495754569",
-
-			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
-			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
-			ButtonR1 = "rbxassetid://84450330851971",
-			ButtonR2 = "rbxassetid://70730301952026",
 		},
 		Keyboard = {
 			MouseButton1 = "rbxassetid://115777151252419",
@@ -79,14 +69,20 @@ local module = {
 			Shift = "rbxassetid://77318620414643",
 		},
 		Misc = {
-			Dpad = "rbxassetid://104088083610808",
-			Left = "rbxassetid://102626010372615",
-			Right = "rbxassetid://128897927978505",
+			DPadAll = "rbxassetid://104088083610808",
 			Horizontal = "rbxassetid://134923880414479",
-			Up = "rbxassetid://112547970720772",
-			Down = "rbxassetid://136246329210868",
 			Vertical = "rbxassetid://81470201795928",
+			DPadLeft = "rbxassetid://102626010372615",
+			DPadRight = "rbxassetid://128897927978505",
+			DPadUp = "rbxassetid://112547970720772",
+			DPadDown = "rbxassetid://136246329210868",
+
 			Unknown = "rbxassetid://136342675608310",
+
+			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
+			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
+			ButtonR1 = "rbxassetid://84450330851971",
+			ButtonR2 = "rbxassetid://70730301952026",
 		},
 	},
 
@@ -145,8 +141,6 @@ function module:CheckKeyPrompts()
 
 		if image:GetAttribute("InputName") and module.inputs[image:GetAttribute("InputName")] then
 			iconKey = module.inputs[image:GetAttribute("InputName")].KeyInputs[module.inputType][1].Name
-
-			print(iconKey, module.inputs[image:GetAttribute("InputName")].KeyInputs)
 		end
 
 		local KEY = image:GetAttribute("Key")
@@ -289,6 +283,11 @@ function module.CreateNewInput(
 			local callback = self.Callback
 			inputIsEnabled = true
 
+			local allInputs = self.KeyInputs.Keyboard
+			for _, input in ipairs(self.KeyInputs.Gamepad) do
+				table.insert(allInputs, input)
+			end
+
 			if self.Priority then
 				ContextActionService:BindActionAtPriority(
 					self.Name,
@@ -300,8 +299,7 @@ function module.CreateNewInput(
 					end,
 					false,
 					self.Priority,
-					table.unpack(self.KeyInputs.Keyboard),
-					table.unpack(self.KeyInputs.Gamepad)
+					table.unpack(allInputs)
 				)
 			else
 				ContextActionService:BindAction(
@@ -313,8 +311,7 @@ function module.CreateNewInput(
 						return callback(inputState, input)
 					end,
 					false,
-					table.unpack(self.KeyInputs.Keyboard),
-					table.unpack(self.KeyInputs.Gamepad)
+					table.unpack(allInputs)
 				)
 			end
 		end,

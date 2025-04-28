@@ -334,15 +334,17 @@ function module.Init()
 	cursorUi = player.PlayerGui.Cursor
 	RunService.RenderStepped:Connect(processCrosshair)
 
-	globalInputService.CreateNewInput("Interact", function(state)
-		local object = mouseTarget.Value
+	globalInputService
+		.CreateNewInput("Interact", function(state)
+			local object = mouseTarget.Value
 
-		if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
-			return
-		end
+			if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
+				return
+			end
 
-		InteractiWithObject(object)
-	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"))
+			InteractiWithObject(object)
+		end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"))
+		:SetPriority(Enum.ContextActionPriority.High)
 end
 
 interactTimer.OnEnded:Connect(function()

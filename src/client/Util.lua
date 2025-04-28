@@ -361,14 +361,14 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, range: number?, stopTime: number?)
+function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent: Instance?)
 	if not sound then
 		return
 	end
 
 	local soundClone = sound:Clone()
 	--soundClone.Name = "SoundPlaying"
-	soundClone.Parent = script
+	soundClone.Parent = parent or script
 	if range then
 		soundClone.PlaybackSpeed += rng:NextNumber(-range, range)
 	end
@@ -376,12 +376,10 @@ function util.PlaySound(sound: Sound, range: number?, stopTime: number?)
 	soundClone:Play()
 
 	if stopTime then
-		task.delay(stopTime, function()
-			soundClone:Destroy()
-		end)
+		deb:AddItem(soundClone, stopTime)
 	else
 		soundClone.Ended:Once(function()
-			soundClone:Destroy()
+			--soundClone:Destroy()
 		end)
 	end
 
@@ -389,11 +387,23 @@ function util.PlaySound(sound: Sound, range: number?, stopTime: number?)
 end
 
 function util.PlayFrom(object: Instance, sound: Sound, range: number?, stopTime: number?)
-	local soundClone = util.PlaySound(sound, range, stopTime)
+	local objectPosition = object:GetPivot().Position
+
+	local newObject = Instance.new("Part")
+	newObject.Parent = workspace
+	newObject.Anchored = true
+	newObject.Transparency = 0
+	newObject.Position = Vector3.new(objectPosition.X, workspace.CurrentCamera.CFrame.Position.Y - 5, objectPosition.Z)
+	newObject.Name = "SoundPart"
+
+	local soundClone = util.PlaySound(sound, range, stopTime, newObject)
+
+	print(workspace.CurrentCamera.CFrame.Position.Y, newObject.Position)
 
 	if soundClone.SoundGroup == SoundService.SoundEffects then
 		soundClone.Destroying:Once(function()
 			util.PlayingSounds[soundClone] = nil
+			--deb:AddItem(newObject, 0.1)
 		end)
 		util.PlayingSounds[soundClone] = object
 	end

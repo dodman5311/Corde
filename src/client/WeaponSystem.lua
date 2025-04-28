@@ -367,22 +367,22 @@ local function inflictPower(model: Model)
 		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(Vector3.zero, weaponData.StoppingPower)
 	end
 
-	-- local newForce = Instance.new("LinearVelocity")
-	-- newForce.Parent = model
-	-- newForce.MaxForce = 11000
-	-- newForce.Attachment0 = model.PrimaryPart.RootAttachment
-	-- newForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
-	-- newForce.VectorVelocity = Vector3.new(0, 0, 10 * weaponData.StoppingPower)
-	--Debris:AddItem(newForce, 0.1)
+	local newForce = Instance.new("LinearVelocity")
+	newForce.Parent = model
+	newForce.MaxForce = 11000
+	newForce.Attachment0 = model.PrimaryPart.RootAttachment
+	newForce.RelativeTo = Enum.ActuatorRelativeTo.Attachment0
+	newForce.VectorVelocity = Vector3.new(0, 0, weaponData.StoppingPower)
+	Debris:AddItem(newForce, 0.1)
 
-	-- task.delay(0.1, function()
-	-- 	local walkVelocity: LinearVelocity = model:FindFirstChild("WalkVelocity")
-	-- 	if walkVelocity then
-	-- 		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(Vector3.zero, weaponData.StoppingPower)
-	-- 	end
+	task.delay(0.1, function()
+		local walkVelocity: LinearVelocity = model:FindFirstChild("WalkVelocity")
+		if walkVelocity then
+			walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(Vector3.zero, weaponData.StoppingPower)
+		end
 
-	-- 	newForce:Destroy()
-	-- end)
+		newForce:Destroy()
+	end)
 end
 
 local function registerShot(result, health)

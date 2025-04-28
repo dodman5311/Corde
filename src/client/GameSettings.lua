@@ -10,13 +10,15 @@ local globalInputService = require(script.Parent.GlobalInputService)
 
 local function onKeyboardChanged(self, previousValue)
 	globalInputService.inputs[self.Name]:ReplaceKeybinds("Keyboard", { [previousValue] = self.Value })
+	globalInputService:CheckKeyPrompts()
 end
 
 local function onGamepadChanged(self, previousValue)
 	globalInputService.inputs[self.Name]:ReplaceKeybinds("Gamepad", { [previousValue] = self.Value })
+	globalInputService:CheckKeyPrompts()
 end
 
-local settings = {
+local gameSettings = {
 	Audio = {
 		{
 			Name = "Music Volume",
@@ -173,7 +175,7 @@ local settings = {
 }
 
 local function applySettings()
-	for _, group in pairs(settings) do
+	for _, group in pairs(gameSettings) do
 		for _, setting in ipairs(group) do
 			setting:OnChanged()
 		end
@@ -185,7 +187,7 @@ local function loadSaveData(upgradeIndex, gameState, settingsToLoad)
 		return
 	end
 
-	for _, group in pairs(settings) do
+	for _, group in pairs(gameSettings) do
 		for _, setting in ipairs(group) do
 			local foundSetting = settingsToLoad[setting.Name]
 			if foundSetting == nil then
@@ -201,4 +203,4 @@ local function loadSaveData(upgradeIndex, gameState, settingsToLoad)
 	applySettings()
 end
 
-return settings
+return gameSettings

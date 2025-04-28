@@ -36,6 +36,7 @@ local sounds = assets.Sounds
 local UITemplate = gui.Inventory
 local UI
 local currentSelectedSlot
+local camera = workspace.CurrentCamera
 
 --// Modules
 local signal = require(ReplicatedStorage.Packages.Signal)
@@ -43,7 +44,7 @@ local UIAnimationService = require(client.UIAnimationService)
 local util = require(client.Util)
 local acts = require(client.Acts)
 local mouseOver = require(client.MouseOver)
-local camera = require(client.Camera)
+local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
 local itemsList = require(ReplicatedStorage.Shared.Items)
@@ -563,8 +564,6 @@ local function nextNotePage(note: item, indexChange: number)
 	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
 	util.PlaySound(sounds.Paper, 0.075)
 
-	clearKeyPrompts()
-
 	if currentNoteIndex > #note.Value.Message then
 		closeNote()
 		return
@@ -575,6 +574,8 @@ local function nextNotePage(note: item, indexChange: number)
 	else
 		noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {#note.Value.Message}  >>`
 	end
+
+	clearKeyPrompts()
 
 	if currentNoteIndex == 1 then
 		util.tween(
@@ -597,14 +598,18 @@ local function nextNotePage(note: item, indexChange: number)
 end
 
 local function openNote(note: item)
+	clearKeyPrompts()
 	Inventory.noteNavigation:Enable()
 	currentNoteItem = note
 
 	local noteUi = UI.Note
+	local message: TextLabel = noteUi.Message
 	noteUi.Visible = true
 
 	noteUi.NoteImage.ImageColor3 = Color3.new(1, 1, 1)
 	noteUi.NoteImage.Image = note.Value.Image
+
+	message.TextSize = math.round(message.AbsoluteSize.X / 50)
 
 	currentNoteIndex = 0
 	nextNotePage(note, 0)
@@ -1028,7 +1033,7 @@ function Inventory.OpenInventory()
 	Inventory.InventoryInteract:Enable()
 
 	if not acts:checkAct("InDialogue") then
-		camera.followViewDistance.current = 1
+		cameraService.followViewDistance.current = 1
 	end
 
 	util.PlaySound(sounds.InventoryOpen)
@@ -1068,7 +1073,7 @@ function Inventory.CloseInventory()
 	closeNote()
 
 	if not acts:checkAct("InDialogue") then
-		camera.followViewDistance.current = camera.followViewDistance.default
+		cameraService.followViewDistance.current = cameraService.followViewDistance.default
 	end
 
 	util.PlaySound(sounds.InventoryClose)
