@@ -2,6 +2,8 @@ local util = {
 	bound = {},
 }
 local deb = game:GetService("Debris")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local ts = game:GetService("TweenService")
 
@@ -361,7 +363,7 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent: Instance?)
+function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent: Instance?): Sound
 	if not sound then
 		return
 	end
@@ -379,30 +381,45 @@ function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent:
 		deb:AddItem(soundClone, stopTime)
 	else
 		soundClone.Ended:Once(function()
-			--soundClone:Destroy()
+			soundClone:Destroy()
 		end)
 	end
 
 	return soundClone
 end
 
-function util.PlayFrom(object: Instance, sound: Sound, range: number?, stopTime: number?)
-	local objectPosition = object:GetPivot().Position
+function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, stopTime: number?)
+	local character = Players.LocalPlayer.Character
+	if not character then
+		return
+	end
 
-	local newObject = Instance.new("Part")
-	newObject.Parent = workspace
-	newObject.Anchored = true
-	newObject.Transparency = 0
-	newObject.Position = Vector3.new(objectPosition.X, workspace.CurrentCamera.CFrame.Position.Y - 5, objectPosition.Z)
-	newObject.Name = "SoundPart"
+	-- local camera = workspace.CurrentCamera -- DIRECTIONAL AUDIO: Simply doesn't sound good.
+	-- local newObject = Instance.new("Part")
+	-- newObject.Parent = workspace
+	-- newObject.Anchored = true
+	-- newObject.Transparency = 0
+	-- newObject.CanQuery = false
+	-- newObject.Size = Vector3.one * 0.1
+	-- newObject.Material = Enum.Material.Neon
 
-	local soundClone = util.PlaySound(sound, range, stopTime, newObject)
+	-- local step = RunService.RenderStepped:Connect(function()
+	-- 	local cn = camera.CFrame * CFrame.Angles(math.rad(90), 0, 0) * CFrame.new(0, -camera.CFrame.Position.Y, 0)
+	-- 	local offset = object:GetPivot().Position - cn.Position
+	-- 	newObject.CFrame = camera.CFrame * CFrame.new(offset)
+	-- end)
 
-	print(workspace.CurrentCamera.CFrame.Position.Y, newObject.Position)
+	-- newObject.Name = "SoundPart"
+
+	local soundClone: Sound = util.PlaySound(sound, range, stopTime) --, newObject)
+	-- soundClone.RollOffMode = Enum.RollOffMode.Inverse
+	-- soundClone.RollOffMinDistance = 1000
+	-- soundClone.RollOffMaxDistance = 1000
 
 	if soundClone.SoundGroup == SoundService.SoundEffects then
 		soundClone.Destroying:Once(function()
 			util.PlayingSounds[soundClone] = nil
+			--step:Disconnect()
 			--deb:AddItem(newObject, 0.1)
 		end)
 		util.PlayingSounds[soundClone] = object

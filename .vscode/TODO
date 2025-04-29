@@ -6,8 +6,9 @@ Security robots
 
 bad food / purifiers (deals damage)
 
-add prompt to exit 3d view
 More ambient sounds
 Make map direct player (Direct to first door, direct to exit) (Blinking light)
 Change dialogue box input type
-fade music slower
+
+stop cursor when in gamepad selection
+Cant interact when in sequence

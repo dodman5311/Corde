@@ -41,6 +41,7 @@ local objectFunctions = {
 		if instant then
 			ti = TweenInfo.new(0)
 		else
+			util.PlayFrom(object, assets.Sounds.HydrolicMovement)
 			util.PlayFrom(object, assets.Sounds.DoorsOpening)
 			task.wait(1.1)
 			util.PlayFrom(object, assets.Sounds.Open)

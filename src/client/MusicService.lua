@@ -12,7 +12,7 @@ local music = assets.Music
 local util = require(script.Parent.Util)
 
 --// Values
-local DEFAULT_FADE_TIME = 0.5
+local DEFAULT_FADE_TIME = 2
 local lastTrack
 
 function musicService:StopTrack(fadeTime: number?): Sound?
@@ -68,7 +68,6 @@ function musicService:ReturnToLastTrack(): Sound?
 		return
 	end
 
-	print(lastTrack)
 	return self:PlayTrack(lastTrack.Name)
 end
 
