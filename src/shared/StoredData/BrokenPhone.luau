@@ -1,9 +1,33 @@
 return {
 	KeyPrompts = {
-		{ Key = "Three", Button = "DPadDown", Position = UDim2.fromScale(0.832, 0.74), Index = 1 },
-		{ Key = "Three", Button = "DPadDown", Position = UDim2.fromScale(0.861, 0.74), Index = 1 },
-		{ Key = "Four", Button = "DPadRight", Position = UDim2.fromScale(0.89, 0.74), Index = 1 },
-		{ Key = "One", Button = "DPadUp", Position = UDim2.fromScale(0.92, 0.74), Index = 1 },
+		{
+			Key = "Three",
+			Button = "DPadDown",
+			PreText = "                                                            						    The code is   ",
+			YPosition = 0.74,
+			Index = 1,
+		},
+		{
+			Key = "Three",
+			Button = "DPadDown",
+			PreText = "                                                            						    The code is       ",
+			YPosition = 0.74,
+			Index = 1,
+		},
+		{
+			Key = "Four",
+			Button = "DPadRight",
+			PreText = "                                                            						    The code is           ",
+			YPosition = 0.74,
+			Index = 1,
+		},
+		{
+			Key = "One",
+			Button = "DPadUp",
+			PreText = "                                                            						    The code is               ",
+			YPosition = 0.74,
+			Index = 1,
+		},
 	},
 	[[                                      			Tuesday, Apr 22
     

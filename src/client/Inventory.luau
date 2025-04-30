@@ -527,7 +527,7 @@ end
 
 local function clearKeyPrompts()
 	for _, child in ipairs(UI.Note.Message:GetChildren()) do -- clear previous prompts
-		if child:IsA("ImageLabel") then
+		if child.Name == "Keyprompt" then
 			child:Destroy()
 		end
 	end
@@ -544,12 +544,14 @@ local function showNoteKeyprompts(note: item)
 		end
 
 		local newPrompt: ImageLabel = gui.Keyprompt:Clone()
-		newPrompt:AddTag("KeyPrompt")
-		newPrompt:SetAttribute("Key", prompt.Key)
-		newPrompt:SetAttribute("Button", prompt.Button)
+		newPrompt.Image:AddTag("KeyPrompt")
+		newPrompt.Image:SetAttribute("Key", prompt.Key)
+		newPrompt.Image:SetAttribute("Button", prompt.Button)
 		newPrompt.Parent = UI.Note.Message
 
-		newPrompt.Position = prompt.Position
+		newPrompt.Image.Position = UDim2.fromScale(1, prompt.YPosition)
+		newPrompt.Text = prompt.PreText
+		newPrompt.TextSize = UI.Note.Message.TextSize
 	end
 
 	globalInputService:CheckKeyPrompts()
@@ -609,7 +611,7 @@ local function openNote(note: item)
 	noteUi.NoteImage.ImageColor3 = Color3.new(1, 1, 1)
 	noteUi.NoteImage.Image = note.Value.Image
 
-	message.TextSize = math.round(message.AbsoluteSize.X / 50)
+	message.TextSize = math.floor(message.AbsoluteSize.X / 50)
 
 	currentNoteIndex = 0
 	nextNotePage(note, 0)

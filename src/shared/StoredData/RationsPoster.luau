@@ -1,7 +1,7 @@
 return {
 
 	KeyPrompts = {
-		{ Key = "LeftShift", Button = "ButtonR2", Position = UDim2.fromScale(0, 0.525), Index = 2 },
+		{ Key = "LeftShift", Button = "ButtonR2", PreText = "", YPosition = 0.525, Index = 2 },
 	},
 
 	[[Rationing means a fair share for all of us.]],

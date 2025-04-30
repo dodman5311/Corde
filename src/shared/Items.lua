@@ -442,10 +442,10 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	},
 
 	--// Notes
-	BrokenPhone = {
-		Name = "Broken Phone",
-		Desc = "A phone with the screen cracked.",
-		Value = { Message = storedData:GetData("BrokenPhone"), Image = "rbxassetid://126027788326937" },
+	OldPhone = {
+		Name = "Old Phone",
+		Desc = "An old phone with a crack in the screen.",
+		Value = { Message = storedData:GetData("BrokenPhone"), Image = "rbxassetid://72233013402684" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
@@ -475,6 +475,15 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		Name = "Journal",
 		Desc = "A journal.",
 		Value = { Message = storedData:GetData("Journal"), Image = "rbxassetid://94886205976075" },
+		Icon = "rbxassetid://82487541380359",
+		Use = "Read",
+		InUse = false,
+	},
+
+	NetManual = {
+		Name = "N.E.T Module Manual",
+		Desc = "A user manual for the N.E.T Module.",
+		Value = { Message = storedData:GetData("N.E.T Manual"), Image = "rbxassetid://96472182587307" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,

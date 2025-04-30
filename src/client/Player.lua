@@ -659,7 +659,7 @@ local itemFunctions = {
 			inventory:RemoveItem(item.Name)
 			sequences:beginSequence("InstallModule")
 		else
-			dialogue:SayFromPlayer("I need a *mirror to use this correctly.")
+			dialogue:SayFromPlayer("I need a *mirror to install this correctly.")
 		end
 	end,
 	EquipStem = function(item)
