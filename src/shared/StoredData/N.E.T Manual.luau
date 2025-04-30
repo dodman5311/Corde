@@ -5,7 +5,7 @@ return {
 			Key = "Tab",
 			Button = "ButtonL1",
 			PreText = "Once installed. Press and hold   ",
-			YPosition = 0.426,
+			YPosition = 0.424,
 			Index = 2,
 		},
 	},
