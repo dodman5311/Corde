@@ -60,6 +60,8 @@ local holdingObject = {
 	Connection = nil,
 }
 
+local hasRead = {}
+
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
 Inventory.SlotValueChanged = signal.new()
@@ -227,7 +229,7 @@ function Inventory:AddItem(item: item)
 	self.ItemAdded:Fire(newItem, slotToAddTo)
 	self.SlotValueChanged:Fire(slotToAddTo, self[slotToAddTo])
 
-	return newItem
+	return newItem, slotToAddTo
 end
 
 function Inventory:RemoveItem(ItemNameOrSlot)
@@ -302,20 +304,26 @@ function Inventory:pickupFromContainer(object)
 
 	local toRemove = {}
 
-	for _, v in ipairs(containerData) do
-		if not self:AddItem(v) then
+	for _, item: item in ipairs(containerData) do
+		local newItem, slot = self:AddItem(item)
+		if not newItem then
 			util.PlaySound(sounds.InventoryFull)
 			break
 		end
-		table.insert(toRemove, v)
+		table.insert(toRemove, item)
+
+		if util.getSetting("Gameplay", "Auto Read") and item.Use == "Read" then
+			Inventory:OpenInventory()
+			Inventory:UseItem(UI.Inventory.Slots:FindFirstChild(slot))
+		end
 	end
 
 	if #toRemove > 0 then
 		util.PlaySound(sounds.ItemAdded, 0.05)
 	end
 
-	for _, v in ipairs(toRemove) do
-		table.remove(containerData, table.find(containerData, v))
+	for _, item in ipairs(toRemove) do
+		table.remove(containerData, table.find(containerData, item))
 	end
 
 	if object:GetAttribute("RemoveOnEmpty") and #containerData == 0 then
@@ -648,7 +656,7 @@ local function emptyWeaponSlot()
 	refreshGui()
 end
 
-local function useItem(slotUi)
+function Inventory:UseItem(slotUi)
 	if slotUi.Name == "Weapon" then
 		emptyWeaponSlot()
 		return

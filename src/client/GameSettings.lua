@@ -55,7 +55,14 @@ local gameSettings = {
 
 	Interface = {},
 
-	Gameplay = {},
+	Gameplay = {
+		{
+			Name = "Auto Read",
+			Type = "Boolean",
+			Value = true,
+			OnChanged = function() end,
+		},
+	},
 
 	Keybinds = {
 		{

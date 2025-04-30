@@ -1,6 +1,5 @@
 local module = {
-	HUNGER_RATE = 0.065,
-	SPRINTING_HUNGER_MULT = 3,
+	HUNGER_RATE = 0.25,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 	ThumbstickSnapPower = 0.5,
@@ -89,7 +88,7 @@ local function checkEquippedStem(healthPercent: number)
 	module.ConsumeItem(currentStimEquipped, "Heal")
 end
 
-local function playerDamaged(character, healthPercent)
+local function playerDamaged(character, healthPercent, damageDealt)
 	local damageUi = HUD.DamageEffects
 	local invertedHealthPercent = math.abs(healthPercent - 1)
 
@@ -98,6 +97,8 @@ local function playerDamaged(character, healthPercent)
 
 	local glitchToPlay
 	local damageSoundFolder
+
+	character:SetAttribute("Hunger", character:GetAttribute("Hunger") - damageDealt / 2.5)
 
 	if healthPercent >= 0.65 then
 		glitchToPlay = damageUi.Glitch_HighHealth
@@ -227,9 +228,10 @@ function module.spawnCharacter()
 	character:GetAttributeChangedSignal("Health"):Connect(function()
 		local health = character:GetAttribute("Health")
 		local healthPercent = getHealthPercentage(character)
+		local change = logHealth - health
 
 		if health < logHealth then
-			playerDamaged(character, healthPercent)
+			playerDamaged(character, healthPercent, change)
 		elseif health > logHealth then
 			playerHealed(character, healthPercent)
 		end
@@ -617,10 +619,10 @@ RunService.Heartbeat:Connect(function()
 			module.toggleSprint(false)
 		elseif player.Character:GetAttribute("Hunger") > 100 then
 			player.Character:SetAttribute("Hunger", 100)
-		elseif player.Character:GetAttribute("Hunger") > 0 then
-			local mult = checkIsSprinting() and module.SPRINTING_HUNGER_MULT or 1
-			local rate = (os.clock() - lastHeartbeat) * (module.HUNGER_RATE * mult)
+		end
 
+		if player.Character:GetAttribute("Hunger") > 0 and checkIsSprinting() then
+			local rate = (os.clock() - lastHeartbeat) * module.HUNGER_RATE
 			player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") - rate)
 		end
 
