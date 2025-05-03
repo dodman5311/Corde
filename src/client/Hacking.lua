@@ -52,13 +52,8 @@ local gamepad = {
 	Enum.KeyCode.DPadRight,
 }
 
-local function getKeyCodeFromNumber(number: number | string)
-	number = tonumber(number)
-	if not number then
-		return
-	end
-
-	return globalInputService.inputType == "Gamepad" and gamepad[number] or keyboard[number]
+local function getNumberFromSequence(point: BillboardGui)
+	return tonumber(string.sub(point:GetAttribute("Sequence"), currentInputIndex, currentInputIndex))
 end
 
 local function getNumberFromKeyCode(keycode: Enum.KeyCode)
@@ -102,14 +97,11 @@ local function failNetPoint(point: BillboardGui)
 	end)
 end
 
-local function setUpKeyLabel(keyLabel: ImageLabel, point: BillboardGui)
-	if not string.match(keyLabel.Name, "Keystroke_") then
-		return
-	end
-	local index = tonumber(string.sub(keyLabel.Name, 11))
-	local number = tonumber(string.sub(point:GetAttribute("Sequence"), index, index))
+local function createKeyLabel(point: BillboardGui)
+	local number = getNumberFromSequence(point)
 
-	keyLabel:SetAttribute("Number", number)
+	local keyLabel = gui.Keystroke:Clone()
+	keyLabel.Parent = point.HackPrompt
 	keyLabel.ImageTransparency = 1
 
 	keyLabel:SetAttribute("Key", keyboard[number].Name)
@@ -120,11 +112,9 @@ local function setUpKeyLabel(keyLabel: ImageLabel, point: BillboardGui)
 		keyLabel:SetAttribute("Button", "Unknown")
 	end
 
-	keyLabel.Size = UDim2.fromScale(0.1, 0.075)
-	keyLabel.ImageTransparency = 1
-
 	keyLabel:AddTag("KeyPrompt")
 	globalInputService:CheckKeyPrompts()
+	return keyLabel
 end
 
 local function showPointPromt(point: BillboardGui)
@@ -145,11 +135,8 @@ local function showPointPromt(point: BillboardGui)
 	hackUi.ActionName.Text = `Action: <font color="rgb(255,240,0)">{point.Adornee:GetAttribute("HackAction")}</font>`
 	hackUi.ItemName.Text = point.Adornee.Name
 
-	for _, keyLabel: TextLabel in ipairs(hackUi:GetChildren()) do
-		setUpKeyLabel(keyLabel, point)
-	end
+	local keyLabel = createKeyLabel(point)
 
-	hackUi.Keystroke_1.ImageTransparency = 1
 	hackUi.Image.Position = UDim2.fromScale(0, 0)
 
 	local animation = uiAnimationService.PlayAnimation(hackUi, 0.045, false, true)
@@ -159,8 +146,7 @@ local function showPointPromt(point: BillboardGui)
 			return
 		end
 
-		util.tween({ hackUi.Keystroke_2, hackUi.Keystroke_3, hackUi.Keystroke_4 }, ti, { ImageTransparency = 0.75 })
-		util.tween({ hackUi.Keystroke_1 }, ti, { ImageTransparency = 0 })
+		util.tween({ keyLabel }, ti, { ImageTransparency = 0 })
 
 		util.flickerUi(hackUi.ItemName, 0.035, 5, true)
 		util.flickerUi(hackUi.ActionName, 0.035, 5)
@@ -403,15 +389,16 @@ local function enterKeyStroke(point: BillboardGui, input: InputObject)
 		return
 	end
 
+	local ti = TweenInfo.new(0.25)
 	local object = point.Adornee
 	local hackUi = currentActivePoint.Value.HackPrompt
-	local keystrokeLabel: ImageLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
-	local number = getNumberFromKeyCode(input.KeyCode)
+	local keystrokeLabel: ImageLabel = hackUi:FindFirstChild("Keystroke")
+	local inputNumber = getNumberFromKeyCode(input.KeyCode)
+	local number = getNumberFromSequence(point)
 
-	if
-		not point:GetAttribute("SequenceHidden")
-		and (not keystrokeLabel or input.KeyCode ~= getKeyCodeFromNumber(keystrokeLabel:GetAttribute("Number")))
-	then
+	print(inputNumber, number, inputNumber == number, keystrokeLabel)
+
+	if not point:GetAttribute("SequenceHidden") and (not keystrokeLabel or inputNumber ~= number) then
 		return
 	end
 
@@ -422,21 +409,28 @@ local function enterKeyStroke(point: BillboardGui, input: InputObject)
 
 	util.PlaySound(sounds.HackInput, 0.05)
 
-	keystrokeLabel:SetAttribute("Key", keyboard[number].Name)
-	keystrokeLabel:SetAttribute("Button", gamepad[number].Name)
+	keystrokeLabel.Name = "InputUsed"
+	keystrokeLabel:SetAttribute("Key", keyboard[inputNumber].Name)
+	keystrokeLabel:SetAttribute("Button", gamepad[inputNumber].Name)
+
 	globalInputService:CheckKeyPrompts()
 
-	util.tween(keystrokeLabel, TweenInfo.new(0.25), { Size = UDim2.fromScale(0.15, 0.15), ImageTransparency = 1 })
+	util.tween(keystrokeLabel, ti, { Size = UDim2.fromScale(0.175, 0.175), ImageTransparency = 1 }, false, function()
+		keystrokeLabel:Destroy()
+	end)
 
 	currentInputIndex += 1
-	currentInput ..= number
+	currentInput ..= inputNumber
 
-	keystrokeLabel = hackUi:FindFirstChild("Keystroke_" .. currentInputIndex)
-	if not keystrokeLabel then
+	if not getNumberFromSequence(point) then
 		checkHackGate(currentActivePoint.Value)
 		return
 	end
-	keystrokeLabel.ImageTransparency = 0
+
+	local newPoint = createKeyLabel(point)
+	newPoint.Size = UDim2.fromScale(0.05, 0.05)
+
+	util.tween({ newPoint }, ti, { ImageTransparency = 0, Size = UDim2.fromScale(0.11, 0.11) })
 end
 
 local function checkKeystrokeInput(state, input)

@@ -1,6 +1,7 @@
 local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
+local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
@@ -11,6 +12,7 @@ local mouseOver = require(script.Parent.MouseOver)
 local uiAnimationService = require(script.Parent.UIAnimationService)
 local musicService = require(script.Parent.MusicService)
 local util = require(script.Parent.Util)
+local globalInputService = require(script.Parent.GlobalInputService)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -76,7 +78,7 @@ local buttonFunctions = {
 	end,
 }
 
-local function enableButtonFucntions()
+local function enableButtonFunctions()
 	for _, button: GuiButton in ipairs(CollectionService:GetTagged("MenuButton")) do
 		button:SetAttribute("DefaultSize", button.Size)
 
@@ -97,17 +99,28 @@ end
 
 function module:ShowTitleScreen()
 	mainMenu.FadeIn.BackgroundTransparency = 0
+
+	util.tween(mainMenu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
+	task.wait(3)
+
+	util.tween(mainMenu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
 	util.tween(mainMenu.FadeIn, TweenInfo.new(4), { BackgroundTransparency = 1 })
 
 	SoundService.AmbientReverb = Enum.ReverbType.Arena
 	uiAnimationService.PlayAnimation(mainFrame.Logo, 0.05, true)
 	titleTheme.TimePosition = 22.9
 	musicService:PlayTrack(titleTheme.Name, 0)
+
+	task.delay(0.5, function()
+		if globalInputService.inputType == "Gamepad" then
+			GuiService:Select(mainFrame)
+		end
+	end)
 end
 
 function module.Init()
-	module:ShowTitleScreen()
-	enableButtonFucntions()
+	task.spawn(module.ShowTitleScreen)
+	enableButtonFunctions()
 end
 
 return module

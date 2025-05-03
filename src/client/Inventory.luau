@@ -781,7 +781,7 @@ end
 
 local optionFunctions = {
 	Use = function(slotUi)
-		useItem(slotUi)
+		Inventory:UseItem(slotUi)
 	end,
 	Drop = function(slotUi)
 		Inventory:DropItem(slotUi.ItemName.Text)
@@ -925,7 +925,7 @@ local function connectSlotButton(slotUi)
 	local button: TextButton = slotUi.Button
 
 	button.MouseButton2Click:Connect(function()
-		useItem(slotUi)
+		Inventory:UseItem(slotUi)
 		closeOptionsMenu()
 	end)
 
@@ -969,7 +969,7 @@ local function connectSlotButton(slotUi)
 		end
 
 		if input.KeyCode == Enum.KeyCode.Return then
-			useItem(slotUi)
+			Inventory:UseItem(slotUi)
 		end
 
 		refreshGui()
@@ -1160,7 +1160,7 @@ local function inventoryInteract(state, input)
 	end
 
 	if input.KeyCode == Enum.KeyCode.ButtonX then
-		useItem(GuiService.SelectedObject.Parent)
+		Inventory:UseItem(GuiService.SelectedObject.Parent)
 		closeOptionsMenu()
 	end
 

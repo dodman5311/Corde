@@ -453,7 +453,7 @@ local function deathScreenUi()
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Eternity" })
 
 	sequenceFrame.Eye.Visible = true
-	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.125)
+	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.1)
 
 	animation:OnFrameRached(8):Once(function()
 		animation:Pause()
@@ -468,7 +468,7 @@ local function deathScreenUi()
 	animation.OnEnded:Once(function()
 		sequenceFrame.Eye.Visible = false
 		sequenceFrame.Vax.Visible = true
-		task.wait(0.5)
+		task.wait(1)
 		uiAnimationService.PlayAnimation(sequenceFrame.Vax, 0.04, false, true).OnEnded:Wait()
 		sequenceFrame.Vax.Visible = false
 		--task.wait(1)

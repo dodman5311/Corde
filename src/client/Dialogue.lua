@@ -23,6 +23,7 @@ local globalInputService = require(client.GlobalInputService)
 local sequences = require(client.Sequences)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local items = require(ReplicatedStorage.Shared.Items)
+local storedData = require(ReplicatedStorage.Shared.StoredData)
 
 local currentNpcModule
 local currentNpc
@@ -432,12 +433,23 @@ function startDialogue(dialogue)
 end
 
 function Dialogue:EnterDialogue(model: Instance)
-	local module = model:FindFirstChild("Data")
-	if not module or acts:checkAct("InDialogue") then
+	if acts:checkAct("InDialogue") then
 		return
 	end
 
-	currentNpcModule = require(module)
+	local module
+
+	if model:FindFirstChild("Data") then
+		module = require(model.Data)
+	elseif model:GetAttribute("Data") then
+		module = storedData:GetData(model:GetAttribute("Data"))
+	end
+
+	if not module then
+		return
+	end
+
+	currentNpcModule = module
 	currentNpc = model
 
 	acts:createAct("InDialogue")

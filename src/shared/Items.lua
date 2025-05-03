@@ -492,7 +492,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	GunManual = {
 		Name = "M45A1 Manual",
 		Desc = "A safety manual for the M45A1.",
-		Value = { Message = storedData:GetData("Gun Manual"), Image = "rbxassetid://96472182587307" },
+		Value = { Message = storedData:GetData("Gun Manual"), Image = "rbxassetid://104443115073021" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,

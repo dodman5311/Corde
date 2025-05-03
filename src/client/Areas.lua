@@ -32,7 +32,11 @@ local attributeEffects = {
 	end,
 
 	Track = function(trackName)
-		if musicService.playingTrack and musicService.playingTrack.Name == "SuddenDeath" then
+		if
+			workspace:GetAttribute("InCombat")
+			-- and musicService.playingTrack
+			--and musicService.playingTrack.Name == "SuddenDeath"
+		then
 			return
 		end
 		musicService:PlayTrack(trackName)

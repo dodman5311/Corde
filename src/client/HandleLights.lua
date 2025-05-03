@@ -9,6 +9,8 @@ local camera = workspace.CurrentCamera
 
 local range = 20
 
+local CastTo = require(script.Parent.CastTo)
+
 local function Lerp(num, goal, i)
 	return num + (goal - num) * i
 end
@@ -74,10 +76,7 @@ local function checkLights()
 		local rp = RaycastParams.new()
 		rp.CollisionGroup = "Light"
 
-		if
-			light:GetAttribute("LightType") == "Dynamic"
-			and workspace:Raycast(playerPosition, light.Position - playerPosition, rp)
-		then
+		if light:GetAttribute("LightType") == "Dynamic" and CastTo.checkCast(playerPosition, light.Position, rp) then
 			fadeLight(light, 1)
 			continue
 		end
