@@ -359,7 +359,7 @@ local function doHackAction(object, point: BillboardGui)
 	completePoint(point)
 
 	if hackFunction then
-		task.spawn(hackFunction, object, point)
+		task.spawn(hackFunction, object)
 	end
 
 	refreshNetPoints()

@@ -107,6 +107,9 @@ local objectFunctions = {
 			util.PlayFrom(object, assets.Sounds.HydrolicMovement, 0, 10)
 		end
 
+		object.Rotating_Light.Light.Enabled = true
+		object.Rotating_Light.Light2.Enabled = true
+
 		util.tween(leftDoor, ti, { CFrame = leftDoor.CFrame * CFrame.new(0, 0, leftDoor.Size.Z) })
 		util.tween(rightDoor, ti, { CFrame = rightDoor.CFrame * CFrame.new(0, 0, rightDoor.Size.Z) })
 

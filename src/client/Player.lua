@@ -36,6 +36,7 @@ local areas = require(Client.Areas)
 local dialogue = require(Client.Dialogue)
 local sequences = require(Client.Sequences)
 local net = require(ReplicatedStorage.Packages.Net)
+local Types = require(ReplicatedStorage.Shared.Types)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -216,11 +217,14 @@ local function getHealthPercentage(character)
 	return character:GetAttribute("Health") / character:GetAttribute("MaxHealth")
 end
 
-function module.spawnCharacter()
+function module.spawnCharacter(saveData: Types.GameState?)
 	local presetCharacter = models.Character
 	local character: Model = presetCharacter:Clone()
 
 	player.Character = character
+	if saveData then
+		character:PivotTo(CFrame.new(saveData.PlayerStats.Position))
+	end
 	character.Parent = workspace
 
 	logHealth = character:GetAttribute("Health")
@@ -573,8 +577,14 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.StartGame()
+function module.StartGame(saveData: Types.GameState?, character: Model)
 	cameraService.followViewDistance.current = cameraService.followViewDistance.default
+
+	if saveData then
+		character:SetAttribute("Health", saveData.PlayerStats.Health)
+		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
+		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
+	end
 end
 
 function module.Init()

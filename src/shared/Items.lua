@@ -213,11 +213,9 @@ Items = {
 		Name = "Cat Food",
 		Desc = [[Canned, wet, cat food.
 		
-<b>+10 Hunger</b>
-<b>+5 Health</b>]],
+<b>+10% Hunger</b>]],
 		Value = {
 			Hunger = 10,
-			Health = 5,
 		},
 		InUse = false,
 		Icon = "rbxassetid://125543981396297",
@@ -241,8 +239,8 @@ Items = {
 		Name = "Spam",
 		Desc = [[Canned pork product.
 		
-<b>+20 Hunger</b>
-<b>+5 Health</b>]],
+<b>+20% Hunger</b>
+<b>+5% Health</b>]],
 		Value = {
 			Hunger = 20,
 			Health = 5,
@@ -260,7 +258,7 @@ Items = {
 <b>M</b>echanical
 <b>C</b>orrection
 
-<b>+20 Health</b>]],
+<b>+20% Health</b>]],
 		Value = {
 			Health = 20,
 		},
@@ -282,7 +280,7 @@ Items = {
 		
 When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% health</b>
 
-<b>+15 Health</b>]],
+<b>+15% Health</b>]],
 		Value = {
 			ActivateValue = 50,
 			Health = 15,
@@ -301,7 +299,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 <b>M</b>ilitary
 <b>B</b>iomechanics
 
-<b>+45 Health</b>]],
+<b>+45% Health</b>]],
 		Value = {
 			Health = 45,
 		},
@@ -324,7 +322,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		
 When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% health</b>
 
-<b>+35 Health</b>]],
+<b>+35% Health</b>]],
 		Value = {
 			ActivateValue = 25,
 			Health = 35,
@@ -343,7 +341,7 @@ When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% hea
 <b>M</b>edical
 <b>A</b>dvancements
 
-<b>+100 Health</b>]],
+<b>+100% Health</b>]],
 		Value = {
 			Health = 100,
 		},
@@ -358,7 +356,7 @@ When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% hea
 		
 When equipped, will use the loaded S.T.E.M.A automatically <b>just before death</b>
 
-<b>+85 Health</b>]],
+<b>+85% Health</b>]],
 		Value = {
 			ActivateValue = 0,
 			Health = 85,
@@ -372,7 +370,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	--// Keys
 	Toolbox_Key = {
 		Name = "Small key",
-		Desc = "Looks to go to some kind of box",
+		Desc = "Looks to go to a tool box",
 		Value = nil,
 		Icon = "rbxassetid://122322561802092",
 		Use = nil,

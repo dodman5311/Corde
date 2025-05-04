@@ -1,6 +1,6 @@
 local module = {
-	lastArea = nil,
-	currentArea = nil,
+	lastArea = nil :: Part?,
+	currentArea = nil :: Part?,
 }
 --// Services
 local collectionService = game:GetService("CollectionService")

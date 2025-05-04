@@ -53,6 +53,18 @@ local commands = {
 				Players.LocalPlayer.Character:SetAttribute("HasNet", Value)
 			end,
 		},
+
+		SaveData = {
+			Parameters = function()
+				return {
+					{ Name = "Slot", Options = { 0, 1, 2 } },
+				}
+			end,
+
+			Execute = function(_, slot)
+				print(require(script.Parent.SaveLoad):SaveGame(slot))
+			end,
+		},
 	},
 
 	Inventory = {

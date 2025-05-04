@@ -10,6 +10,7 @@ local camera = workspace.CurrentCamera
 local range = 20
 
 local CastTo = require(script.Parent.CastTo)
+local lights = cs:GetTagged("Light")
 
 local function Lerp(num, goal, i)
 	return num + (goal - num) * i
@@ -32,8 +33,6 @@ local function fadeLight(light, goal)
 end
 
 local function getLightBrightness()
-	local lights = cs:GetTagged("Light")
-
 	for _, light in ipairs(lights) do
 		local lightObject = light:FindFirstChild("Light")
 		if not lightObject then
@@ -75,6 +74,10 @@ local function checkLights()
 
 		local rp = RaycastParams.new()
 		rp.CollisionGroup = "Light"
+
+		if light:GetAttribute("LightType") == "RotatingStatic" then
+			light.CFrame *= CFrame.Angles(0, 0, math.rad(-2))
+		end
 
 		if light:GetAttribute("LightType") == "Dynamic" and CastTo.checkCast(playerPosition, light.Position, rp) then
 			fadeLight(light, 1)

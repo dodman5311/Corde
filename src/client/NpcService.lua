@@ -8,38 +8,9 @@ local acts = require(client.Acts)
 local npcFunctions = require(client.NpcFunctions)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local simplePath = require(ReplicatedStorage.Packages.SimplePath)
+local Types = require(ReplicatedStorage.Shared.Types)
 
-export type Npc = {
-	Name: string,
-	Instance: Instance,
-	Personality: {},
-	MindData: {}, -- extra data the npc might need
-	MindState: StringValue,
-	MindTarget: ObjectValue,
-
-	Heartbeat: {},
-
-	Path: any?,
-	Timer: { new: (self: any) -> nil }?,
-	Timers: {},
-	Acts: {},
-	Janitor: any,
-	OnDied: any?,
-
-	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
-
-	IsState: (Npc: Npc, State: string) -> boolean,
-	GetState: (Npc: Npc) -> string,
-	GetTarget: (Npc: Npc) -> any?,
-	GetTimer: (Npc: Npc, TimerName: string) -> {},
-
-	Exists: (Npc: Npc) -> boolean,
-
-	Destroy: (Npc: Npc) -> nil,
-	Place: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
-	Run: (Npc: Npc) -> nil,
-	LoadPersonality: (Npc: Npc) -> nil,
-}
+type Npc = Types.Npc
 
 local NpcService = {}
 

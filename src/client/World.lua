@@ -3,6 +3,7 @@ local module = {}
 local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
@@ -11,6 +12,8 @@ local Client = player.PlayerScripts.Client
 
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
+local interact = require(Client.Interact)
+local Types = require(ReplicatedStorage.Shared.Types)
 
 function module:pause()
 	if acts:checkAct("Paused") then
@@ -50,10 +53,75 @@ function module:resume()
 	end
 end
 
-function module.StartGame()
+local function loadContainers(saveData: Types.GameState)
+	if not saveData then
+		return
+	end
+
+	for _, container in ipairs(CollectionService:GetTagged("Container")) do
+		local foundMatch = false
+		for _, containerData in ipairs(saveData.Containers) do
+			if containerData.Position == container:GetPivot().Position then
+				foundMatch = true
+			else
+				continue
+			end
+
+			local containerContents = require(container.Container)
+
+			table.clear(containerContents)
+			for _, item in ipairs(containerData.Contents) do
+				table.insert(containerContents, item)
+			end
+		end
+
+		if not foundMatch then
+			container:Destroy()
+		end
+	end
+end
+
+local function loadObjects(saveData: Types.GameState)
+	if not saveData then
+		return
+	end
+
+	for _, object: Model in ipairs(CollectionService:GetTagged("Interactable")) do
+		for _, objectData in ipairs(saveData.Objects) do
+			if objectData.Position ~= object:GetPivot().Position then
+				continue
+			end
+
+			object:SetAttribute("Locked", objectData.Locked)
+
+			for _, tag in ipairs(object:GetTags()) do
+				object:RemoveTag(tag)
+			end
+
+			for _, tag in ipairs(objectData.Tags) do
+				object:AddTag(tag)
+			end
+
+			if objectData.Used then
+				interact.UseObject(object, true)
+			end
+		end
+	end
+end
+
+function module.StartGame(saveData: Types.GameState?)
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = -math.huge
 		shadowPart.Material = Enum.Material.ForceField
+	end
+
+	loadContainers(saveData)
+	loadObjects(saveData)
+
+	workspace:SetAttribute("StartTime", os.clock())
+
+	if saveData then
+		workspace:SetAttribute("PlayTime", saveData.PlayTime)
 	end
 end
 

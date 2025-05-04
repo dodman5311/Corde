@@ -13,6 +13,8 @@ local uiAnimationService = require(script.Parent.UIAnimationService)
 local musicService = require(script.Parent.MusicService)
 local util = require(script.Parent.Util)
 local globalInputService = require(script.Parent.GlobalInputService)
+local saveLoad = require(script.Parent.SaveLoad)
+local Types = require(ReplicatedStorage.Shared.Types)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -20,17 +22,17 @@ local gui = assets.Gui
 local sounds = assets.Sounds
 
 local titleTheme = assets.Music.MemoriesOfWhatNeverWas
-local mainMenu: ScreenGui = gui.MainMenu
-mainMenu.Parent = Players.LocalPlayer.PlayerGui
+local menu: ScreenGui = gui.Menu
+menu.Parent = Players.LocalPlayer.PlayerGui
 
-local mainFrame = mainMenu.Main
+local mainFrame = menu.Main
 
 --// Values
 module.StartEvent = signal.new()
 
 --// Functions
 
-local hoverFunctions = {
+local hoverFunctions = { -- SAVE MENU
 	PlayButton = {
 		Enter = function(button: GuiButton)
 			local ti = TweenInfo.new(1, Enum.EasingStyle.Exponential)
@@ -57,24 +59,70 @@ local hoverFunctions = {
 			sound.Volume = 0.025
 		end,
 	},
+
+	SlotButton = {
+		Enter = function(button: GuiButton)
+			local ti = TweenInfo.new(0.1)
+			local buttonImage = button.Parent
+
+			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
+			buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
+			buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
+
+			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1.005, 1.005) })
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 3
+			sound.Volume = 0.1
+		end,
+
+		Exit = function(button: GuiButton)
+			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+			local buttonImage = button.Parent
+
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
+			buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+			buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+
+			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1, 1) })
+		end,
+	},
 }
 
 local buttonFunctions = {
-	Start = function(button: GuiButton)
-		local ti = TweenInfo.new(2, Enum.EasingStyle.Quart)
-
+	Start = function()
 		uiAnimationService.StopAnimation(mainFrame.Logo)
 		musicService:StopTrack(0.025)
 
-		mainMenu.Transition.BackgroundTransparency = 0
+		util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 })
 		mainFrame.Visible = false
-		mainMenu.Background.Visible = false
-		task.wait(4)
 
-		util.tween(mainMenu.Transition, ti, { BackgroundTransparency = 1 }, false, function()
-			mainMenu.Enabled = false
-		end)
-		module.StartEvent:Fire()
+		menu.Background.BackgroundColor3 = Color3.new()
+		task.wait(2)
+		module:ShowSaveMenu("Load")
+	end,
+
+	SaveLoadSlot = function(button: GuiButton)
+		util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
+
+		menu.Save.Visible = false
+		menu.Background.Visible = false
+
+		task.wait(2)
+
+		util.tween(menu.Transition, TweenInfo.new(2), { BackgroundTransparency = 1 }, false, function()
+			menu.Enabled = false
+		end, Enum.PlaybackState.Completed)
+
+		sounds.InventoryAmbience:Stop()
+		-- load game
+
+		local slotIndex = button:GetAttribute("SlotIndex")
+		if menu.Save:GetAttribute("Type") == "Load" then
+			module.StartEvent:Fire(saveLoad:LoadGame(slotIndex))
+		else
+			saveLoad:SaveGame(slotIndex)
+		end
 	end,
 }
 
@@ -97,14 +145,82 @@ local function enableButtonFunctions()
 	end
 end
 
-function module:ShowTitleScreen()
-	mainMenu.FadeIn.BackgroundTransparency = 0
+function formatTime(seconds)
+	local days = math.floor(seconds / 86400)
+	seconds = seconds % 86400
 
-	util.tween(mainMenu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
+	local hours = math.floor(seconds / 3600)
+	seconds = seconds % 3600
+
+	local minutes = math.floor(seconds / 60)
+
+	local parts = {}
+	if days > 0 then
+		table.insert(parts, days .. "D")
+	end
+	if hours > 0 then
+		table.insert(parts, hours .. "H")
+	end
+	if minutes > 0 then
+		table.insert(parts, minutes .. "M")
+	end
+
+	-- If all values are 0, show "0M"
+	if #parts == 0 then
+		return math.round(seconds) .. "S"
+	end
+
+	return table.concat(parts, " ")
+end
+
+function module:ShowSaveMenu(menuType)
+	local ti_1 = TweenInfo.new(2, Enum.EasingStyle.Quart)
+
+	local saveMenu = menu.Save
+
+	for i = 0, 2 do
+		local saveData: Types.GameState = saveLoad:GetSaveData(i)
+		local label: ImageLabel = saveMenu["Slot_" .. i]
+		local saveFrame = label.Frame
+
+		if saveData then
+			saveFrame.SaveDate.Text = saveData.Date
+			saveFrame.Area.Text = saveData.Area
+			saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
+
+			label.LoadGame.Visible = true
+			label.NewGame.Visible = false
+		else
+			saveFrame.Visible = false
+			label.NewGame.Visible = true
+			label.LoadGame.Visible = false
+		end
+	end
+
+	saveMenu.Visible = true
+
+	saveMenu:SetAttribute("Type", menuType)
+
+	saveMenu.LoadGame.Visible = menuType == "Load"
+	saveMenu.SaveGame.Visible = menuType == "Save"
+
+	menu.Transition.BackgroundTransparency = 0
+	sounds.InventoryAmbience.Volume = 0
+
+	sounds.InventoryAmbience:Play()
+
+	util.tween(menu.Transition, ti_1, { BackgroundTransparency = 1 })
+	util.tween(sounds.InventoryAmbience, ti_1, { Volume = 0.1 })
+end
+
+function module:ShowTitleScreen()
+	menu.Transition.BackgroundTransparency = 0
+
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
 	task.wait(3)
 
-	util.tween(mainMenu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
-	util.tween(mainMenu.FadeIn, TweenInfo.new(4), { BackgroundTransparency = 1 })
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
+	util.tween(menu.Transition, TweenInfo.new(4), { BackgroundTransparency = 1 })
 
 	SoundService.AmbientReverb = Enum.ReverbType.Arena
 	uiAnimationService.PlayAnimation(mainFrame.Logo, 0.05, true)

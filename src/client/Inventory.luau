@@ -48,6 +48,7 @@ local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
 local itemsList = require(ReplicatedStorage.Shared.Items)
+local Types = require(ReplicatedStorage.Shared.Types)
 
 --// Values
 local currentNoteIndex = 0
@@ -1217,8 +1218,14 @@ function Inventory.PlayerDied()
 	Inventory.ToggleInventoryInput:Disable()
 end
 
-function Inventory.StartGame()
+function Inventory.StartGame(saveData: Types.GameState?)
 	Inventory.ToggleInventoryInput:Enable()
+
+	if saveData then
+		for slot, item in pairs(saveData.PlayerStats.Inventory) do
+			Inventory[slot] = item
+		end
+	end
 end
 
 function Inventory.Init()

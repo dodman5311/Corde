@@ -218,7 +218,7 @@ end
 
 mouseTarget.Changed:Connect(checkMouseTargetInteractable)
 
-function module.UseObject(object)
+function module.UseObject(object: Instance, load: boolean?)
 	if object:FindFirstChild("Module") then
 		local objectModule = require(object.Module)
 		return objectModule.Use()
@@ -229,7 +229,7 @@ function module.UseObject(object)
 		return
 	end
 
-	return objectFunctions[use](object)
+	return objectFunctions[use](object, load)
 end
 
 local function runTimer(actionName: string, interactionTime: number, func, ...)
@@ -242,7 +242,7 @@ local function runTimer(actionName: string, interactionTime: number, func, ...)
 end
 
 local function attemptInteract(object: Instance)
-	if not checkSightline(object) then
+	if not checkSightline(object) or acts:checkAct("InSequence") then
 		return
 	end
 

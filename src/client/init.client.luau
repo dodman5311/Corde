@@ -21,5 +21,5 @@ end
 callModuleAction("Init")
 
 modules.MainMenu.StartEvent:Connect(function(gameSave)
-	callModuleAction("StartGame", gameSave, modules["Player"].spawnCharacter())
+	callModuleAction("StartGame", gameSave, modules["Player"].spawnCharacter(gameSave))
 end)
