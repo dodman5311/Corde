@@ -94,9 +94,13 @@ function getGameState(): Types.GameState
 	for _, npc: Types.Npc in ipairs(NpcFunctions.npcs) do
 		local model: Model = npc.Instance
 
+		local _, y = model:GetPivot().Rotation:ToOrientation()
+		--local direction = math.deg(y)
+
 		table.insert(gameState.Npcs, {
 			Name = npc.Name,
 			Position = serializeVector3(model:GetPivot().Position),
+			Direction = y,
 			Health = model:GetAttribute("Health"),
 		})
 	end

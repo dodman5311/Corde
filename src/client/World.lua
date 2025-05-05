@@ -88,7 +88,7 @@ local function loadObjects(saveData: Types.GameState)
 
 	for _, object: Model in ipairs(CollectionService:GetTagged("Interactable")) do
 		for _, objectData in ipairs(saveData.Objects) do
-			if objectData.Position ~= object:GetPivot().Position then
+			if (objectData.Position - object:GetPivot().Position).Magnitude > 0.05 then
 				continue
 			end
 

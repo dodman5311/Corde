@@ -118,7 +118,7 @@ function NpcService.new(npcName: string): Npc
 			npcFunctions.RunNpc(self)
 		end,
 
-		Spawn = function(self: Npc, position: Vector3 | CFrame)
+		Spawn = function(self: Npc, position: Vector3 | CFrame): Npc
 			self:Place(position)
 			self:Run()
 

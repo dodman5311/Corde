@@ -11,7 +11,14 @@ export type GameState = {
 		Inventory: {},
 	},
 
-	Npcs: { { Name: string, Position: { X: number, Y: number, Z: number }, Health: number } },
+	Npcs: {
+		{
+			Name: string,
+			Position: { X: number, Y: number, Z: number },
+			Direction: number,
+			Health: number,
+		}
+	},
 
 	Containers: { { Name: string, Position: { X: number, Y: number, Z: number }, Contents: {} } },
 	Objects: {
