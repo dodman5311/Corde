@@ -15,6 +15,7 @@ local util = require(script.Parent.Util)
 local globalInputService = require(script.Parent.GlobalInputService)
 local saveLoad = require(script.Parent.SaveLoad)
 local Types = require(ReplicatedStorage.Shared.Types)
+local objectFunctions = require(script.Parent.ObjectFunctions)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -66,8 +67,10 @@ local hoverFunctions = { -- SAVE MENU
 			local buttonImage = button.Parent
 
 			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
-			buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
-			buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
+			if buttonImage:FindFirstChild("NewGame") then
+				buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
+				buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
+			end
 
 			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1.005, 1.005) })
 
@@ -81,13 +84,44 @@ local hoverFunctions = { -- SAVE MENU
 			local buttonImage = button.Parent
 
 			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
-			buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
-			buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+
+			if buttonImage:FindFirstChild("NewGame") then
+				buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+				buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+			end
 
 			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1, 1) })
 		end,
 	},
 }
+
+local function SaveLoadGame(button: GuiButton, newGame: boolean?)
+	util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
+
+	menu.Save.Visible = false
+	menu.Background.Visible = false
+
+	task.wait(2)
+
+	util.tween(menu.Transition, TweenInfo.new(2), { BackgroundTransparency = 1 }, false, function()
+		menu.Enabled = false
+	end, Enum.PlaybackState.Completed)
+
+	sounds.InventoryAmbience:Stop()
+	-- load game
+
+	if newGame then
+		module.StartEvent:Fire()
+		return
+	end
+
+	local slotIndex = button:GetAttribute("SlotIndex")
+	if menu.Save:GetAttribute("Type") == "Load" then
+		module.StartEvent:Fire(saveLoad:LoadGame(slotIndex))
+	else
+		saveLoad:SaveGame(slotIndex)
+	end
+end
 
 local buttonFunctions = {
 	Start = function()
@@ -102,27 +136,9 @@ local buttonFunctions = {
 		module:ShowSaveMenu("Load")
 	end,
 
-	SaveLoadSlot = function(button: GuiButton)
-		util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
-
-		menu.Save.Visible = false
-		menu.Background.Visible = false
-
-		task.wait(2)
-
-		util.tween(menu.Transition, TweenInfo.new(2), { BackgroundTransparency = 1 }, false, function()
-			menu.Enabled = false
-		end, Enum.PlaybackState.Completed)
-
-		sounds.InventoryAmbience:Stop()
-		-- load game
-
-		local slotIndex = button:GetAttribute("SlotIndex")
-		if menu.Save:GetAttribute("Type") == "Load" then
-			module.StartEvent:Fire(saveLoad:LoadGame(slotIndex))
-		else
-			saveLoad:SaveGame(slotIndex)
-		end
+	SaveLoadSlot = SaveLoadGame,
+	NewGame = function(button: GuiButton)
+		SaveLoadGame(button, true)
 	end,
 }
 
@@ -173,10 +189,13 @@ function formatTime(seconds)
 	return table.concat(parts, " ")
 end
 
-function module:ShowSaveMenu(menuType)
+function module:ShowSaveMenu(menuType: "Save" | "Load")
 	local ti_1 = TweenInfo.new(2, Enum.EasingStyle.Quart)
-
 	local saveMenu = menu.Save
+
+	menu.Enabled = true
+	menu.Background.BackgroundColor3 = Color3.new()
+	menu.Background.Visible = true
 
 	for i = 0, 2 do
 		local saveData: Types.GameState = saveLoad:GetSaveData(i)
@@ -202,6 +221,7 @@ function module:ShowSaveMenu(menuType)
 	saveMenu:SetAttribute("Type", menuType)
 
 	saveMenu.LoadGame.Visible = menuType == "Load"
+	saveMenu.NewGame.Visible = menuType == "Load"
 	saveMenu.SaveGame.Visible = menuType == "Save"
 
 	menu.Transition.BackgroundTransparency = 0
@@ -238,5 +258,9 @@ function module.Init()
 	task.spawn(module.ShowTitleScreen)
 	enableButtonFunctions()
 end
+
+objectFunctions.SaveGameEvent:Connect(function()
+	module:ShowSaveMenu("Save")
+end)
 
 return module

@@ -1,34 +1,13 @@
-make saving / loading
+Clean up saving UI for console. Add sounds
 
-Add E prompt
+Fix prompts not showing --
+
+
+Add E prompt for inventory
 
 Security robots
 
-Make map direct player (Direct to first door, direct to exit) (Blinking light)
 Change dialogue box input type
 
 stop cursor when in gamepad selection
 
-What to save:
-Inventory
-PlayerPos : Vector 3
-PlayerHealth
-PlayerHunger
-
-EnemyName : String -- Which enemy it is
-Enemy Pos : Vector 3
-
-NpcName : string
-NpcPos : Vector 3
-
-Containers in world
-
-Check world:
-check Used attribute on doors. If true, open door. (Use instant)
-Locked
-
-check objects. If it has interactable, but not in the save, then remove interactable.
-
-Doors are saved
-
-Hackable, Interactable

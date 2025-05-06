@@ -543,23 +543,27 @@ local function clearKeyPrompts()
 end
 
 local function showNoteKeyprompts(note: item)
-	if not note.Value.Message.KeyPrompts then
+	if typeof(note.Value.Message[1]) == string then
 		return
 	end
 
-	for _, prompt in ipairs(note.Value.Message.KeyPrompts) do
-		if prompt.Index ~= currentNoteIndex then
+	local keyprompts = note.Value.Message[1]
+
+	for _, prompt in ipairs(keyprompts) do
+		local key, button, preText, yPos, index = table.unpack(prompt)
+
+		if index ~= currentNoteIndex then
 			continue
 		end
 
 		local newPrompt: ImageLabel = gui.Keyprompt:Clone()
 		newPrompt.Image:AddTag("KeyPrompt")
-		newPrompt.Image:SetAttribute("Key", prompt.Key)
-		newPrompt.Image:SetAttribute("Button", prompt.Button)
+		newPrompt.Image:SetAttribute("Key", key)
+		newPrompt.Image:SetAttribute("Button", button)
 		newPrompt.Parent = UI.Note.Message
 
-		newPrompt.Image.Position = UDim2.fromScale(1, prompt.YPosition)
-		newPrompt.Text = prompt.PreText
+		newPrompt.Image.Position = UDim2.fromScale(1, yPos)
+		newPrompt.Text = preText
 		newPrompt.TextSize = UI.Note.Message.TextSize
 	end
 
@@ -571,19 +575,24 @@ local function nextNotePage(note: item, indexChange: number)
 		return
 	end
 
+	local size = #note.Value.Message
+	if typeof(note.Value.Message[1]) ~= string then
+		size -= 1
+	end
+
 	local noteUi = UI.Note
-	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, #note.Value.Message + 1)
+	currentNoteIndex = math.clamp(currentNoteIndex + indexChange, 0, size + 1)
 	util.PlaySound(sounds.Paper, 0.075)
 
-	if currentNoteIndex > #note.Value.Message then
+	if currentNoteIndex > size then
 		closeNote()
 		return
-	elseif currentNoteIndex == #note.Value.Message then
-		noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {#note.Value.Message}    `
+	elseif currentNoteIndex == size then
+		noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {size}    `
 	elseif currentNoteIndex == 0 then
-		noteUi.Message.Page.Text = `    {currentNoteIndex} / {#note.Value.Message}  >>`
+		noteUi.Message.Page.Text = `    {currentNoteIndex} / {size}  >>`
 	else
-		noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {#note.Value.Message}  >>`
+		noteUi.Message.Page.Text = `<<  {currentNoteIndex} / {size}  >>`
 	end
 
 	clearKeyPrompts()
@@ -604,7 +613,12 @@ local function nextNotePage(note: item, indexChange: number)
 		return
 	end
 
-	noteUi.Message.Text = note.Value.Message[currentNoteIndex]
+	if typeof(note.Value.Message[1]) ~= string then
+		noteUi.Message.Text = note.Value.Message[currentNoteIndex + 1]
+	else
+		noteUi.Message.Text = note.Value.Message[currentNoteIndex]
+	end
+
 	showNoteKeyprompts(note)
 end
 

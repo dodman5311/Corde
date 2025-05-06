@@ -12,6 +12,8 @@ local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDi
 
 local player = Players.LocalPlayer
 
+local signal = require(ReplicatedStorage.Packages.Signal)
+
 local objectFunctions = {
 	Door = function(object: Model, instant: boolean?)
 		local ti = TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut, 0, false, 0.5)
@@ -133,6 +135,12 @@ local objectFunctions = {
 		end)
 	end,
 }
+
+function objectFunctions.SaveGame()
+	objectFunctions.SaveGameEvent:Fire()
+end
+
+objectFunctions.SaveGameEvent = signal.new()
 
 function objectFunctions.Init()
 	HUD = Players.LocalPlayer.PlayerGui.HUD

@@ -1,28 +1,28 @@
 return {
 
-	KeyPrompts = {
+	{
 		{
-			Key = "MouseButton2",
-			Button = "ButtonL2",
-			PreText = "To equip a gun, use the weapon in your inventory. Once equipped, hold    ",
-			YPosition = 0.25,
-			Index = 2,
+			"MouseButton2",
+			"ButtonL2",
+			"To equip a gun, use the weapon in your inventory. Once equipped, hold    ",
+			0.25,
+			2,
 		},
 
 		{
-			Key = "MouseButton1",
-			Button = "ButtonR2",
-			PreText = "While your weapon is ready, press   ",
-			YPosition = 0.368,
-			Index = 2,
+			"MouseButton1",
+			"ButtonR2",
+			"While your weapon is ready, press   ",
+			0.368,
+			2,
 		},
 
 		{
-			Key = "R",
-			Button = "ButtonL1",
-			PreText = "To load or reload your weapon, press   ",
-			YPosition = 0.525,
-			Index = 2,
+			"R",
+			"ButtonL1",
+			"To load or reload your weapon, press   ",
+			0.525,
+			2,
 		},
 	},
 

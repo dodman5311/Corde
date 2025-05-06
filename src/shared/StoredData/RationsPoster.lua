@@ -1,7 +1,7 @@
 return {
 
-	KeyPrompts = {
-		{ Key = "LeftShift", Button = "ButtonR2", PreText = "Hold   ", YPosition = 0.565, Index = 2 },
+	{
+		{ "LeftShift", "ButtonR2", "Hold   ", 0.565, 2 },
 	},
 
 	[[Rationing means a fair share for all of us.]],

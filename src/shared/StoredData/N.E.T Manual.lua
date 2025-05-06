@@ -1,12 +1,12 @@
 return {
 
-	KeyPrompts = {
+	{
 		{
-			Key = "Tab",
-			Button = "ButtonL1",
-			PreText = "Once installed. Press and hold   ",
-			YPosition = 0.424,
-			Index = 2,
+			"Tab",
+			"ButtonL1",
+			"Once installed. Press and hold   ",
+			0.424,
+			2,
 		},
 	},
 
