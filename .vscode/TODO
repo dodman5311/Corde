@@ -1,7 +1,5 @@
-Clean up saving UI for console. Add sounds
-
-Fix prompts not showing --
-
+Add cancel button for loading game
+Add "Are you sure" for deleting a slot
 
 Add E prompt for inventory
 

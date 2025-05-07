@@ -128,6 +128,10 @@ function saveLoad:SaveGame(saveSlot: number)
 	return gameState
 end
 
+function saveLoad:ClearSave(saveSlot: number)
+	Net:Invoke("SaveGameState", saveSlot, {})
+end
+
 function saveLoad:GetSaveData(saveSlot: number)
 	return Net:Invoke("GetSavedGame", saveSlot)
 end

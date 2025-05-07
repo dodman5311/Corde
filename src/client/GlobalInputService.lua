@@ -398,4 +398,8 @@ end)
 Player:WaitForChild("PlayerGui").SelectionImageObject = selectionUi.HideSelection
 selectionUi.Parent = Player.PlayerGui
 
+function module.StartGame()
+	module:CheckKeyPrompts()
+end
+
 return module

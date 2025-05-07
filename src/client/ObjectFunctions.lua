@@ -5,6 +5,7 @@ local util = require(client.Util)
 local sequences = require(client.Sequences)
 local acts = require(client.Acts)
 local globalInputService = require(client.GlobalInputService)
+local dialogue = require(client.Dialogue)
 
 local assets = ReplicatedStorage.Assets
 local HUD

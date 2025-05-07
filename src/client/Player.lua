@@ -1,5 +1,5 @@
 local module = {
-	HUNGER_RATE = 0.25,
+	HUNGER_RATE = 0.3,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 	ThumbstickSnapPower = 0.5,

@@ -543,7 +543,7 @@ local function clearKeyPrompts()
 end
 
 local function showNoteKeyprompts(note: item)
-	if typeof(note.Value.Message[1]) == string then
+	if typeof(note.Value.Message[1]) == "string" then
 		return
 	end
 
@@ -576,7 +576,8 @@ local function nextNotePage(note: item, indexChange: number)
 	end
 
 	local size = #note.Value.Message
-	if typeof(note.Value.Message[1]) ~= string then
+
+	if typeof(note.Value.Message[1]) ~= "string" then
 		size -= 1
 	end
 
@@ -613,7 +614,7 @@ local function nextNotePage(note: item, indexChange: number)
 		return
 	end
 
-	if typeof(note.Value.Message[1]) ~= string then
+	if typeof(note.Value.Message[1]) ~= "string" then
 		noteUi.Message.Text = note.Value.Message[currentNoteIndex + 1]
 	else
 		noteUi.Message.Text = note.Value.Message[currentNoteIndex]

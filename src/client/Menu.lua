@@ -27,9 +27,11 @@ local menu: ScreenGui = gui.Menu
 menu.Parent = Players.LocalPlayer.PlayerGui
 
 local mainFrame = menu.Main
+local saveMenu = menu.Save
 
 --// Values
 module.StartEvent = signal.new()
+local lockSelection = {}
 
 --// Functions
 
@@ -70,6 +72,7 @@ local hoverFunctions = { -- SAVE MENU
 			if buttonImage:FindFirstChild("NewGame") then
 				buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
 				buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
+				buttonImage.Delete.ImageColor3 = Color3.new(1, 1, 1)
 			end
 
 			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1.005, 1.005) })
@@ -88,20 +91,54 @@ local hoverFunctions = { -- SAVE MENU
 			if buttonImage:FindFirstChild("NewGame") then
 				buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
 				buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+				buttonImage.Delete.ImageColor3 = Color3.fromRGB(255, 92, 92)
 			end
 
 			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1, 1) })
 		end,
 	},
+
+	ColorSwitch = {
+		Enter = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 3
+			sound.Volume = 0.1
+		end,
+
+		Exit = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
+		end,
+	},
+
+	DeleteButton = {
+		Enter = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
+
+			buttonImage.Parent.SaveSlot.Active = false
+		end,
+
+		Exit = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = buttonImage.Parent.ImageColor3
+
+			buttonImage.Parent.SaveSlot.Active = true
+		end,
+	},
 }
 
 local function SaveLoadGame(button: GuiButton, newGame: boolean?)
+	util.PlaySound(sounds.CloseSave)
 	util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
 
 	menu.Save.Visible = false
 	menu.Background.Visible = false
 
-	task.wait(2)
+	task.wait(1)
 
 	util.tween(menu.Transition, TweenInfo.new(2), { BackgroundTransparency = 1 }, false, function()
 		menu.Enabled = false
@@ -110,8 +147,10 @@ local function SaveLoadGame(button: GuiButton, newGame: boolean?)
 	sounds.InventoryAmbience:Stop()
 	-- load game
 
-	if newGame then
+	if newGame == true then
 		module.StartEvent:Fire()
+		return
+	elseif newGame == false then
 		return
 	end
 
@@ -120,6 +159,16 @@ local function SaveLoadGame(button: GuiButton, newGame: boolean?)
 		module.StartEvent:Fire(saveLoad:LoadGame(slotIndex))
 	else
 		saveLoad:SaveGame(slotIndex)
+	end
+end
+
+local function lockSelectionTo(buttons: {})
+	lockSelection = buttons
+	for _, button: GuiButton in ipairs(CollectionService:GetTagged("MenuButton")) do
+		if not button:GetAttribute("Hover") then
+			continue
+		end
+		hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 	end
 end
 
@@ -140,7 +189,53 @@ local buttonFunctions = {
 	NewGame = function(button: GuiButton)
 		SaveLoadGame(button, true)
 	end,
+
+	CloseMenu = function(button: GuiButton)
+		SaveLoadGame(button, false)
+	end,
+
+	DeleteSlot = function(button: GuiButton)
+		local label: ImageLabel = button.Parent.Parent
+		local slotFrame = label.Frame
+
+		local deletePrompt = saveMenu.DeleteConfirm
+		deletePrompt.Visible = true
+
+		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
+
+		local cancelConnect
+		local confirmConnect
+
+		cancelConnect = deletePrompt.CancelBtn.Button.MouseButton1Click:Connect(function()
+			deletePrompt.Visible = false
+
+			cancelConnect:Disconnect()
+			confirmConnect:Disconnect()
+
+			lockSelection = {}
+		end)
+
+		confirmConnect = deletePrompt.ConfirmBtn.Button.MouseButton1Click:Connect(function()
+			deletePrompt.Visible = false
+
+			saveLoad:ClearSave(button:GetAttribute("SlotIndex"))
+
+			slotFrame.Visible = false
+			label.NewGame.Visible = true
+			label.LoadGame.Visible = false
+			label.Delete.Visible = false
+
+			cancelConnect:Disconnect()
+			confirmConnect:Disconnect()
+
+			lockSelection = {}
+		end)
+	end,
 }
+
+local function checkLocked(button)
+	return #lockSelection > 0 and not table.find(lockSelection, button)
+end
 
 local function enableButtonFunctions()
 	for _, button: GuiButton in ipairs(CollectionService:GetTagged("MenuButton")) do
@@ -148,14 +243,23 @@ local function enableButtonFunctions()
 
 		local enter, exit = mouseOver.MouseEnterLeaveEvent(button)
 		enter:Connect(function()
+			if not button:GetAttribute("Hover") or checkLocked(button) then
+				return
+			end
 			hoverFunctions[button:GetAttribute("Hover")].Enter(button)
 		end)
 
 		exit:Connect(function()
+			if not button:GetAttribute("Hover") or checkLocked(button) then
+				return
+			end
 			hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 		end)
 
 		button.MouseButton1Click:Connect(function()
+			if not button:GetAttribute("Action") or checkLocked(button) then
+				return
+			end
 			buttonFunctions[button:GetAttribute("Action")](button)
 		end)
 	end
@@ -191,7 +295,8 @@ end
 
 function module:ShowSaveMenu(menuType: "Save" | "Load")
 	local ti_1 = TweenInfo.new(2, Enum.EasingStyle.Quart)
-	local saveMenu = menu.Save
+
+	util.PlaySound(sounds.OpenSave)
 
 	menu.Enabled = true
 	menu.Background.BackgroundColor3 = Color3.new()
@@ -207,12 +312,15 @@ function module:ShowSaveMenu(menuType: "Save" | "Load")
 			saveFrame.Area.Text = saveData.Area
 			saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
 
+			saveFrame.Visible = true
 			label.LoadGame.Visible = true
 			label.NewGame.Visible = false
+			label.Delete.Visible = true
 		else
 			saveFrame.Visible = false
 			label.NewGame.Visible = true
 			label.LoadGame.Visible = false
+			label.Delete.Visible = false
 		end
 	end
 
@@ -222,6 +330,7 @@ function module:ShowSaveMenu(menuType: "Save" | "Load")
 
 	saveMenu.LoadGame.Visible = menuType == "Load"
 	saveMenu.NewGame.Visible = menuType == "Load"
+	saveMenu.Cancel.Visible = menuType == "Save"
 	saveMenu.SaveGame.Visible = menuType == "Save"
 
 	menu.Transition.BackgroundTransparency = 0
