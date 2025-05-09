@@ -27,10 +27,10 @@ Dyson is right. These people are insane; this is insane. What are we doing!? Peo
 Okay. I feel okay. I'm okay. It's almost over.
 Yeah, these help.]],
 
-	[[And we touched the waxen mind of the void, and it went mad.
+	[[We touched the waxen mind of the void, and it went mad.
 Mad with pain.
 Mad with disgust.
 Mad with hate.
 
-Is this the one? Maybe I will meet them this time.]],
+I will atone. I must atone.]],
 }

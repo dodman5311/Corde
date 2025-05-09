@@ -73,7 +73,7 @@ local function setUpAreaParts()
 	end
 end
 
-local function onHeartbeaat()
+local function onHeartbeat()
 	local character = player.Character
 	if not character then
 		return
@@ -103,6 +103,6 @@ function module.Init()
 end
 
 --// Main //--
-runService.Heartbeat:Connect(onHeartbeaat)
+runService.Heartbeat:Connect(onHeartbeat)
 
 return module
