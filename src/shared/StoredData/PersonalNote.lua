@@ -1,5 +1,5 @@
 return {
-	[[Halls Montgomery, 08/16/████:
+	[[Dyson Locke, 08/16/████:
 
 ██ Days since I realized ████ █ am.
 This isn't some test. This ████ some half ████ way for them to check our vitals or ██████ our brains.

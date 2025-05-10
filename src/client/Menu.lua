@@ -132,6 +132,10 @@ local hoverFunctions = { -- SAVE MENU
 }
 
 local function SaveLoadGame(button: GuiButton, newGame: boolean?)
+	saveMenu.Slot_0.SaveSlot.Visible = false
+	saveMenu.Slot_1.SaveSlot.Visible = false
+	saveMenu.Slot_2.SaveSlot.Visible = false
+
 	util.PlaySound(sounds.CloseSave)
 	util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
 
@@ -294,6 +298,10 @@ function formatTime(seconds)
 end
 
 function module:ShowSaveMenu(menuType: "Save" | "Load")
+	saveMenu.Slot_0.SaveSlot.Visible = true
+	saveMenu.Slot_1.SaveSlot.Visible = true
+	saveMenu.Slot_2.SaveSlot.Visible = true
+
 	local ti_1 = TweenInfo.new(2, Enum.EasingStyle.Quart)
 
 	util.PlaySound(sounds.OpenSave)

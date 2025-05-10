@@ -68,7 +68,7 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
 local WALK_SPEED = 2.75
-local SPRINT_SPEED = 3.75
+local SPRINT_SPEED = 3.85
 
 local function checkEquippedStem(healthPercent: number)
 	if not healthPercent then

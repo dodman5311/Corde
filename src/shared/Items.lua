@@ -453,7 +453,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	PersonalNote = {
 		Name = "Personal Note",
 		Desc = "A small scuffed note.",
-		Value = { Message = storedData:GetData("PersonalNote"), Image = "rbxassetid://126027788326937" },
+		Value = { Message = storedData:GetData("PersonalNote"), Image = "rbxassetid://133550222984676" },
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,

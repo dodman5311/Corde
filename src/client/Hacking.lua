@@ -396,8 +396,6 @@ local function enterKeyStroke(point: BillboardGui, input: InputObject)
 	local inputNumber = getNumberFromKeyCode(input.KeyCode)
 	local number = getNumberFromSequence(point)
 
-	print(inputNumber, number, inputNumber == number, keystrokeLabel)
-
 	if not point:GetAttribute("SequenceHidden") and (not keystrokeLabel or inputNumber ~= number) then
 		return
 	end
