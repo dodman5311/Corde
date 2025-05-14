@@ -2,7 +2,7 @@ local module = {
 	Start = {
 		{
 			Speaker = "Player",
-			Message = "Door's broken.",
+			Message = "Control panel on this door is broken.",
 		},
 	},
 }

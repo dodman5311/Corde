@@ -63,4 +63,46 @@ export type Npc = {
 	LoadPersonality: (Npc: Npc) -> nil,
 }
 
+export type item = {
+	Name: "string",
+	Desc: "string",
+	Value: any,
+	InUse: boolean,
+	Icon: "string",
+	Use: "Eat" | "Read" | "EquipWeapon" | "Reload",
+
+	CombineData: {}?,
+	CanArchive: boolean?,
+}
+
+export type weaponData = {
+	Type: number,
+	RateOfFire: number,
+	FireSound: string,
+	Volume: number,
+	ReloadSound: string,
+	ReloadTime: number,
+	Damage: number,
+	BulletCount: number,
+	CurrentMag: item?,
+	FireMode: number,
+	Spread: number,
+	StoppingPower: number,
+
+	Recoil: number,
+	DisplayImage: string,
+}
+
+export type weapon = {
+	Name: "string",
+	Desc: "string",
+	Value: weaponData,
+	InUse: boolean,
+	Icon: "string",
+	Use: "EquipWeapon",
+
+	CombineData: {}?,
+	CanArchive: boolean?,
+}
+
 return {}

@@ -60,6 +60,7 @@ local module = {
 			MouseButton3 = "rbxassetid://95452537473335",
 			Scroll = "rbxassetid://129056272209004",
 			F = "rbxassetid://74228350755401",
+			E = "rbxassetid://136402653357293",
 			R = "rbxassetid://86806472892566",
 			One = "rbxassetid://87310485799989",
 			Two = "rbxassetid://104360287893229",

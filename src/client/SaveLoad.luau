@@ -139,7 +139,14 @@ end
 function saveLoad:LoadGame(saveSlot: number)
 	local gameState = self:GetSaveData(saveSlot)
 	-- CHANGE SECTION
+
 	getInteractables()
+
+	if gameState then
+		for slot, item in pairs(gameState.PlayerStats.Inventory) do
+			Inventory[slot] = item
+		end
+	end
 
 	return gameState
 end

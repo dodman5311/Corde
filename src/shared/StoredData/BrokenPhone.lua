@@ -47,7 +47,7 @@ Last time, I promise.
     
 Palcy please help. Im okay im alive <font color="rgb(150,150,150)">5:05 AM</font>
 
-																						whats going on in there?
+																					whats going on in there?
 
 I don't think it knows I'm in here
 
@@ -69,9 +69,9 @@ Did you really close the door
 
 Answer me palcy! <font color="rgb(150,150,150)">5:10 AM</font>
 
-                                    						  							 It was going to kill us.
+                                    						  						 It was going to kill us.
 
-															  					What else should I have done?]],
+															  				What else should I have done?]],
 
 	[[YOU ARE JUST LIKE THEM PALCY!
 
@@ -95,16 +95,16 @@ let me out please palsy don't make me talk
 
 don't make me yell please
 
-                                                            						   I can't do that. I'm sorry.]],
+                                                            					   I can't do that. I'm sorry.]],
 
-	[[																									 <font color="rgb(150,150,150)">5:20 PM</font> Lester?
+	[[																								 <font color="rgb(150,150,150)">5:20 PM</font> Lester?
 																						
-																							What was that sound?
+																						What was that sound?
+																					
+																								 	You're okay.
 																						
-																									 	You're okay.
-																						
-														   I see a shadow under the door. That's you right?]],
+													   I see a shadow under the door. That's you right?]],
 	[[                                      			Tuesday, Jul 13
 													
-																 <font color="rgb(150,150,150)">9:55 PM</font> Forgive me. I will atone. I miss you.]],
+															 <font color="rgb(150,150,150)">9:55 PM</font> Forgive me. I will atone. I miss you.]],
 }

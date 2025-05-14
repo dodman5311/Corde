@@ -1,7 +1,7 @@
 local module = {
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 10, 100 } },
-		{ Function = "LookAtTarget", Parameters = { true, 0.025 } },
+		{ Function = "LookAtTarget", Parameters = { true, 0.05 } },
 		{ Function = "MoveForwards", State = "Chasing", Parameters = { 0.05 } },
 		{ Function = "StopMoving", State = "Idle" },
 	},
@@ -52,6 +52,7 @@ local module = {
 
 	OnTargetLost = {
 		{ Function = "SwitchToState", Parameters = { "Idle" } },
+		{ Function = "MoveTowardsTarget" },
 	},
 
 	OnStateChanged = {

@@ -1,14 +1,3 @@
-export type item = {
-	Name: "string",
-	Desc: "string",
-	Value: any,
-	Icon: "string",
-	Use: "Eat" | "Read" | "EquipWeapon" | "Reload",
-	InUse: boolean,
-	CombineData: {},
-	CanArchive: boolean?,
-}
-
 --// Services
 
 local CollectionService = game:GetService("CollectionService")
@@ -49,6 +38,8 @@ local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
 local itemsList = require(ReplicatedStorage.Shared.Items)
 local Types = require(ReplicatedStorage.Shared.Types)
+
+type item = Types.item
 
 --// Values
 local currentNoteIndex = 0
@@ -101,6 +92,32 @@ function Inventory:SearchForItem(itemName: string)
 		return item, slot
 	end
 end
+
+-- function Inventory:SearchForMatch(valueTable: {})
+-- 	if not valueTable then
+-- 		return
+-- 	end
+
+-- 	for slot, item in pairs(self) do
+-- 		if not string.match(slot, "slot_") then
+-- 			continue
+-- 		end
+
+-- 		local isMatch = true
+
+-- 		for property, value in ipairs(valueTable) do
+-- 			if item[property] ~= value then
+-- 				isMatch = false
+-- 			end
+-- 		end
+
+-- 		if not isMatch then
+-- 			continue
+-- 		end
+
+-- 		return item, slot
+-- 	end
+-- end
 
 function Inventory:CheckSlot(slot: string | number)
 	if tonumber(slot) then
@@ -1233,13 +1250,10 @@ function Inventory.PlayerDied()
 	Inventory.ToggleInventoryInput:Disable()
 end
 
-function Inventory.StartGame(saveData: Types.GameState?)
+function Inventory.StartGame()
 	Inventory.ToggleInventoryInput:Enable()
 
-	if saveData then
-		for slot, item in pairs(saveData.PlayerStats.Inventory) do
-			Inventory[slot] = item
-		end
+	if Inventory:CheckSlot(13) then
 	end
 end
 

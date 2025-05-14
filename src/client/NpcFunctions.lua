@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local rng = Random.new()
 
+local PathfindingService = game:GetService("PathfindingService")
+
 local client = script.Parent
 local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
@@ -15,9 +17,12 @@ local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
 
+type Npc = types.Npc
+
 local module = {
-	npcs = {} :: { types.Npc },
+	npcs = {} :: { Npc },
 }
+
 local function checkSightLine(npc, target: Instance, maxSightAngle)
 	if not target then
 		return
@@ -227,7 +232,9 @@ module.events = {
 			if not value then
 				return
 			end
+
 			module.doActions(npc, actions)
+			npc["LastTarget"] = value
 		end)
 	end,
 
@@ -236,6 +243,7 @@ module.events = {
 			if value then
 				return
 			end
+
 			module.doActions(npc, actions)
 		end)
 	end,
@@ -405,7 +413,22 @@ module.actions = {
 			return
 		end
 
-		module.actions.MoveTowardsPoint(npc, target:GetPivot().Position, lerpAlpha)
+		local newPath = PathfindingService:FindPathAsync(npc.Instance:GetPivot().Position, target:GetPivot().Position)
+
+		module.actions.MoveTowardsPoint(npc, newPath:GetWaypoints()[1].Position, lerpAlpha)
+	end,
+
+	PathfindToLastTarget = function(npc: Npc, lerpAlpha: number?)
+		local target = npc.LastTarget
+		if not target then
+			return
+		end
+
+		local newPath = PathfindingService:FindPathAsync(npc.Instance:GetPivot().Position, target:GetPivot().Position)
+
+		for _, v in ipairs(newPath:GetWaypoints()) do
+			module.actions.MoveTowardsPoint(npc, v.Position, lerpAlpha)
+		end
 	end,
 
 	MeleeAttack = function(npc: Npc, damage: number, cooldown: number, damageFrame: number?, stopMotion: boolean?)

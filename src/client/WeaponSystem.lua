@@ -27,8 +27,9 @@ local cameraShaker = require(Client.CameraShaker)
 local haptics = require(Client.Haptics)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local globalInputService = require(Client.GlobalInputService)
+local Types = require(ReplicatedStorage.Shared.Types)
 
-local currentWeapon
+local currentWeapon: Types.weapon?
 local fireKeyDown = false
 local readyKeyDown = false
 
@@ -258,7 +259,7 @@ local function useAmmo()
 	return true
 end
 
-local function getNextMag()
+local function getNextMag(isInUse)
 	if not currentWeapon then
 		return
 	end
@@ -274,12 +275,13 @@ local function getNextMag()
 
 	local foundMag
 
-	for slot, item in pairs(inventory) do
+	for slot, item: Types.item in pairs(inventory) do
 		if
 			not string.match(slot, "slot_")
 			or item.Name ~= searchFor
 			or item == weaponData.CurrentMag
 			or item.Value <= 0
+			or (isInUse and not item.InUse)
 		then
 			continue
 		end
@@ -563,6 +565,14 @@ end)
 
 function module.StartGame()
 	module.equipWeapon(inventory:CheckSlot("slot_13"))
+
+	print(currentWeapon)
+
+	if currentWeapon then
+		local mag = getNextMag(true)
+		currentWeapon.Value.CurrentMag = getNextMag(true)
+		print(mag, currentWeapon.Value.CurrentMag)
+	end
 end
 
 function module.Init()

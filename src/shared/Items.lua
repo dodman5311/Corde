@@ -113,7 +113,7 @@ Items = {
 		CanArchive = true,
 	},
 
-	CP_45 = {
+	CP_32 = {
 		Name = "CP-32",
 		Desc = "A bullpup pistol, designed for CQB against armored aponents.",
 		Value = {
