@@ -21,10 +21,18 @@ local function flicker(frame, speed, amnt)
 	end
 end
 
-function util.getSetting(group, name)
-	for _, setting in ipairs(gameSettings[group]) do
-		if setting.Name == name then
-			return setting.Value
+function util.getSetting(groupName: string, settingName: string)
+	for _, group in ipairs(gameSettings) do
+		if group.Name ~= groupName then
+			continue
+		end
+
+		for _, setting in ipairs(group) do
+			if setting.Name ~= settingName then
+				continue
+			end
+
+			return setting.Value, setting
 		end
 	end
 end

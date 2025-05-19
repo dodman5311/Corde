@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
-local playerGui = player.PlayerGui
+local playerGui = player:WaitForChild("PlayerGui")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -19,52 +19,83 @@ local function onGamepadChanged(self, previousValue)
 end
 
 local gameSettings = {
-	Audio = {
+	{
+		Name = "Audio",
+
 		{
 			Name = "Music Volume",
 			Type = "Slider",
-			MaxValue = NumberRange.new(0, 100),
 			Value = 100,
+			Values = NumberRange.new(0, 100),
 			OnChanged = function(self)
 				game:GetService("SoundService").Music.Volume = self.Value / 100
 			end,
 		},
 
 		{
-			Name = "Effects Volume",
+			Name = "SFX Volume",
 			Type = "Slider",
-			MaxValue = NumberRange.new(0, 100),
 			Value = 100,
-			OnChanged = function(self)
-				game:GetService("SoundService").Effects.Volume = self.Value / 100
-			end,
-		},
-
-		{
-			Name = "Voice Volume",
-			Type = "Slider",
 			MaxValue = NumberRange.new(0, 100),
-			Value = 100,
 			OnChanged = function(self)
-				game:GetService("SoundService").Voice.Volume = self.Value / 100
+				game:GetService("SoundService").UI.Volume = self.Value / 100
+				game:GetService("SoundService").SoundEffects.Volume = self.Value / 100
 			end,
 		},
 	},
 
-	Graphics = {},
+	{
+		Name = "Graphics",
 
-	Interface = {},
+		{
+			Name = "Film Grain",
+			Type = "Selection",
+			Value = true,
+			Values = { true, false },
+			OnChanged = function(self)
+				playerGui:WaitForChild("FilmGrain").Enabled = self.Value
+			end,
+		},
+	},
 
-	Gameplay = {
+	{
+		Name = "Interface",
+	},
+
+	{
+		Name = "Gameplay",
+		{
+			Name = "Difficulty",
+			Type = "Selection",
+			Value = "Solemn",
+			Values = { "Hope", "Solemn", "Despair" },
+			-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
+			-- Solemn: The intended way to play.
+			-- Despair: Take more damage. Hunger goes down over time. Less ammo.
+
+			OnChanged = function() end,
+		},
+
 		{
 			Name = "Auto Read",
-			Type = "Boolean",
+			Type = "Selection",
 			Value = true,
+			Values = { true, false },
+			OnChanged = function() end,
+		},
+
+		{
+			Name = "Hints",
+			Type = "Selection",
+			Value = false,
+			Values = { true, false },
 			OnChanged = function() end,
 		},
 	},
 
-	Keybinds = {
+	{
+		Name = "Keybinds",
+
 		{
 			Name = "Interact",
 			Type = "KeyInput",
@@ -122,7 +153,9 @@ local gameSettings = {
 		},
 	},
 
-	Gamepad = {
+	{
+		Name = "Gamepad",
+
 		{
 			Name = "Interact",
 			Type = "KeyInput",
