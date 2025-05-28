@@ -1267,19 +1267,19 @@ function Inventory.Init()
 	Inventory.InventoryInteract =
 		globalInputService.CreateNewInput("InventoryInteraction", inventoryInteract, Enum.KeyCode.ButtonX)
 
-	Inventory.ToggleInventoryInput = globalInputService.CreateNewInput(
-		"Inventory",
-		toggleInventoryKey,
-		util.getSetting("Keybinds", "Inventory"),
-		{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB }
-	)
-
 	Inventory.InventoryInteract:Disable()
 	Inventory.noteNavigation:Disable()
 	Inventory.ToggleInventoryInput:Disable()
 
 	initGui()
 end
+
+Inventory.ToggleInventoryInput = globalInputService.CreateNewInput(
+	"Inventory",
+	toggleInventoryKey,
+	util.getSetting("Keybinds", "Inventory"),
+	{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB }
+)
 
 --// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus

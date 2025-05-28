@@ -1,10 +1,13 @@
 local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
+local ContentProvider = game:GetService("ContentProvider")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
 
 --// Modules
 local signal = require(ReplicatedStorage.Packages.Signal)
@@ -16,6 +19,8 @@ local globalInputService = require(script.Parent.GlobalInputService)
 local saveLoad = require(script.Parent.SaveLoad)
 local Types = require(ReplicatedStorage.Shared.Types)
 local objectFunctions = require(script.Parent.ObjectFunctions)
+local gameSettings = require(script.Parent.GameSettings)
+local slider = require(script.Parent.Slider)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -23,7 +28,7 @@ local gui = assets.Gui
 local sounds = assets.Sounds
 
 local titleTheme = assets.Music.MemoriesOfWhatNeverWas
-local menu: ScreenGui = gui.Menu
+local menu = gui.Menu
 menu.Parent = Players.LocalPlayer.PlayerGui
 
 local mainFrame = menu.Main
@@ -132,6 +137,8 @@ local hoverFunctions = { -- SAVE MENU
 }
 
 local function SaveLoadGame(button: GuiButton, newGame: boolean?)
+	globalInputService.inputs.MenuBack:Disable()
+
 	saveMenu.Slot_0.SaveSlot.Visible = false
 	saveMenu.Slot_1.SaveSlot.Visible = false
 	saveMenu.Slot_2.SaveSlot.Visible = false
@@ -176,17 +183,24 @@ local function lockSelectionTo(buttons: {})
 	end
 end
 
+local function transitionFromMain()
+	uiAnimationService.StopAnimation(mainFrame.Logo)
+	musicService:StopTrack(0.025)
+
+	mainFrame.Visible = false
+
+	menu.Background.BackgroundColor3 = Color3.new()
+end
+
 local buttonFunctions = {
 	Start = function()
-		uiAnimationService.StopAnimation(mainFrame.Logo)
-		musicService:StopTrack(0.025)
-
-		util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 })
-		mainFrame.Visible = false
-
-		menu.Background.BackgroundColor3 = Color3.new()
-		task.wait(2)
+		transitionFromMain()
 		module:ShowSaveMenu("Load")
+	end,
+
+	Settings = function()
+		transitionFromMain()
+		module:ShowSettingsMenu()
 	end,
 
 	SaveLoadSlot = SaveLoadGame,
@@ -194,16 +208,20 @@ local buttonFunctions = {
 		SaveLoadGame(button, true)
 	end,
 
-	CloseMenu = function(button: GuiButton)
-		SaveLoadGame(button, false)
+	CloseMenu = function()
+		SaveLoadGame(nil, false)
 	end,
 
-	DeleteSlot = function(button: GuiButton)
-		local label: ImageLabel = button.Parent.Parent
+	DeleteSlot = function(button)
+		local label = button.Parent.Parent
 		local slotFrame = label.Frame
 
 		local deletePrompt = saveMenu.DeleteConfirm
 		deletePrompt.Visible = true
+
+		if globalInputService.inputType == "Gamepad" then
+			GuiService:Select(deletePrompt.CancelBtn)
+		end
 
 		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
 
@@ -247,13 +265,27 @@ local function enableButtonFunctions()
 
 		local enter, exit = mouseOver.MouseEnterLeaveEvent(button)
 		enter:Connect(function()
-			if not button:GetAttribute("Hover") or checkLocked(button) then
+			if not button:GetAttribute("Hover") or checkLocked(button) or globalInputService.inputType == "Gamepad" then
 				return
 			end
 			hoverFunctions[button:GetAttribute("Hover")].Enter(button)
 		end)
 
 		exit:Connect(function()
+			if not button:GetAttribute("Hover") or checkLocked(button) or globalInputService.inputType == "Gamepad" then
+				return
+			end
+			hoverFunctions[button:GetAttribute("Hover")].Exit(button)
+		end)
+
+		button.SelectionGained:Connect(function()
+			if not button:GetAttribute("Hover") or checkLocked(button) then
+				return
+			end
+			hoverFunctions[button:GetAttribute("Hover")].Enter(button)
+		end)
+
+		button.SelectionLost:Connect(function()
 			if not button:GetAttribute("Hover") or checkLocked(button) then
 				return
 			end
@@ -297,6 +329,13 @@ function formatTime(seconds)
 	return table.concat(parts, " ")
 end
 
+local function doTransition(transitionTime: number?)
+	transitionTime = transitionTime or 2
+
+	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
+	util.tween(menu.Transition, TweenInfo.new(transitionTime, Enum.EasingStyle.Quart), { BackgroundTransparency = 1 })
+end
+
 function module:ShowSaveMenu(menuType: "Save" | "Load")
 	saveMenu.Slot_0.SaveSlot.Visible = true
 	saveMenu.Slot_1.SaveSlot.Visible = true
@@ -310,9 +349,11 @@ function module:ShowSaveMenu(menuType: "Save" | "Load")
 	menu.Background.BackgroundColor3 = Color3.new()
 	menu.Background.Visible = true
 
+	globalInputService.inputs.MenuBack:Disable()
+
 	for i = 0, 2 do
 		local saveData: Types.GameState = saveLoad:GetSaveData(i)
-		local label: ImageLabel = saveMenu["Slot_" .. i]
+		local label = saveMenu["Slot_" .. i]
 		local saveFrame = label.Frame
 
 		if saveData then
@@ -341,39 +382,299 @@ function module:ShowSaveMenu(menuType: "Save" | "Load")
 	saveMenu.Cancel.Visible = menuType == "Save"
 	saveMenu.SaveGame.Visible = menuType == "Save"
 
-	menu.Transition.BackgroundTransparency = 0
 	sounds.InventoryAmbience.Volume = 0
 
 	sounds.InventoryAmbience:Play()
 
-	util.tween(menu.Transition, ti_1, { BackgroundTransparency = 1 })
+	doTransition()
 	util.tween(sounds.InventoryAmbience, ti_1, { Volume = 0.1 })
+
+	if globalInputService.inputType == "Gamepad" then
+		GuiService:Select(mainFrame)
+	end
+
+	globalInputService.inputs.MenuBack:Enable()
+end
+
+local function updateValue(label, setting: Types.Setting)
+	if setting.Type == "List" then
+		if typeof(setting.Value) == "boolean" then
+			if setting.Value then
+				label.Value.Text = "Enabled"
+			else
+				label.Value.Text = "Disabled"
+			end
+		else
+			label.Value.Text = tostring(setting.Value)
+		end
+	elseif setting.Type == "Slider" then
+		local pos = setting.Value / setting.Values.Max
+		label.Value.Bar.UIGradient.Offset = Vector2.new(pos, 0)
+	elseif setting.Type == "KeyInput" then
+		label.Value:SetAttribute("Key", setting.Value.Name)
+		label.Value:SetAttribute("Button", setting.Value.Name)
+		globalInputService:CheckKeyPrompts()
+	end
+end
+
+local function changeValue(label, setting, value)
+	setting.Value = value
+	updateValue(label, setting)
+	setting:OnChanged()
+end
+
+local function connectSettingButtons(label, setting: Types.Setting)
+	if setting.Type == "List" then
+		label.Value.Next.MouseButton1Click:Connect(function()
+			local currentIndex = table.find(setting.Values, setting.Value)
+			currentIndex += 1
+
+			if currentIndex > #setting.Values then
+				currentIndex = 1
+			end
+
+			changeValue(label, setting, setting.Values[currentIndex])
+		end)
+
+		label.Value.Prev.MouseButton1Click:Connect(function()
+			local currentIndex = table.find(setting.Values, setting.Value)
+			currentIndex -= 1
+
+			if currentIndex == 0 then
+				currentIndex = #setting.Values
+			end
+
+			changeValue(label, setting, setting.Values[currentIndex])
+		end)
+	elseif setting.Type == "Slider" then
+		local stepDelay = 0.05
+		local newSlider = slider.new(label.Value, {
+			SliderData = {
+				Start = setting.Values.Min,
+				End = setting.Values.Max,
+				Increment = 5,
+				DefaultValue = setting.Value,
+			},
+			MoveInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+			Axis = "X",
+			Padding = 0,
+		})
+
+		newSlider:Track()
+		newSlider.Changed:Connect(function(value)
+			changeValue(label, setting, value)
+		end)
+
+		local nextBtn: ImageButton = label.Value.Next
+		local prevBtn: ImageButton = label.Value.Prev
+
+		nextBtn.MouseButton1Down:Connect(function()
+			local lastStep = 0
+			local startTime = os.clock()
+			newSlider:OverrideValue(newSlider:GetValue() + newSlider:GetIncrement())
+
+			local connection = RunService.Heartbeat:Connect(function(dt)
+				if os.clock() - startTime < 0.25 then
+					return
+				end
+
+				lastStep += dt
+				if lastStep < stepDelay then
+					return
+				end
+
+				lastStep = 0
+				newSlider:OverrideValue(newSlider:GetValue() + newSlider:GetIncrement())
+			end)
+
+			nextBtn.MouseButton1Up:Once(function()
+				connection:Disconnect()
+			end)
+
+			nextBtn.MouseLeave:Once(function()
+				connection:Disconnect()
+			end)
+
+			nextBtn.SelectionChanged:Once(function()
+				connection:Disconnect()
+			end)
+		end)
+
+		prevBtn.MouseButton1Down:Connect(function()
+			local lastStep = 0
+			local startTime = os.clock()
+			newSlider:OverrideValue(newSlider:GetValue() - newSlider:GetIncrement())
+
+			local connection = RunService.Heartbeat:Connect(function(dt)
+				if os.clock() - startTime < 0.25 then
+					return
+				end
+
+				lastStep += dt
+				if lastStep < stepDelay then
+					return
+				end
+
+				lastStep = 0
+				newSlider:OverrideValue(newSlider:GetValue() - newSlider:GetIncrement())
+			end)
+
+			prevBtn.MouseButton1Up:Once(function()
+				connection:Disconnect()
+			end)
+
+			prevBtn.MouseLeave:Once(function()
+				connection:Disconnect()
+			end)
+
+			prevBtn.SelectionChanged:Once(function()
+				connection:Disconnect()
+			end)
+		end)
+	elseif setting.Type == "KeyInput" then
+		local btn: ImageButton = label.Value
+		btn.MouseButton1Click:Connect(function()
+			--btn.Active = false
+			btn.Interactable = false
+			globalInputService.inputs.MenuBack:Disable()
+
+			UserInputService.InputBegan:Once(function(input)
+				if string.match(input.UserInputType.Name, "MouseButton") then
+					input = input.UserInputType
+				else
+					input = input.KeyCode
+				end
+
+				changeValue(label, setting, input)
+
+				btn.Interactable = true
+				--btn.Active = true
+				globalInputService.inputs.MenuBack:Enable()
+			end)
+		end)
+	end
+end
+
+local function loadSettings(settingGroup: {})
+	menu.Settings.Groups.Visible = false
+	menu.Settings.SettingGroup.Visible = true
+
+	for _, child in ipairs(menu.Settings.SettingGroup:GetChildren()) do
+		if not child:IsA("TextLabel") then
+			continue
+		end
+
+		child:Destroy()
+	end
+
+	for _, setting: Types.Setting in ipairs(settingGroup) do
+		local newLabel = gui.SettingLabels:FindFirstChild(setting.Type):Clone()
+		newLabel.Parent = menu.Settings.SettingGroup
+		newLabel.Text = setting.Name
+
+		updateValue(newLabel, setting)
+
+		if setting.Type == "Slider" then
+			local pos = setting.Value / setting.Values.Max
+			newLabel.Value.Slider.Position = UDim2.fromScale(pos, 0.5)
+		end
+
+		connectSettingButtons(newLabel, setting)
+	end
+end
+
+local function loadSettingGroups()
+	local settingsMenu = menu.Settings
+
+	for _, child in ipairs(settingsMenu.Groups:GetChildren()) do
+		if not child:IsA("TextButton") then
+			continue
+		end
+
+		child:Destroy()
+	end
+
+	for _, settingGroup in ipairs(gameSettings) do
+		local newGroupButton = gui.SettingLabels.SettingGroup:Clone()
+		newGroupButton.Parent = settingsMenu.Groups
+		newGroupButton.Text = settingGroup.Name
+		newGroupButton.MouseButton1Click:Connect(function()
+			doTransition(1)
+			loadSettings(settingGroup)
+		end)
+	end
+end
+
+function module:ShowSettingsMenu()
+	menu.Enabled = true
+	menu.Background.BackgroundColor3 = Color3.new()
+	menu.Background.Visible = true
+
+	menu.Settings.Visible = true
+
+	doTransition()
+
+	menu.Settings.Groups.Visible = true
+	menu.Settings.SettingGroup.Visible = false
+
+	loadSettingGroups()
+
+	if globalInputService.inputType == "Gamepad" then
+		GuiService:Select(mainFrame)
+	end
 end
 
 function module:ShowTitleScreen()
-	menu.Transition.BackgroundTransparency = 0
+	menu.Background.BackgroundColor3 = Color3.new(1, 1, 1)
 
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
-	task.wait(3)
-
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
-	util.tween(menu.Transition, TweenInfo.new(4), { BackgroundTransparency = 1 })
+	doTransition(4)
 
 	SoundService.AmbientReverb = Enum.ReverbType.Arena
 	uiAnimationService.PlayAnimation(mainFrame.Logo, 0.05, true)
 	titleTheme.TimePosition = 22.9
 	musicService:PlayTrack(titleTheme.Name, 0)
 
-	task.delay(0.5, function()
-		if globalInputService.inputType == "Gamepad" then
-			GuiService:Select(mainFrame)
-		end
-	end)
+	menu.Save.Visible = false
+	menu.Settings.Visible = false
+	menu.Main.Visible = true
+
+	if globalInputService.inputType == "Gamepad" then
+		GuiService:Select(mainFrame)
+	end
+end
+
+function module:ShowDisclaimer()
+	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
+
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
+	task.wait(3)
+
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
 end
 
 function module.Init()
-	task.spawn(module.ShowTitleScreen)
+	task.spawn(function()
+		module:ShowDisclaimer()
+		module:ShowTitleScreen()
+	end)
 	enableButtonFunctions()
+
+	globalInputService.CreateNewInput("MenuBack", function(inputState)
+		if inputState ~= Enum.UserInputState.Begin then
+			return
+		end
+
+		if menu.Save:GetAttribute("Type") == "Save" then
+			buttonFunctions.CloseMenu()
+			return
+		end
+
+		if menu.Settings.SettingGroup.Visible then
+			module:ShowSettingsMenu()
+		elseif not menu.Main.Visible then
+			module:ShowTitleScreen()
+		end
+	end, Enum.KeyCode.Backspace, Enum.KeyCode.ButtonB)
 end
 
 objectFunctions.SaveGameEvent:Connect(function()

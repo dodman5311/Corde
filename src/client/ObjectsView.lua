@@ -81,16 +81,17 @@ local function exitViewInput(state)
 end
 
 function module.Init()
-	module.exitInput = globalInputService.CreateNewInput(
-		"Exit First Person View",
-		exitViewInput,
-		{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Backspace, Enum.KeyCode.Space },
-		util.getSetting("Gamepad", "Exit First Person View")
-	)
 	module.exitInput:Disable()
 
 	HUD = Players.LocalPlayer.PlayerGui.HUD
 end
+
+module.exitInput = globalInputService.CreateNewInput(
+	"Exit First Person View",
+	exitViewInput,
+	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Backspace, Enum.KeyCode.Space },
+	util.getSetting("Gamepad", "Exit First Person View")
+)
 
 inventory.InvetoryToggled:Connect(function(value)
 	if value or not acts:checkAct("InObjectView") then

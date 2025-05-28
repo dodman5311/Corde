@@ -32,6 +32,14 @@ export type GameState = {
 	},
 }
 
+export type Setting = {
+	Name: string,
+	Type: "Slider" | "List" | "KeyInput",
+	Value: any,
+	Values: any?,
+	OnChanged: (self: Setting) -> any?,
+}
+
 export type Npc = {
 	Name: string,
 	Instance: Instance,

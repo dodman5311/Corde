@@ -4,17 +4,19 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 
 local globalInputService = require(script.Parent.GlobalInputService)
+local Types = require(ReplicatedStorage.Shared.Types)
 
-local function onKeyboardChanged(self, previousValue)
-	globalInputService.inputs[self.Name]:ReplaceKeybinds("Keyboard", { [previousValue] = self.Value })
+local function onKeyboardChanged(self: Types.Setting)
+	globalInputService.inputs[self.Name]:ReplaceKeybinds("Keyboard", { [self.Values] = self.Value })
+	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
 
-local function onGamepadChanged(self, previousValue)
-	globalInputService.inputs[self.Name]:ReplaceKeybinds("Gamepad", { [previousValue] = self.Value })
+local function onGamepadChanged(self: Types.Setting)
+	globalInputService.inputs[self.Name]:ReplaceKeybinds("Gamepad", { [self.Values] = self.Value })
+	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
 
@@ -27,7 +29,7 @@ local gameSettings = {
 			Type = "Slider",
 			Value = 100,
 			Values = NumberRange.new(0, 100),
-			OnChanged = function(self)
+			OnChanged = function(self: Types.Setting)
 				game:GetService("SoundService").Music.Volume = self.Value / 100
 			end,
 		},
@@ -36,8 +38,8 @@ local gameSettings = {
 			Name = "SFX Volume",
 			Type = "Slider",
 			Value = 100,
-			MaxValue = NumberRange.new(0, 100),
-			OnChanged = function(self)
+			Values = NumberRange.new(0, 100),
+			OnChanged = function(self: Types.Setting)
 				game:GetService("SoundService").UI.Volume = self.Value / 100
 				game:GetService("SoundService").SoundEffects.Volume = self.Value / 100
 			end,
@@ -49,10 +51,10 @@ local gameSettings = {
 
 		{
 			Name = "Film Grain",
-			Type = "Selection",
+			Type = "List",
 			Value = true,
 			Values = { true, false },
-			OnChanged = function(self)
+			OnChanged = function(self: Types.Setting)
 				playerGui:WaitForChild("FilmGrain").Enabled = self.Value
 			end,
 		},
@@ -66,7 +68,7 @@ local gameSettings = {
 		Name = "Gameplay",
 		{
 			Name = "Difficulty",
-			Type = "Selection",
+			Type = "List",
 			Value = "Solemn",
 			Values = { "Hope", "Solemn", "Despair" },
 			-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
@@ -78,7 +80,7 @@ local gameSettings = {
 
 		{
 			Name = "Auto Read",
-			Type = "Selection",
+			Type = "List",
 			Value = true,
 			Values = { true, false },
 			OnChanged = function() end,
@@ -86,7 +88,7 @@ local gameSettings = {
 
 		{
 			Name = "Hints",
-			Type = "Selection",
+			Type = "List",
 			Value = false,
 			Values = { true, false },
 			OnChanged = function() end,
@@ -100,6 +102,7 @@ local gameSettings = {
 			Name = "Interact",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.F,
+			Values = Enum.KeyCode.F,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -107,6 +110,7 @@ local gameSettings = {
 			Name = "Inventory",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.E,
+			Values = Enum.KeyCode.E,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -114,6 +118,7 @@ local gameSettings = {
 			Name = "N.E.T",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.Tab,
+			Values = Enum.KeyCode.Tab,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -121,6 +126,7 @@ local gameSettings = {
 			Name = "Sprint",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.LeftShift,
+			Values = Enum.KeyCode.LeftShift,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -128,6 +134,7 @@ local gameSettings = {
 			Name = "Ready Weapon",
 			Type = "KeyInput",
 			Value = Enum.UserInputType.MouseButton2,
+			Values = Enum.UserInputType.MouseButton2,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -135,6 +142,7 @@ local gameSettings = {
 			Name = "Fire Weapon",
 			Type = "KeyInput",
 			Value = Enum.UserInputType.MouseButton1,
+			Values = Enum.UserInputType.MouseButton1,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -142,6 +150,7 @@ local gameSettings = {
 			Name = "Reload",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.R,
+			Values = Enum.KeyCode.R,
 			OnChanged = onKeyboardChanged,
 		},
 
@@ -149,6 +158,7 @@ local gameSettings = {
 			Name = "Exit First Person View",
 			Type = "KeyInput",
 			Value = Enum.UserInputType.MouseButton2,
+			Values = Enum.UserInputType.MouseButton2,
 			OnChanged = onKeyboardChanged,
 		},
 	},
@@ -160,6 +170,7 @@ local gameSettings = {
 			Name = "Interact",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonA,
+			Values = Enum.KeyCode.ButtonA,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -167,6 +178,7 @@ local gameSettings = {
 			Name = "Inventory",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonY,
+			Values = Enum.KeyCode.ButtonY,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -174,6 +186,7 @@ local gameSettings = {
 			Name = "N.E.T",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonL1,
+			Values = Enum.KeyCode.ButtonL1,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -181,6 +194,7 @@ local gameSettings = {
 			Name = "Sprint",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonR2,
+			Values = Enum.KeyCode.ButtonR2,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -188,6 +202,7 @@ local gameSettings = {
 			Name = "Ready Weapon",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonL2,
+			Values = Enum.KeyCode.ButtonL2,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -195,6 +210,7 @@ local gameSettings = {
 			Name = "Fire Weapon",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonR2,
+			Values = Enum.KeyCode.ButtonR2,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -202,6 +218,7 @@ local gameSettings = {
 			Name = "Reload",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonR1,
+			Values = Enum.KeyCode.ButtonR1,
 			OnChanged = onGamepadChanged,
 		},
 
@@ -209,6 +226,7 @@ local gameSettings = {
 			Name = "Exit First Person View",
 			Type = "KeyInput",
 			Value = Enum.KeyCode.ButtonB,
+			Values = Enum.KeyCode.ButtonB,
 			OnChanged = onKeyboardChanged,
 		},
 	},

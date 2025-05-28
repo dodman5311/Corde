@@ -36,7 +36,7 @@ local module = {
 	end,
 
 	Memory_Wipe = function(object: Model)
-		local data = require(object.Data)
+		local data = require(object:FindFirstChild("Data"))
 
 		data.Dialogue.Start = data.Start
 	end,

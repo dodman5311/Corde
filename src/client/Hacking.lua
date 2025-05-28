@@ -33,13 +33,6 @@ local ti = TweenInfo.new(0.25)
 local currentInputIndex = 1
 local currentInput = ""
 
-local dpadIcons = {
-	globalInputService.inputIcons.Misc.Up,
-	globalInputService.inputIcons.Misc.Left,
-	globalInputService.inputIcons.Misc.Down,
-	globalInputService.inputIcons.Misc.Right,
-}
-
 local keyboard = {
 	Enum.KeyCode.One,
 	Enum.KeyCode.Two,
@@ -53,7 +46,7 @@ local gamepad = {
 	Enum.KeyCode.DPadRight,
 }
 
-local function getNumberFromSequence(point: BillboardGui)
+local function getNumberFromSequence(point)
 	return tonumber(string.sub(point:GetAttribute("Sequence"), currentInputIndex, currentInputIndex))
 end
 
@@ -62,13 +55,13 @@ local function getNumberFromKeyCode(keycode: Enum.KeyCode)
 	return table.find(list, keycode)
 end
 
-local function deregisterPoint(point: BillboardGui)
+local function deregisterPoint(point)
 	point:RemoveTag("ActiveNetPoint")
 	point.HackPrompt.Visible = true
 	point.NetLine.Enabled = false
 end
 
-local function completePoint(point: BillboardGui)
+local function completePoint(point)
 	local hackUi = point.HackPrompt
 	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
 
@@ -81,7 +74,7 @@ local function completePoint(point: BillboardGui)
 	end)
 end
 
-local function failNetPoint(point: BillboardGui)
+local function failNetPoint(point)
 	local hackUi = point.HackPrompt
 	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
 	local ti_0 = TweenInfo.new(0.5, Enum.EasingStyle.Elastic)
@@ -98,7 +91,7 @@ local function failNetPoint(point: BillboardGui)
 	end)
 end
 
-local function createKeyLabel(point: BillboardGui)
+local function createKeyLabel(point)
 	local number = getNumberFromSequence(point)
 
 	local keyLabel = gui.Keystroke:Clone()
@@ -118,7 +111,7 @@ local function createKeyLabel(point: BillboardGui)
 	return keyLabel
 end
 
-local function showPointPromt(point: BillboardGui)
+local function showPointPromt(point)
 	if not point:HasTag("ActiveNetPoint") then
 		return
 	end
@@ -166,7 +159,7 @@ local function showPointPromt(point: BillboardGui)
 	actionPrompt.showEnergyUsage(point.Adornee:GetAttribute("RamUsage"))
 end
 
-local function hidePointPromt(point: BillboardGui?)
+local function hidePointPromt(point)
 	if not point or not point.Parent then
 		return
 	end
@@ -258,8 +251,8 @@ local function getValidNetPoints()
 	local closest, closestPoint = math.huge, nil
 	local validPoints = {}
 
-	for _, netPoint: BillboardGui in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do -- raycast
-		local object: BasePart | Model = netPoint.Adornee
+	for _, netPoint in ipairs(CollectionService:GetTagged("ActiveNetPoint")) do -- raycast
+		local object = netPoint.Adornee
 
 		local vector, onScreen = camera:WorldToViewportPoint(object:GetPivot().Position)
 		if not onScreen then
@@ -291,10 +284,10 @@ local function drawNetLines(validPoints: {}, closestPoint: BillboardGui)
 		return
 	end
 
-	for _, netPoint: BillboardGui in ipairs(validPoints) do
+	for _, netPoint in ipairs(validPoints) do
 		local object: BasePart | Model = netPoint.Adornee
 		local netLine: Beam = netPoint.NetLine
-		local netLineAttachment: Attachment? = netLine.Attachment1
+		local netLineAttachment = netLine.Attachment1
 
 		netLine.Attachment0 = character.PrimaryPart.RootAttachment
 		netPoint.NetLine.Enabled = true

@@ -588,12 +588,6 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 end
 
 function module.Init()
-	globalInputService.CreateNewInput(
-		"Sprint",
-		updateSprinting,
-		util.getSetting("Keybinds", "Sprint"),
-		util.getSetting("Gamepad", "Sprint")
-	)
 	UserInputService.InputChanged:Connect(updateCursorData)
 
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
@@ -606,6 +600,13 @@ function module.Init()
 		end
 	end)
 end
+
+globalInputService.CreateNewInput(
+	"Sprint",
+	updateSprinting,
+	util.getSetting("Keybinds", "Sprint"),
+	util.getSetting("Gamepad", "Sprint")
+)
 
 RunService.Heartbeat:Connect(function()
 	updatePlayerMovement()

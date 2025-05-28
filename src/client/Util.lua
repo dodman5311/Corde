@@ -3,7 +3,6 @@ local util = {
 }
 local deb = game:GetService("Debris")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local ts = game:GetService("TweenService")
 
@@ -22,27 +21,37 @@ local function flicker(frame, speed, amnt)
 end
 
 function util.getSetting(groupName: string, settingName: string)
+	local foundSetting
+
 	for _, group in ipairs(gameSettings) do
 		if group.Name ~= groupName then
 			continue
 		end
+
+		
 
 		for _, setting in ipairs(group) do
 			if setting.Name ~= settingName then
 				continue
 			end
 
-			return setting.Value, setting
+			foundSetting = setting			
 		end
 	end
+
+	return foundSetting and foundSetting.Value, foundSetting
 end
 
 function util.SearchDictionary(dictionary, value)
+	local foundValue
 	for i, v in pairs(dictionary) do
 		if v == value then
-			return i
+			foundValue = i
+			break
 		end
 	end
+
+	return foundValue
 end
 
 function util.flickerUi(frame, speed, amnt, nonSync)
@@ -126,8 +135,8 @@ function util.tween(
 	tweenInfo: TweenInfo,
 	propertyTable: {},
 	yield: boolean?,
-	endingFunction,
-	endingState: Enum.PlaybackState
+	endingFunction: any?,
+	endingState: Enum.PlaybackState?
 )
 	local createdTween
 
@@ -176,7 +185,7 @@ function util:GetMatchingChildren(
 	parent: Instance,
 	propertiesTable: {},
 	getDescendants: boolean?
-): table -- e.g {PropertyName = Value}
+): {} -- e.g {PropertyName = Value}
 	local children
 	local matchingChildren = {}
 	if getDescendants then
@@ -371,7 +380,7 @@ end
 
 util.PlayingSounds = {}
 
-function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent: Instance?): Sound
+function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent: Instance?): Sound?
 	if not sound then
 		return
 	end
@@ -396,7 +405,7 @@ function util.PlaySound(sound: Sound, range: number?, stopTime: number?, parent:
 	return soundClone
 end
 
-function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, stopTime: number?)
+function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, stopTime: number?): Sound?
 	local character = Players.LocalPlayer.Character
 	if not character then
 		return
@@ -419,10 +428,14 @@ function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, s
 
 	-- newObject.Name = "SoundPart"
 
-	local soundClone: Sound = util.PlaySound(sound, range, stopTime) --, newObject)
+	local soundClone: Sound? = util.PlaySound(sound, range, stopTime) --, newObject)
 	-- soundClone.RollOffMode = Enum.RollOffMode.Inverse
 	-- soundClone.RollOffMinDistance = 1000
 	-- soundClone.RollOffMaxDistance = 1000
+
+	if not soundClone then
+		return
+	end
 
 	if soundClone.SoundGroup == SoundService.SoundEffects then
 		soundClone.Destroying:Once(function()

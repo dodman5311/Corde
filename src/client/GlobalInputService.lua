@@ -25,7 +25,6 @@ local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 
@@ -34,8 +33,6 @@ local selectionImage = selectionUi.SelectionImage
 
 local acts = require(script.Parent.Acts)
 
-local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
-
 local inputs: { Input } = {}
 local module = {
 	inputType = "Keyboard",
@@ -43,48 +40,105 @@ local module = {
 
 	inputIcons = {
 		Ps4 = {
-			ButtonX = "rbxassetid://122062730815411",
-			ButtonA = "rbxassetid://99222140491626",
-			ButtonB = "rbxassetid://139151046418306",
-			ButtonY = "rbxassetid://124498431294550",
+			ButtonX = "122062730815411",
+			ButtonA = "99222140491626",
+			ButtonB = "139151046418306",
+			ButtonY = "124498431294550",
 		},
 		Xbox = {
-			ButtonX = "rbxassetid://122267119998385",
-			ButtonA = "rbxassetid://121295530666976",
-			ButtonB = "rbxassetid://97330447691033",
-			ButtonY = "rbxassetid://73181495754569",
+			ButtonX = "122267119998385",
+			ButtonA = "121295530666976",
+			ButtonB = "97330447691033",
+			ButtonY = "73181495754569",
 		},
 		Keyboard = {
-			MouseButton1 = "rbxassetid://115777151252419",
-			MouseButton2 = "rbxassetid://126344159018792",
-			MouseButton3 = "rbxassetid://95452537473335",
-			Scroll = "rbxassetid://129056272209004",
-			F = "rbxassetid://74228350755401",
-			E = "rbxassetid://136402653357293",
-			R = "rbxassetid://86806472892566",
-			One = "rbxassetid://87310485799989",
-			Two = "rbxassetid://104360287893229",
-			Three = "rbxassetid://108142578535176",
-			Four = "rbxassetid://131238976336903",
-			Tab = "rbxassetid://116362922317477",
-			LeftShift = "rbxassetid://77318620414643",
-			Shift = "rbxassetid://77318620414643",
+			MouseButton1 = "115777151252419",
+			MouseButton2 = "126344159018792",
+			MouseButton3 = "95452537473335",
+			Scroll = "129056272209004",
+
+			A = "101275553943757",
+			B = "82125102642552",
+			C = "75040199280823",
+			D = "136848745869062",
+			E = "136402653357293",
+			F = "74228350755401",
+			G = "139863023567545",
+			H = "128507033987187",
+			I = "132474088542264",
+			J = "102179810274882",
+			K = "87814320776721",
+			L = "99738826372890",
+			M = "121076145919314",
+			N = "136011881995276",
+			O = "140099094723629",
+			P = "110404287194349",
+			Q = "119136958738304",
+			R = "86806472892566",
+			S = "108784305233331",
+			T = "96905636160084",
+			U = "94844091505145",
+			V = "87680637350638",
+			W = "102148238829302",
+			X = "87163573711492",
+			Y = "127900229578238",
+			Z = "80586602767548",
+
+			One = "87310485799989",
+			Two = "104360287893229",
+			Three = "108142578535176",
+			Four = "131238976336903",
+			Five = "89806329448950",
+			Six = "109902722112996",
+			Seven = "124839388428121",
+			Eight = "81782371502694",
+			Nine = "85135646962139",
+			Zero = "132714539349368",
+
+			Tab = "116362922317477",
+			Backspace = "78379859775356",
+			Return = "92998529564469",
+
+			LeftAlt = "87837814972423",
+			RightAlt = "87837814972423",
+			LeftControl = "106626790058135",
+			RightControl = "106626790058135",
+			LeftShift = "77318620414643",
+			RightShift = "84872227572806",
+
+			Left = "128150224671805",
+			Right = "102185023122198",
+			Up = "99253643967342",
+			Down = "87452731519451",
+
+			F1 = "103476659333916",
+			F2 = "118103405706830",
+			F3 = "132768899424965",
+			F4 = "128049648305911",
+			F5 = "79143962195606",
+			F6 = "80822468566195",
+			F7 = "88851680649058",
+			F8 = "99080921834878",
+			F9 = "79483779934054",
+			F10 = "87514655605900",
+			F11 = "122519259304949",
+			F12 = "120250003182329",
 		},
 		Misc = {
-			DPadAll = "rbxassetid://104088083610808",
-			Horizontal = "rbxassetid://134923880414479",
-			Vertical = "rbxassetid://81470201795928",
-			DPadLeft = "rbxassetid://102626010372615",
-			DPadRight = "rbxassetid://128897927978505",
-			DPadUp = "rbxassetid://112547970720772",
-			DPadDown = "rbxassetid://136246329210868",
+			DPadAll = "104088083610808",
+			Horizontal = "134923880414479",
+			Vertical = "81470201795928",
+			DPadLeft = "102626010372615",
+			DPadRight = "128897927978505",
+			DPadUp = "112547970720772",
+			DPadDown = "136246329210868",
 
-			Unknown = "rbxassetid://136342675608310",
+			Unknown = "136342675608310",
 
-			ButtonL1 = "rbxassetid://97608958968765", -- left bumper
-			ButtonL2 = "rbxassetid://84837513862254", -- left trigger
-			ButtonR1 = "rbxassetid://84450330851971",
-			ButtonR2 = "rbxassetid://70730301952026",
+			ButtonL1 = "97608958968765", -- left bumper
+			ButtonL2 = "84837513862254", -- left trigger
+			ButtonR1 = "84450330851971",
+			ButtonR2 = "70730301952026",
 		},
 	},
 
@@ -162,15 +216,19 @@ function module:CheckKeyPrompts()
 
 		image.Visible = true
 
+		local imageId
+
 		if module.inputIcons.Misc[iconKey] then
-			image.Image = module.inputIcons.Misc[iconKey]
-			continue
+			imageId = module.inputIcons.Misc[iconKey]
+		elseif module.inputIcons.Keyboard[iconKey] then
+			imageId = module.inputIcons.Keyboard[iconKey]
+		elseif module.inputIcons[module.gamepadType][iconKey] then
+			imageId = module.inputIcons[module.gamepadType][iconKey]
+		else
+			imageId = module.inputIcons.Misc.Unknown
 		end
 
-		local list = module.inputType == "Gamepad" and module.inputIcons[module.gamepadType]
-			or module.inputIcons.Keyboard
-
-		image.Image = list[iconKey]
+		image.Image = imageId and "rbxassetid://" .. imageId or ""
 	end
 end
 
