@@ -170,7 +170,7 @@ local function showDialogueOptions(options)
 		end)
 	end
 
-	if globalInputService.inputType == "Gamepad" then
+	if globalInputService:GetInputSource().Type == "Gamepad" then
 		GuiService:Select(UI.Box.Choices)
 	end
 end

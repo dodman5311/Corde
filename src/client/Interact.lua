@@ -327,7 +327,7 @@ local function processCrosshair()
 end
 
 function module.StartGame()
-	globalInputService.inputs.Interact:Refresh()
+	globalInputService.inputActions.Interact:Refresh()
 end
 
 function module.Init()
@@ -336,7 +336,7 @@ function module.Init()
 end
 
 globalInputService
-	.CreateNewInput("Interact", function(state)
+	.CreateInputAction("Interact", function(state)
 		local object = mouseTarget.Value
 
 		if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then

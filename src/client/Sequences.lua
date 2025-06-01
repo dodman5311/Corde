@@ -199,7 +199,7 @@ function module.keyhole(object: Model)
 	sequenceFrame.Visible = true
 	uiAnimationService.PlayAnimation(frame.Static, 0.5, true)
 
-	globalInputService.inputs["Inventory"]:Disable()
+	globalInputService.inputActions["Inventory"]:Disable()
 	player:SetAttribute("MovementEnabled", false)
 
 	task.wait(4)
@@ -211,7 +211,7 @@ function module.keyhole(object: Model)
 	fade.BackgroundTransparency = 0
 	util.tween(fade, ti, { BackgroundTransparency = 1 })
 
-	globalInputService.inputs["Inventory"]:Enable()
+	globalInputService.inputActions["Inventory"]:Enable()
 	player:SetAttribute("MovementEnabled", true)
 
 	musicService:PlayTrack("ItsPlaytime")

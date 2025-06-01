@@ -157,7 +157,7 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
--- globalInputService.CreateNewInput("PauseGame", function(state)
+-- globalInputService.CreateInputAction("PauseGame", function(state)
 -- 	if state ~= Enum.UserInputState.Begin then
 -- 		return
 -- 	end

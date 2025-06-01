@@ -9,13 +9,13 @@ local globalInputService = require(script.Parent.GlobalInputService)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 local function onKeyboardChanged(self: Types.Setting)
-	globalInputService.inputs[self.Name]:ReplaceKeybinds("Keyboard", { [self.Values] = self.Value })
+	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Keyboard", { [self.Values] = self.Value })
 	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
 
 local function onGamepadChanged(self: Types.Setting)
-	globalInputService.inputs[self.Name]:ReplaceKeybinds("Gamepad", { [self.Values] = self.Value })
+	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Gamepad", { [self.Values] = self.Value })
 	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
@@ -56,6 +56,18 @@ local gameSettings = {
 			Values = { true, false },
 			OnChanged = function(self: Types.Setting)
 				playerGui:WaitForChild("FilmGrain").Enabled = self.Value
+			end,
+		},
+
+		{
+			Name = "Screen Effects",
+			Type = "List",
+			Value = "None",
+			Values = { "None", "Vintage", "CRTV" },
+			OnChanged = function(self: Types.Setting)
+				for _, frame in ipairs(playerGui.ScreenEffects:GetChildren()) do
+					frame.Visible = frame.Name == self.Value
+				end
 			end,
 		},
 	},

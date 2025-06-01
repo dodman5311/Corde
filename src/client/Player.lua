@@ -122,7 +122,7 @@ local function playerDamaged(character, healthPercent, damageDealt)
 
 	cameraService.shaker:Shake(damageShakeInstance)
 	haptics.hapticPulse(
-		globalInputService["LastGamepadInput"],
+		globalInputService:GetInputSource().LastGamepadInput,
 		Enum.VibrationMotor.Large,
 		invertedHealthPercent * 10,
 		timeScale / 2,
@@ -370,7 +370,7 @@ local function processGamepadCursorSnap()
 end
 
 local function updateCursorLocation()
-	if globalInputService.inputType == "Gamepad" then
+	if globalInputService:GetInputSource().Type == "Gamepad" then
 		if acts:checkAct("InObjectView") then
 			cursorLocation += thumbstickLookPos * OBJECTVIEW_GAMEPAD_SENSITIVITY
 		else
@@ -601,7 +601,7 @@ function module.Init()
 	end)
 end
 
-globalInputService.CreateNewInput(
+globalInputService.CreateInputAction(
 	"Sprint",
 	updateSprinting,
 	util.getSetting("Keybinds", "Sprint"),
@@ -699,7 +699,7 @@ inventory.ItemUsed:Connect(function(use, item)
 end)
 
 inventory.InvetoryToggled:Connect(function(value)
-	cursor.Enabled = not (globalInputService.inputType == "Gamepad" and value)
+	cursor.Enabled = not (globalInputService:GetInputSource().Type == "Gamepad" and value)
 end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)

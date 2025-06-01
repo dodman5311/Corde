@@ -70,7 +70,7 @@ function Color3.fromRGB(r, g, b)
 end
 
 function Color3.fromHSV(h, s, v)
-	-- Convert h to a 360-degree value (inputs as between 0 and 1)
+	-- Convert h to a 360-degree value (inputActions as between 0 and 1)
 	h = h * 360
 
 	-- Sector of the HSV color space (there are 6) that the hue falls in

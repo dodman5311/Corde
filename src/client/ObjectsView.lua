@@ -28,14 +28,14 @@ function module:EnterView(object: Instance)
 	end
 	acts:createAct("InObjectView")
 
-	globalInputService.inputs["Fire Weapon"]:Disable()
-	globalInputService.inputs.Interact:Disable()
+	globalInputService.inputActions["Fire Weapon"]:Disable()
+	globalInputService.inputActions.Interact:Disable()
 	player:SetAttribute("MovementEnabled", false)
 
 	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
 		module.exitInput:Enable()
 		HUD.Leave3DViewPrompt.Visible = true
-		globalInputService.inputs.Interact:Enable()
+		globalInputService.inputActions.Interact:Enable()
 	end, Enum.PlaybackState.Completed)
 
 	local newModel = model:Clone()
@@ -57,9 +57,9 @@ function module:EnterView(object: Instance)
 end
 
 function module:ExitView()
-	globalInputService.inputs.Interact:Disable()
+	globalInputService.inputActions.Interact:Disable()
 	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
-		globalInputService.inputs.Interact:Enable()
+		globalInputService.inputActions.Interact:Enable()
 	end, Enum.PlaybackState.Completed)
 
 	module.exitInput:Disable()
@@ -86,7 +86,7 @@ function module.Init()
 	HUD = Players.LocalPlayer.PlayerGui.HUD
 end
 
-module.exitInput = globalInputService.CreateNewInput(
+module.exitInput = globalInputService.CreateInputAction(
 	"Exit First Person View",
 	exitViewInput,
 	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Backspace, Enum.KeyCode.Space },

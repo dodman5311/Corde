@@ -123,11 +123,11 @@ local objectFunctions = {
 		local teleportTo = object.TeleportTo.Value
 		local character = player.Character
 
-		globalInputService.inputs.Interact:Disable()
+		globalInputService.inputActions.Interact:Disable()
 		player:SetAttribute("MovementEnabled", false)
 
 		util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
-			globalInputService.inputs.Interact:Enable()
+			globalInputService.inputActions.Interact:Enable()
 			player:SetAttribute("MovementEnabled", true)
 		end, Enum.PlaybackState.Completed)
 

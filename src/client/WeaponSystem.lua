@@ -129,7 +129,7 @@ function module.toggleHolstered(value)
 
 		showWeapon(currentWeapon.Value.Type)
 
-		globalInputService.inputs["Fire Weapon"]:Enable()
+		globalInputService.inputActions["Fire Weapon"]:Enable()
 		util.PlayFrom(character, sounds.Unholster, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -138,7 +138,7 @@ function module.toggleHolstered(value)
 	elseif not readyKeyDown and not module.weaponUnequipped then
 		showWeapon(0)
 
-		globalInputService.inputs["Fire Weapon"]:Disable()
+		globalInputService.inputActions["Fire Weapon"]:Disable()
 		util.PlayFrom(character, sounds.Holster, 0.075)
 
 		acts:createTempAct("Holstering", function()
@@ -639,21 +639,21 @@ local function reloadInput(state)
 	reload()
 end
 
-globalInputService.CreateNewInput(
+globalInputService.CreateInputAction(
 	"Reload",
 	reloadInput,
 	util.getSetting("Keybinds", "Reload"),
 	util.getSetting("Gamepad", "Reload")
 )
 globalInputService
-	.CreateNewInput(
+	.CreateInputAction(
 		"Fire Weapon",
 		module.fireKeyToggle,
 		util.getSetting("Keybinds", "Fire Weapon"),
 		util.getSetting("Gamepad", "Fire Weapon")
 	)
 	:Disable()
-globalInputService.CreateNewInput(
+globalInputService.CreateInputAction(
 	"Ready Weapon",
 	module.readyKeyToggle,
 	util.getSetting("Keybinds", "Ready Weapon"),

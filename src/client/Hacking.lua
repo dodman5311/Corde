@@ -51,7 +51,7 @@ local function getNumberFromSequence(point)
 end
 
 local function getNumberFromKeyCode(keycode: Enum.KeyCode)
-	local list = globalInputService.inputType == "Gamepad" and gamepad or keyboard
+	local list = globalInputService:GetInputSource().Type == "Gamepad" and gamepad or keyboard
 	return table.find(list, keycode)
 end
 
@@ -496,13 +496,13 @@ local function pressNetKey(state)
 	end
 end
 
-module.ToggleNetInput = globalInputService.CreateNewInput(
+module.ToggleNetInput = globalInputService.CreateInputAction(
 	"N.E.T",
 	pressNetKey,
 	util.getSetting("Keybinds", "N.E.T"),
 	util.getSetting("Gamepad", "N.E.T")
 )
-globalInputService.CreateNewInput(
+globalInputService.CreateInputAction(
 	"EnterHackingInput",
 	checkKeystrokeInput,
 	{ Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four },
