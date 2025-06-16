@@ -1,12 +1,12 @@
 local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
-local ContentProvider = game:GetService("ContentProvider")
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local TextService = game:GetService("TextService")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
@@ -37,126 +37,11 @@ local saveMenu = menu.Save
 --// Values
 module.StartEvent = signal.new()
 local lockSelection = {}
+local currentPage
+local currentSubPage
+local inMainMenu = false
 
 --// Functions
-
-local hoverFunctions = { -- SAVE MENU
-	PlayButton = {
-		Enter = function(button: GuiButton)
-			local ti = TweenInfo.new(1, Enum.EasingStyle.Exponential)
-
-			local size = button:GetAttribute("DefaultSize")
-			util.tween(button, ti, { Size = UDim2.fromScale(size.X.Scale + 0.01, size.Y.Scale + 0.01) })
-
-			local sound = util.PlaySound(sounds.HoverStart)
-			sound.PlaybackSpeed = 3
-			sound.Volume = 0.1
-		end,
-
-		Exit = function(button: GuiButton)
-			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
-
-			util.tween(button, ti, { Size = button:GetAttribute("DefaultSize") })
-
-			if not mainFrame.Visible then
-				return
-			end
-
-			local sound = util.PlaySound(sounds.HoverStart)
-			sound.PlaybackSpeed = 2
-			sound.Volume = 0.025
-		end,
-	},
-
-	SettingButton = {
-		Enter = function(button)
-			button.BackgroundTransparency = 0
-			button.TextColor3 = Color3.new(0)
-
-			if button.Name == "List" then
-				button.Value.TextColor3 = Color3.new(0)
-			end
-
-			util.PlaySound(sounds.HoverStart)
-		end,
-
-		Exit = function(button)
-			button.BackgroundTransparency = 1
-			button.TextColor3 = Color3.new(1, 1, 1)
-
-			if button.Name == "List" then
-				button.Value.TextColor3 = Color3.new(1, 1, 1)
-			end
-		end,
-	},
-
-	SlotButton = {
-		Enter = function(button: GuiButton)
-			local ti = TweenInfo.new(0.1)
-			local buttonImage = button.Parent
-
-			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
-			if buttonImage:FindFirstChild("NewGame") then
-				buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
-				buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
-				buttonImage.Delete.ImageColor3 = Color3.new(1, 1, 1)
-			end
-
-			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1.005, 1.005) })
-
-			local sound = util.PlaySound(sounds.HoverStart)
-			sound.PlaybackSpeed = 3
-			sound.Volume = 0.1
-		end,
-
-		Exit = function(button: GuiButton)
-			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
-			local buttonImage = button.Parent
-
-			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
-
-			if buttonImage:FindFirstChild("NewGame") then
-				buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
-				buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
-				buttonImage.Delete.ImageColor3 = Color3.fromRGB(255, 92, 92)
-			end
-
-			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1, 1) })
-		end,
-	},
-
-	ColorSwitch = {
-		Enter = function(button: GuiButton)
-			local buttonImage = button.Parent
-			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
-
-			local sound = util.PlaySound(sounds.HoverStart)
-			sound.PlaybackSpeed = 3
-			sound.Volume = 0.1
-		end,
-
-		Exit = function(button: GuiButton)
-			local buttonImage = button.Parent
-			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
-		end,
-	},
-
-	DeleteButton = {
-		Enter = function(button: GuiButton)
-			local buttonImage = button.Parent
-			buttonImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
-
-			buttonImage.Parent.SaveSlot.Active = false
-		end,
-
-		Exit = function(button: GuiButton)
-			local buttonImage = button.Parent
-			buttonImage.ImageColor3 = buttonImage.Parent.ImageColor3
-
-			buttonImage.Parent.SaveSlot.Active = true
-		end,
-	},
-}
 
 function formatTime(seconds)
 	local days = math.floor(seconds / 86400)
@@ -193,19 +78,23 @@ local function doTransition(transitionTime: number?)
 	util.tween(menu.Transition, TweenInfo.new(transitionTime, Enum.EasingStyle.Quart), { BackgroundTransparency = 1 })
 end
 
-local function closeGui()
+local function closeGui(transitionTime: number?)
+	globalInputService.actionGroups.PlayerControl:Enable()
+	currentPage = nil
+	inMainMenu = false
+	transitionTime = transitionTime or 3.5
 	globalInputService.inputActions.MenuBack:Disable()
 
-	util.tween(menu.Transition, TweenInfo.new(0.5), { BackgroundTransparency = 0 }, true)
+	util.tween(menu.Transition, TweenInfo.new(transitionTime / 7), { BackgroundTransparency = 0 }, true)
 
 	menu.Save.Visible = false
 	menu.Settings.Visible = false
 	menu.Main.Visible = false
 	menu.Background.Visible = false
 
-	task.wait(1)
+	task.wait(transitionTime / 3.5)
 
-	util.tween(menu.Transition, TweenInfo.new(2), { BackgroundTransparency = 1 }, false, function()
+	util.tween(menu.Transition, TweenInfo.new(transitionTime / 1.75), { BackgroundTransparency = 1 }, false, function()
 		menu.Enabled = false
 	end, Enum.PlaybackState.Completed)
 end
@@ -243,81 +132,29 @@ local function lockSelectionTo(buttons: {})
 		if not button:GetAttribute("Hover") then
 			continue
 		end
-		hoverFunctions[button:GetAttribute("Hover")].Exit(button)
+		module.hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 	end
 end
 
-local function transitionFromMain()
-	uiAnimationService.StopAnimation(mainFrame.Logo)
-	musicService:StopTrack(0.025)
+-- local function transitionFromMain()
+-- 	uiAnimationService.StopAnimation(mainFrame.Logo)
+-- 	musicService:StopTrack(0.025)
 
-	mainFrame.Visible = false
+-- 	mainFrame.Visible = false
 
-	menu.Background.BackgroundColor3 = Color3.new()
+-- 	menu.Background.BackgroundColor3 = Color3.new()
+-- end
+
+local function switchToPage(page: string, ...)
+	globalInputService.actionGroups.PlayerControl:Disable()
+
+	if currentPage then
+		module.pageFunctions[currentPage].Exit()
+	end
+
+	currentPage = page
+	module.pageFunctions[page].Enter(...)
 end
-
-local buttonFunctions = {
-	Start = function()
-		transitionFromMain()
-		module:ShowSaveMenu("Load")
-	end,
-
-	Settings = function()
-		transitionFromMain()
-		module:ShowSettingsMenu()
-	end,
-
-	SaveLoadSlot = SaveLoadGame,
-	NewGame = function(button: GuiButton)
-		SaveLoadGame(button, true)
-	end,
-
-	CloseMenu = function()
-		SaveLoadGame(nil, false)
-	end,
-
-	DeleteSlot = function(button)
-		local label = button.Parent.Parent
-		local slotFrame = label.Frame
-
-		local deletePrompt = saveMenu.DeleteConfirm
-		deletePrompt.Visible = true
-
-		if globalInputService:GetInputSource().Type == "Gamepad" then
-			GuiService:Select(deletePrompt.CancelBtn)
-		end
-
-		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
-
-		local cancelConnect
-		local confirmConnect
-
-		cancelConnect = deletePrompt.CancelBtn.Button.MouseButton1Click:Connect(function()
-			deletePrompt.Visible = false
-
-			cancelConnect:Disconnect()
-			confirmConnect:Disconnect()
-
-			lockSelection = {}
-		end)
-
-		confirmConnect = deletePrompt.ConfirmBtn.Button.MouseButton1Click:Connect(function()
-			deletePrompt.Visible = false
-
-			saveLoad:ClearSave(button:GetAttribute("SlotIndex"))
-
-			slotFrame.Visible = false
-			label.NewGame.Visible = true
-			label.LoadGame.Visible = false
-			label.Delete.Visible = false
-
-			cancelConnect:Disconnect()
-			confirmConnect:Disconnect()
-
-			lockSelection = {}
-		end)
-	end,
-}
 
 local function checkLocked(button)
 	return #lockSelection > 0 and not table.find(lockSelection, button)
@@ -336,7 +173,7 @@ local function enableButtonFunctions(list: {}?)
 			then
 				return
 			end
-			hoverFunctions[button:GetAttribute("Hover")].Enter(button)
+			module.hoverFunctions[button:GetAttribute("Hover")].Enter(button)
 		end)
 
 		exit:Connect(function()
@@ -347,21 +184,21 @@ local function enableButtonFunctions(list: {}?)
 			then
 				return
 			end
-			hoverFunctions[button:GetAttribute("Hover")].Exit(button)
+			module.hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 		end)
 
 		button.SelectionGained:Connect(function()
 			if not button:GetAttribute("Hover") or checkLocked(button) then
 				return
 			end
-			hoverFunctions[button:GetAttribute("Hover")].Enter(button)
+			module.hoverFunctions[button:GetAttribute("Hover")].Enter(button)
 		end)
 
 		button.SelectionLost:Connect(function()
 			if not button:GetAttribute("Hover") or checkLocked(button) then
 				return
 			end
-			hoverFunctions[button:GetAttribute("Hover")].Exit(button)
+			module.hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 		end)
 
 		if button:GetAttribute("Action") then
@@ -369,7 +206,7 @@ local function enableButtonFunctions(list: {}?)
 				if checkLocked(button) then
 					return
 				end
-				buttonFunctions[button:GetAttribute("Action")](button)
+				module.buttonFunctions[button:GetAttribute("Action")](button)
 			end)
 		end
 	end
@@ -537,6 +374,9 @@ end
 local function loadSettings(settingGroup: {})
 	menu.Settings.Groups.Visible = false
 	menu.Settings.SettingGroup.Visible = true
+	globalInputService.inputActions.MenuBack:Enable()
+
+	currentSubPage = "SettingValues"
 
 	for _, child in ipairs(menu.Settings.SettingGroup:GetChildren()) do
 		if not child:IsA("TextLabel") then
@@ -587,28 +427,137 @@ local function loadSettingGroups()
 	end
 end
 
-function module:ShowSettingsMenu()
-	menu.Enabled = true
-	menu.Background.BackgroundColor3 = Color3.new()
-	menu.Background.Visible = true
+function module:ShowDisclaimer()
+	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
 
-	menu.Settings.Visible = true
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
+	task.wait(3)
 
-	doTransition()
-
-	menu.Settings.Groups.Visible = true
-	menu.Settings.SettingGroup.Visible = false
-
-	loadSettingGroups()
-
-	if globalInputService:GetInputSource().Type == "Gamepad" then
-		GuiService:Select(mainFrame)
-	end
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
 end
 
-local pageFunctions = {
+module.hoverFunctions = { -- SAVE MENU
+	PlayButton = {
+		Enter = function(button: GuiButton)
+			local ti = TweenInfo.new(1, Enum.EasingStyle.Exponential)
+
+			local size = button:GetAttribute("DefaultSize")
+			util.tween(button, ti, { Size = UDim2.fromScale(size.X.Scale + 0.01, size.Y.Scale + 0.01) })
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 3
+			sound.Volume = 0.1
+		end,
+
+		Exit = function(button: GuiButton)
+			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+
+			util.tween(button, ti, { Size = button:GetAttribute("DefaultSize") })
+
+			if not mainFrame.Visible then
+				return
+			end
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 2
+			sound.Volume = 0.025
+		end,
+	},
+
+	SettingButton = {
+		Enter = function(button)
+			button.BackgroundTransparency = 0
+			button.TextColor3 = Color3.new(0)
+
+			if button.Name == "List" then
+				button.Value.TextColor3 = Color3.new(0)
+			end
+
+			util.PlaySound(sounds.HoverStart)
+		end,
+
+		Exit = function(button)
+			button.BackgroundTransparency = 1
+			button.TextColor3 = Color3.new(1, 1, 1)
+
+			if button.Name == "List" then
+				button.Value.TextColor3 = Color3.new(1, 1, 1)
+			end
+		end,
+	},
+
+	SlotButton = {
+		Enter = function(button: GuiButton)
+			local ti = TweenInfo.new(0.1)
+			local buttonImage = button.Parent
+
+			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
+			if buttonImage:FindFirstChild("NewGame") then
+				buttonImage.NewGame.ImageColor3 = Color3.new(1, 1, 1)
+				buttonImage.LoadGame.ImageColor3 = Color3.new(1, 1, 1)
+				buttonImage.Delete.ImageColor3 = Color3.new(1, 1, 1)
+			end
+
+			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1.005, 1.005) })
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 3
+			sound.Volume = 0.1
+		end,
+
+		Exit = function(button: GuiButton)
+			local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quint)
+			local buttonImage = button.Parent
+
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
+
+			if buttonImage:FindFirstChild("NewGame") then
+				buttonImage.NewGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+				buttonImage.LoadGame.ImageColor3 = Color3.fromRGB(255, 92, 92)
+				buttonImage.Delete.ImageColor3 = Color3.fromRGB(255, 92, 92)
+			end
+
+			util.tween(buttonImage, ti, { Size = UDim2.fromScale(1, 1) })
+		end,
+	},
+
+	ColorSwitch = {
+		Enter = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.new(1, 1, 1)
+
+			local sound = util.PlaySound(sounds.HoverStart)
+			sound.PlaybackSpeed = 3
+			sound.Volume = 0.1
+		end,
+
+		Exit = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 92, 92)
+		end,
+	},
+
+	DeleteButton = {
+		Enter = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = Color3.fromRGB(255, 0, 0)
+
+			buttonImage.Parent.SaveSlot.Active = false
+		end,
+
+		Exit = function(button: GuiButton)
+			local buttonImage = button.Parent
+			buttonImage.ImageColor3 = buttonImage.Parent.ImageColor3
+
+			buttonImage.Parent.SaveSlot.Active = true
+		end,
+	},
+}
+
+module.pageFunctions = {
 	Main = {
 		Enter = function()
+			inMainMenu = true
 			doTransition(4)
 
 			menu.Background.BackgroundColor3 = Color3.new(1, 1, 1)
@@ -629,7 +578,25 @@ local pageFunctions = {
 	},
 
 	Settings = {
-		Enter = function() end,
+		Enter = function()
+			menu.Enabled = true
+			menu.Background.BackgroundColor3 = Color3.new()
+			menu.Background.Visible = true
+
+			menu.Settings.Visible = true
+
+			doTransition()
+
+			menu.Settings.Groups.Visible = true
+			menu.Settings.SettingGroup.Visible = false
+			currentSubPage = nil
+
+			loadSettingGroups()
+
+			if globalInputService:GetInputSource().Type == "Gamepad" then
+				GuiService:Select(mainFrame)
+			end
+		end,
 		Exit = function()
 			menu.Settings.Visible = false
 		end,
@@ -706,19 +673,71 @@ local pageFunctions = {
 	},
 }
 
-function module:ShowDisclaimer()
-	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
+module.buttonFunctions = {
+	Start = function()
+		switchToPage("Save", "Load")
+	end,
 
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
-	task.wait(3)
+	Settings = function()
+		switchToPage("Settings")
+	end,
 
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
-end
+	SaveLoadSlot = SaveLoadGame,
+	NewGame = function(button: GuiButton)
+		SaveLoadGame(button, true)
+	end,
+
+	CloseMenu = function()
+		SaveLoadGame(nil, false)
+	end,
+
+	DeleteSlot = function(button)
+		local label = button.Parent.Parent
+		local slotFrame = label.Frame
+
+		local deletePrompt = saveMenu.DeleteConfirm
+		deletePrompt.Visible = true
+
+		if globalInputService:GetInputSource().Type == "Gamepad" then
+			GuiService:Select(deletePrompt.CancelBtn)
+		end
+
+		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
+
+		local cancelConnect
+		local confirmConnect
+
+		cancelConnect = deletePrompt.CancelBtn.Button.MouseButton1Click:Connect(function()
+			deletePrompt.Visible = false
+
+			cancelConnect:Disconnect()
+			confirmConnect:Disconnect()
+
+			lockSelection = {}
+		end)
+
+		confirmConnect = deletePrompt.ConfirmBtn.Button.MouseButton1Click:Connect(function()
+			deletePrompt.Visible = false
+
+			saveLoad:ClearSave(button:GetAttribute("SlotIndex"))
+
+			slotFrame.Visible = false
+			label.NewGame.Visible = true
+			label.LoadGame.Visible = false
+			label.Delete.Visible = false
+
+			cancelConnect:Disconnect()
+			confirmConnect:Disconnect()
+
+			lockSelection = {}
+		end)
+	end,
+}
 
 function module.Init()
 	task.spawn(function()
 		module:ShowDisclaimer()
-		module:ShowTitleScreen()
+		switchToPage("Main")
 	end)
 	enableButtonFunctions()
 
@@ -727,15 +746,17 @@ function module.Init()
 			return
 		end
 
-		if menu.Save:GetAttribute("Type") == "Save" then
-			buttonFunctions.CloseMenu()
+		if currentPage == "Save" and menu.Save:GetAttribute("Type") == "Save" then
+			closeGui(1)
 			return
 		end
 
-		if menu.Settings.SettingGroup.Visible then
-			module:ShowSettingsMenu()
-		elseif not menu.Main.Visible then
-			module:ShowTitleScreen()
+		if currentPage == "Settings" then
+			if currentSubPage == "SettingValues" then
+				switchToPage("Settings")
+			elseif inMainMenu then
+				switchToPage("Main")
+			end
 		end
 	end, Enum.KeyCode.Backspace, Enum.KeyCode.ButtonB)
 end
@@ -745,10 +766,10 @@ objectFunctions.SaveGameEvent:Connect(function()
 end)
 
 GuiService.MenuOpened:Connect(function()
-	if menu.Enabled then
-		closeGui()
+	if currentPage then
+		closeGui(1)
 	else
-		module:ShowSettingsMenu()
+		switchToPage("Settings")
 	end
 end)
 

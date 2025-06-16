@@ -601,11 +601,14 @@ function module.Init()
 	end)
 end
 
-globalInputService.CreateInputAction(
-	"Sprint",
-	updateSprinting,
-	util.getSetting("Keybinds", "Sprint"),
-	util.getSetting("Gamepad", "Sprint")
+globalInputService.AddToActionGroup(
+	"PlayerControl",
+	globalInputService.CreateInputAction(
+		"Sprint",
+		updateSprinting,
+		util.getSetting("Keybinds", "Sprint"),
+		util.getSetting("Gamepad", "Sprint")
+	)
 )
 
 RunService.Heartbeat:Connect(function()

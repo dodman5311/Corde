@@ -639,26 +639,29 @@ local function reloadInput(state)
 	reload()
 end
 
-globalInputService.CreateInputAction(
-	"Reload",
-	reloadInput,
-	util.getSetting("Keybinds", "Reload"),
-	util.getSetting("Gamepad", "Reload")
-)
-globalInputService
-	.CreateInputAction(
+globalInputService.AddToActionGroup(
+	"PlayerControl",
+	globalInputService.CreateInputAction(
+		"Reload",
+		reloadInput,
+		util.getSetting("Keybinds", "Reload"),
+		util.getSetting("Gamepad", "Reload")
+	),
+	globalInputService.CreateInputAction(
 		"Fire Weapon",
 		module.fireKeyToggle,
 		util.getSetting("Keybinds", "Fire Weapon"),
 		util.getSetting("Gamepad", "Fire Weapon")
+	),
+	globalInputService.CreateInputAction(
+		"Ready Weapon",
+		module.readyKeyToggle,
+		util.getSetting("Keybinds", "Ready Weapon"),
+		util.getSetting("Gamepad", "Ready Weapon")
 	)
-	:Disable()
-globalInputService.CreateInputAction(
-	"Ready Weapon",
-	module.readyKeyToggle,
-	util.getSetting("Keybinds", "Ready Weapon"),
-	util.getSetting("Gamepad", "Ready Weapon")
 )
+
+globalInputService.inputActions["Fire Weapon"]:Disable()
 
 RunService.Heartbeat:Connect(function()
 	if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then

@@ -502,11 +502,16 @@ module.ToggleNetInput = globalInputService.CreateInputAction(
 	util.getSetting("Keybinds", "N.E.T"),
 	util.getSetting("Gamepad", "N.E.T")
 )
-globalInputService.CreateInputAction(
-	"EnterHackingInput",
-	checkKeystrokeInput,
-	{ Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four },
-	{ Enum.KeyCode.DPadDown, Enum.KeyCode.DPadLeft, Enum.KeyCode.DPadRight, Enum.KeyCode.DPadUp }
+
+globalInputService.AddToActionGroup(
+	"PlayerControl",
+	module.ToggleNetInput,
+	globalInputService.CreateInputAction(
+		"EnterHackingInput",
+		checkKeystrokeInput,
+		{ Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four },
+		{ Enum.KeyCode.DPadDown, Enum.KeyCode.DPadLeft, Enum.KeyCode.DPadRight, Enum.KeyCode.DPadUp }
+	)
 )
 
 inventory.InvetoryToggled:Connect(function(value)

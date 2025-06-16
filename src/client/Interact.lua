@@ -335,8 +335,9 @@ function module.Init()
 	RunService.RenderStepped:Connect(processCrosshair)
 end
 
-globalInputService
-	.CreateInputAction("Interact", function(state)
+globalInputService.AddToActionGroup(
+	"PlayerControl",
+	globalInputService.CreateInputAction("Interact", function(state)
 		local object = mouseTarget.Value
 
 		if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
@@ -345,7 +346,9 @@ globalInputService
 
 		InteractiWithObject(object)
 	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"))
-	:SetPriority(Enum.ContextActionPriority.High)
+)
+
+globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.High)
 
 interactTimer.OnEnded:Connect(function()
 	acts:removeAct("Interacting")
