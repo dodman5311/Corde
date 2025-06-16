@@ -714,10 +714,11 @@ end
 
 function globalInputService.AddToActionGroup(actionGroup: ActionGroup | string, ...)
 	if typeof(actionGroup) == "string" then
-		actionGroup = globalInputService.actionGroups[actionGroup]
+		local actionGroupName = actionGroup
+		actionGroup = globalInputService.actionGroups[actionGroupName]
 
 		if not actionGroup then
-			actionGroup = globalInputService.CreateActionGroup(actionGroup)
+			actionGroup = globalInputService.CreateActionGroup(actionGroupName)
 		end
 	end
 

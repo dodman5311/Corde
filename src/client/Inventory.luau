@@ -1281,6 +1281,8 @@ Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 	{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB }
 )
 
+globalInputService.AddToActionGroup("PlayerControl", Inventory.ToggleInventoryInput)
+
 --// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus
 RunService.Heartbeat:Connect(updatePlayerStatus)

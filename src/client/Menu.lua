@@ -79,7 +79,10 @@ local function doTransition(transitionTime: number?)
 end
 
 local function closeGui(transitionTime: number?)
-	globalInputService.actionGroups.PlayerControl:Enable()
+	if globalInputService.actionGroups["PlayerControl"] then
+		globalInputService.actionGroups.PlayerControl:Enable()
+	end
+
 	currentPage = nil
 	inMainMenu = false
 	transitionTime = transitionTime or 3.5
@@ -146,7 +149,9 @@ end
 -- end
 
 local function switchToPage(page: string, ...)
-	globalInputService.actionGroups.PlayerControl:Disable()
+	if globalInputService.actionGroups["PlayerControl"] then
+		globalInputService.actionGroups.PlayerControl:Disable()
+	end
 
 	if currentPage then
 		module.pageFunctions[currentPage].Exit()
