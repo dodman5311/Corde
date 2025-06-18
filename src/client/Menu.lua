@@ -2,11 +2,11 @@ local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
 local GuiService = game:GetService("GuiService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
-local TextService = game:GetService("TextService")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
@@ -21,13 +21,15 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local objectFunctions = require(script.Parent.ObjectFunctions)
 local gameSettings = require(script.Parent.GameSettings)
 local slider = require(script.Parent.Slider)
+local world = require(script.Parent.World)
+local acts = require(script.Parent.Acts)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
 local gui = assets.Gui
 local sounds = assets.Sounds
 
-local titleTheme = assets.Music.MemoriesOfWhatNeverWas
+local titleTheme = assets.Music.ToHisConcern
 local menu = gui.Menu
 menu.Parent = Players.LocalPlayer.PlayerGui
 
@@ -38,8 +40,7 @@ local saveMenu = menu.Save
 module.StartEvent = signal.new()
 local lockSelection = {}
 local currentPage
-local currentSubPage
-local inMainMenu = false
+local inMainMenu = true
 
 --// Functions
 
@@ -74,11 +75,18 @@ end
 local function doTransition(transitionTime: number?)
 	transitionTime = transitionTime or 2
 
-	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
-	util.tween(menu.Transition, TweenInfo.new(transitionTime, Enum.EasingStyle.Quart), { BackgroundTransparency = 1 })
+	acts:createTempAct("InMenuTransition", function()
+		util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
+		util.tween(
+			menu.Transition,
+			TweenInfo.new(transitionTime, Enum.EasingStyle.Quart),
+			{ BackgroundTransparency = 1 }
+		)
+	end)
 end
 
 local function closeGui(transitionTime: number?)
+	acts:createAct("InMenuTransition")
 	if globalInputService.actionGroups["PlayerControl"] then
 		globalInputService.actionGroups.PlayerControl:Enable()
 	end
@@ -86,7 +94,6 @@ local function closeGui(transitionTime: number?)
 	currentPage = nil
 	inMainMenu = false
 	transitionTime = transitionTime or 3.5
-	globalInputService.inputActions.MenuBack:Disable()
 
 	util.tween(menu.Transition, TweenInfo.new(transitionTime / 7), { BackgroundTransparency = 0 }, true)
 
@@ -97,6 +104,8 @@ local function closeGui(transitionTime: number?)
 
 	task.wait(transitionTime / 3.5)
 
+	acts:removeAct("InMenuTransition")
+	world:resume()
 	util.tween(menu.Transition, TweenInfo.new(transitionTime / 1.75), { BackgroundTransparency = 1 }, false, function()
 		menu.Enabled = false
 	end, Enum.PlaybackState.Completed)
@@ -148,17 +157,38 @@ end
 -- 	menu.Background.BackgroundColor3 = Color3.new()
 -- end
 
-local function switchToPage(page: string, ...)
+local function enterPage(page: string, ...)
+	if currentPage == page then
+		return
+	end
+	currentPage = page
+
 	if globalInputService.actionGroups["PlayerControl"] then
 		globalInputService.actionGroups.PlayerControl:Disable()
 	end
 
-	if currentPage then
-		module.pageFunctions[currentPage].Exit()
-	end
-
-	currentPage = page
 	module.pageFunctions[page].Enter(...)
+end
+
+local function exitPage()
+	if not currentPage then
+		return
+	end
+	module.pageFunctions[currentPage].Exit()
+end
+
+local function returnPage()
+	if not currentPage or not module.pageFunctions[currentPage]["Back"] then
+		return
+	end
+	module.pageFunctions[currentPage].Back()
+end
+
+local function switchToPage(page: string, ...)
+	exitPage()
+	enterPage(page, ...)
+	globalInputService:SelectGui(mainFrame)
+	globalInputService.inputActions.MenuBack:Enable()
 end
 
 local function checkLocked(button)
@@ -208,7 +238,7 @@ local function enableButtonFunctions(list: {}?)
 
 		if button:GetAttribute("Action") then
 			button.MouseButton1Click:Connect(function()
-				if checkLocked(button) then
+				if checkLocked(button) or acts:checkAct("InMenuTransition") then
 					return
 				end
 				module.buttonFunctions[button:GetAttribute("Action")](button)
@@ -230,7 +260,8 @@ local function updateValue(label, setting: Types.Setting)
 		end
 	elseif setting.Type == "Slider" then
 		local pos = setting.Value / setting.Values.Max
-		label.Value.Bar.UIGradient.Offset = Vector2.new(pos, 0)
+		label.Value.Bar.Frame.Size = UDim2.fromScale(pos, 1)
+		--label.Value.Bar.UIGradient.Offset = Vector2.new(pos, 0)
 	elseif setting.Type == "KeyInput" then
 		label.Value:SetAttribute("Key", setting.Value.Name)
 		label.Value:SetAttribute("Button", setting.Value.Name)
@@ -358,8 +389,16 @@ local function connectSettingButtons(label, setting: Types.Setting)
 			--btn.Active = false
 			btn.Interactable = false
 			globalInputService.inputActions.MenuBack:Disable()
+			menu.Settings.KeyPrompt.Visible = true
 
 			UserInputService.InputBegan:Once(function(input)
+				menu.Settings.KeyPrompt.Visible = false
+				print(input)
+				if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonStart then
+					btn.Interactable = true
+					return
+				end
+
 				if string.match(input.UserInputType.Name, "MouseButton") then
 					input = input.UserInputType
 				else
@@ -370,7 +409,6 @@ local function connectSettingButtons(label, setting: Types.Setting)
 
 				btn.Interactable = true
 				--btn.Active = true
-				globalInputService.inputActions.MenuBack:Enable()
 			end)
 		end)
 	end
@@ -379,9 +417,6 @@ end
 local function loadSettings(settingGroup: {})
 	menu.Settings.Groups.Visible = false
 	menu.Settings.SettingGroup.Visible = true
-	globalInputService.inputActions.MenuBack:Enable()
-
-	currentSubPage = "SettingValues"
 
 	for _, child in ipairs(menu.Settings.SettingGroup:GetChildren()) do
 		if not child:IsA("TextLabel") then
@@ -423,9 +458,9 @@ local function loadSettingGroups()
 		local newGroupButton = gui.SettingLabels.SettingGroup:Clone()
 		newGroupButton.Parent = settingsMenu.Groups
 		newGroupButton.Text = settingGroup.Name
+		newGroupButton.Name = settingGroup.Name
 		newGroupButton.MouseButton1Click:Connect(function()
-			doTransition(1)
-			loadSettings(settingGroup)
+			switchToPage("SettingValues", settingGroup)
 		end)
 
 		enableButtonFunctions({ newGroupButton })
@@ -568,14 +603,10 @@ module.pageFunctions = {
 			menu.Background.BackgroundColor3 = Color3.new(1, 1, 1)
 			SoundService.AmbientReverb = Enum.ReverbType.Arena
 			uiAnimationService.PlayAnimation(mainFrame.Logo, 0.05, true)
-			titleTheme.TimePosition = 22.9
-			musicService:PlayTrack(titleTheme.Name, 0)
+			--titleTheme.TimePosition = 22.9
+			musicService:PlayTrack(titleTheme.Name)
 
 			menu.Main.Visible = true
-
-			if globalInputService:GetInputSource().Type == "Gamepad" then
-				GuiService:Select(mainFrame)
-			end
 		end,
 		Exit = function()
 			menu.Main.Visible = false
@@ -594,16 +625,31 @@ module.pageFunctions = {
 
 			menu.Settings.Groups.Visible = true
 			menu.Settings.SettingGroup.Visible = false
-			currentSubPage = nil
 
 			loadSettingGroups()
-
-			if globalInputService:GetInputSource().Type == "Gamepad" then
-				GuiService:Select(mainFrame)
-			end
 		end,
 		Exit = function()
 			menu.Settings.Visible = false
+		end,
+		Back = function()
+			if inMainMenu then
+				switchToPage("Main")
+			else
+				closeGui(1)
+			end
+		end,
+	},
+	SettingValues = {
+		Enter = function(settingGroup)
+			menu.Settings.Visible = true
+			doTransition(1)
+			loadSettings(settingGroup)
+		end,
+		Exit = function()
+			menu.Settings.SettingGroup.Visible = false
+		end,
+		Back = function()
+			switchToPage("Settings")
 		end,
 	},
 
@@ -621,29 +667,44 @@ module.pageFunctions = {
 			menu.Background.BackgroundColor3 = Color3.new()
 			menu.Background.Visible = true
 
-			globalInputService.inputActions.MenuBack:Disable()
+			task.spawn(function()
+				for i = 0, 2 do
+					local label = saveMenu["Slot_" .. i]
 
-			for i = 0, 2 do
-				local saveData: Types.GameState = saveLoad:GetSaveData(i)
-				local label = saveMenu["Slot_" .. i]
-				local saveFrame = label.Frame
-
-				if saveData then
-					saveFrame.SaveDate.Text = saveData.Date
-					saveFrame.Area.Text = saveData.Area
-					saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
-
-					saveFrame.Visible = true
-					label.LoadGame.Visible = true
+					label.Frame.Visible = false
 					label.NewGame.Visible = false
-					label.Delete.Visible = true
-				else
-					saveFrame.Visible = false
-					label.NewGame.Visible = true
+					label.SaveSlot.Visible = false
 					label.LoadGame.Visible = false
 					label.Delete.Visible = false
 				end
-			end
+				saveMenu.CollectingData.Visible = true
+
+				for i = 0, 2 do
+					local saveData: Types.GameState = saveLoad:GetSaveData(i)
+
+					local label = saveMenu["Slot_" .. i]
+					local saveFrame = label.Frame
+					label.SaveSlot.Visible = true
+
+					if saveData then
+						saveFrame.SaveDate.Text = saveData.Date
+						saveFrame.Area.Text = saveData.Area
+						saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
+
+						saveFrame.Visible = true
+						label.LoadGame.Visible = true
+						label.NewGame.Visible = false
+						label.Delete.Visible = true
+					else
+						saveFrame.Visible = false
+						label.NewGame.Visible = true
+						label.LoadGame.Visible = false
+						label.Delete.Visible = false
+					end
+				end
+
+				saveMenu.CollectingData.Visible = false
+			end)
 
 			saveMenu.Visible = true
 
@@ -655,26 +716,42 @@ module.pageFunctions = {
 			saveMenu.SaveGame.Visible = menuType == "Save"
 
 			sounds.InventoryAmbience.Volume = 0
-
 			sounds.InventoryAmbience:Play()
 
 			doTransition()
 			util.tween(sounds.InventoryAmbience, ti_1, { Volume = 0.1 })
 
-			if globalInputService:GetInputSource().Type == "Gamepad" then
-				GuiService:Select(mainFrame)
-			end
-
-			globalInputService.inputActions.MenuBack:Enable()
+			globalInputService:SelectGui(saveMenu)
 		end,
 		Exit = function()
 			menu.Save.Visible = false
+			sounds.InventoryAmbience:Stop()
+		end,
+		Back = function()
+			sounds.InventoryAmbience:Stop()
+
+			if inMainMenu then
+				switchToPage("Main")
+			else
+				closeGui(1)
+			end
 		end,
 	},
 
 	Credits = {
-		Enter = function() end,
-		Exit = function() end,
+		Enter = function()
+			menu.Background.BackgroundColor3 = Color3.new()
+			menu.Background.Visible = true
+
+			doTransition()
+			menu.Credits.Visible = true
+		end,
+		Exit = function()
+			menu.Credits.Visible = false
+		end,
+		Back = function()
+			switchToPage("Main")
+		end,
 	},
 }
 
@@ -687,13 +764,22 @@ module.buttonFunctions = {
 		switchToPage("Settings")
 	end,
 
+	Credits = function()
+		switchToPage("Credits")
+	end,
+
 	SaveLoadSlot = SaveLoadGame,
+
 	NewGame = function(button: GuiButton)
 		SaveLoadGame(button, true)
 	end,
 
 	CloseMenu = function()
 		SaveLoadGame(nil, false)
+	end,
+
+	Back = function()
+		returnPage()
 	end,
 
 	DeleteSlot = function(button)
@@ -703,9 +789,7 @@ module.buttonFunctions = {
 		local deletePrompt = saveMenu.DeleteConfirm
 		deletePrompt.Visible = true
 
-		if globalInputService:GetInputSource().Type == "Gamepad" then
-			GuiService:Select(deletePrompt.CancelBtn)
-		end
+		globalInputService:SelectGui(deletePrompt.CancelBtn)
 
 		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
 
@@ -739,6 +823,19 @@ module.buttonFunctions = {
 	end,
 }
 
+local function EscKey()
+	if acts:checkAct("InMenuTransition") then
+		return
+	end
+
+	if currentPage then
+		returnPage()
+	elseif not inMainMenu then
+		world:pause()
+		switchToPage("Settings")
+	end
+end
+
 function module.Init()
 	task.spawn(function()
 		module:ShowDisclaimer()
@@ -746,36 +843,28 @@ function module.Init()
 	end)
 	enableButtonFunctions()
 
-	globalInputService.CreateInputAction("MenuBack", function(inputState)
-		if inputState ~= Enum.UserInputState.Begin then
+	UserInputService.InputBegan:Once(function()
+		mainFrame.PressKeyPrompt.Visible = false
+
+		mainFrame.Play.Visible = true
+		mainFrame.Credits.Visible = true
+		mainFrame.Settings.Visible = true
+
+		globalInputService:CheckKeyPrompts()
+		globalInputService:SelectGui(mainFrame)
+	end)
+
+	globalInputService.CreateInputAction("MenuBack", function(inputState, input)
+		if inputState ~= Enum.UserInputState.Begin or (input.KeyCode == Enum.KeyCode.ButtonB and not currentPage) then
 			return
 		end
 
-		if currentPage == "Save" and menu.Save:GetAttribute("Type") == "Save" then
-			closeGui(1)
-			return
-		end
-
-		if currentPage == "Settings" then
-			if currentSubPage == "SettingValues" then
-				switchToPage("Settings")
-			elseif inMainMenu then
-				switchToPage("Main")
-			end
-		end
-	end, Enum.KeyCode.Backspace, Enum.KeyCode.ButtonB)
+		EscKey()
+	end, Enum.KeyCode.Backspace, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect })
 end
 
 objectFunctions.SaveGameEvent:Connect(function()
-	module:ShowSaveMenu("Save")
-end)
-
-GuiService.MenuOpened:Connect(function()
-	if currentPage then
-		closeGui(1)
-	else
-		switchToPage("Settings")
-	end
+	switchToPage("Save")
 end)
 
 return module

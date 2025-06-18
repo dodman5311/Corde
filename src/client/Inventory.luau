@@ -546,9 +546,7 @@ local function closeNote()
 		noteUi.Visible = false
 	end, Enum.PlaybackState.Completed)
 
-	if globalInputService:GetInputSource().Type == "Gamepad" then
-		GuiService:Select(UI.Inventory.Slots)
-	end
+	globalInputService:SelectGui(UI.Inventory.Slots)
 end
 
 local function clearKeyPrompts()
@@ -1102,9 +1100,7 @@ function Inventory.OpenInventory()
 
 	acts:removeAct("InventoryOpening")
 
-	if globalInputService:GetInputSource().Type == "Gamepad" then
-		GuiService:Select(UI.Inventory.Slots)
-	end
+	globalInputService:SelectGui(UI.Inventory.Slots)
 end
 
 function Inventory.CloseInventory()

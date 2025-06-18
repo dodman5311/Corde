@@ -223,7 +223,8 @@ function module.keyhole(object: Model)
 	end
 
 	task.wait(1)
-	object:Destroy()
+	object.Door:Destroy()
+	object:SetAttribute("Used", true)
 	util.PlayFrom(player.Character, sequenceSounds.MetalBreak)
 end
 

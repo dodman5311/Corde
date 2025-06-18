@@ -90,12 +90,14 @@ local globalInputService = {
 			ButtonA = "99222140491626",
 			ButtonB = "139151046418306",
 			ButtonY = "124498431294550",
+			ButtonStart = "73919858164198",
 		},
 		Xbox = {
 			ButtonX = "122267119998385",
 			ButtonA = "121295530666976",
 			ButtonB = "97330447691033",
 			ButtonY = "73181495754569",
+			ButtonStart = "107633779437915",
 		},
 		Keyboard = {
 			MouseButton1 = "115777151252419",
@@ -144,6 +146,7 @@ local globalInputService = {
 			Tab = "116362922317477",
 			Backspace = "78379859775356",
 			Return = "92998529564469",
+			Escape = "96123588185359",
 
 			LeftAlt = "87837814972423",
 			RightAlt = "87837814972423",
@@ -726,6 +729,12 @@ function globalInputService.AddToActionGroup(actionGroup: ActionGroup | string, 
 
 	for _, action in ipairs(actions) do
 		actionGroup.Actions[action.Name] = action
+	end
+end
+
+function globalInputService:SelectGui(frame: GuiObject)
+	if self:GetInputSource().Type == "Gamepad" then
+		GuiService:Select(frame)
 	end
 end
 

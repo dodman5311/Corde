@@ -379,6 +379,8 @@ local function updateCursorLocation()
 		end
 
 		processGamepadCursorSnap()
+	else
+		cursorLocation = UserInputService:GetMouseLocation()
 	end
 
 	player:SetAttribute("CursorLocation", cursorLocation)
@@ -446,7 +448,7 @@ local function updateDirection(vector)
 	local frame = character.Legs.UI.Frame
 	local arms = character.Torso.UI.Reload
 
-	if moveDirection.Magnitude > 0 then
+	if moveDirection.Magnitude > 0 and not acts:checkAct("Paused") then
 		if uiAnimationService.CheckPlaying(frame) then
 			return
 		end
@@ -477,13 +479,11 @@ sounds.Steps.DidLoop:Connect(function()
 	end
 end)
 
-local function updateCursorData(key)
+local function updateGamepadCursorData(key)
 	if key.KeyCode == Enum.KeyCode.Thumbstick2 then
 		thumbstick2Pos = key.Position
 	elseif key.KeyCode == Enum.KeyCode.Thumbstick1 then
 		thumbstick1Pos = key.Position
-	elseif key.UserInputType == Enum.UserInputType.MouseMovement or key.UserInputType == Enum.UserInputType.Touch then
-		cursorLocation = UserInputService:GetMouseLocation()
 	end
 
 	if key.KeyCode ~= Enum.KeyCode.Thumbstick2 and key.KeyCode ~= Enum.KeyCode.Thumbstick1 then
@@ -588,7 +588,7 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 end
 
 function module.Init()
-	UserInputService.InputChanged:Connect(updateCursorData)
+	UserInputService.InputChanged:Connect(updateGamepadCursorData)
 
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
 		HUD.Glitch.Visible = math.random(1, 2) ~= 1

@@ -135,6 +135,10 @@ local objectFunctions = {
 			character:PivotTo(teleportTo:GetPivot())
 		end)
 	end,
+
+	RemoveDoor = function(object: Model)
+		object.Door:Destroy()
+	end,
 }
 
 function objectFunctions.SaveGame()

@@ -78,17 +78,17 @@ local gameSettings = {
 
 	{
 		Name = "Gameplay",
-		{
-			Name = "Difficulty",
-			Type = "List",
-			Value = "Solemn",
-			Values = { "Hope", "Solemn", "Despair" },
-			-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
-			-- Solemn: The intended way to play.
-			-- Despair: Take more damage. Hunger goes down over time. Less ammo.
+		-- {
+		-- 	Name = "Difficulty",
+		-- 	Type = "List",
+		-- 	Value = "Solemn",
+		-- 	Values = { "Hope", "Solemn", "Despair" },
+		-- 	-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
+		-- 	-- Solemn: The intended way to play.
+		-- 	-- Despair: Take more damage. Hunger goes down over time. Less ammo.
 
-			OnChanged = function() end,
-		},
+		-- 	OnChanged = function() end,
+		-- },
 
 		{
 			Name = "Auto Read",
