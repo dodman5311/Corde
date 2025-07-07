@@ -188,7 +188,7 @@ local function switchToPage(page: string, ...)
 	exitPage()
 	enterPage(page, ...)
 	globalInputService:SelectGui(mainFrame)
-	globalInputService.inputActions.MenuBack:Enable()
+	globalInputService.inputActions.MenuBack:Refresh()
 end
 
 local function checkLocked(button)

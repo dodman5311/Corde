@@ -74,6 +74,30 @@ local gameSettings = {
 
 	{
 		Name = "Interface",
+
+		{
+			Name = "Font",
+			Type = "List",
+
+			Value = "Silkscreen",
+			Values = { "Silkscreen", "Arcade", "Inconsolata", "Arial" },
+			OnChanged = function(self: Types.Setting)
+				local fonts = {
+					Silkscreen = Font.fromId(12187371840),
+					["Arcade"] = Font.fromEnum(Enum.Font.Arcade),
+					["Arial"] = Font.fromEnum(Enum.Font.Arial),
+					["Inconsolata"] = Font.fromEnum(Enum.Font.Code),
+				}
+
+				for _, label in ipairs(game:GetDescendants()) do
+					if not (label:IsA("TextLabel") or label:IsA("TextButton") or label:IsA("TextBox")) then
+						continue
+					end
+
+					label.FontFace = fonts[self.Value]
+				end
+			end,
+		},
 	},
 
 	{

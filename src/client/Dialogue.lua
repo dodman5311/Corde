@@ -32,6 +32,11 @@ local rng = Random.new()
 
 Dialogue.DialogueActionSignal = signal.new()
 
+local portraits = {
+	Player = 136036431177966,
+	Echo = 102753832810768,
+}
+
 local function clearOptions()
 	for _, option in ipairs(UI.Box.Choices:GetChildren()) do
 		if not option:IsA("Frame") then
@@ -327,6 +332,19 @@ local function endMessage(messageData)
 	end
 end
 
+local function processSpeakerPortrait(messageData)
+	if portraits[messageData.Speaker] then
+		UI.Portrait.Visible = true
+		UI.Portrait.Image = "rbxassetid://" .. portraits[messageData.Speaker]
+	else
+		UI.Portrait.Visible = false
+	end
+
+	if messageData.Speaker == "Player" then
+		UI.Box.Speaker.Text = "Kaia"
+	end
+end
+
 function typeOutMessage(messageData)
 	inMessage = true
 
@@ -342,12 +360,7 @@ function typeOutMessage(messageData)
 
 	UI.Box.Speaker.Text = messageData.Speaker
 
-	if messageData.Speaker == "Player" then
-		UI.PlayerPortrait.Visible = true
-		UI.Box.Speaker.Text = "Kaia"
-	else
-		UI.PlayerPortrait.Visible = false
-	end
+	processSpeakerPortrait(messageData)
 
 	inputEvent = UserInputService.InputBegan:Connect(function(input)
 		if

@@ -162,8 +162,8 @@ function module.doActions(npc, actions, ...)
 
 		if action.Parameters then
 			for _, parameter in ipairs(action.Parameters) do
-				if typeof(parameter) == "table" and parameter["Min"] and parameter["Max"] then
-					parameter = rng:NextNumber(parameter["Min"], parameter["Max"])
+				if typeof(parameter) == "NumberRange" then
+					parameter = rng:NextNumber(parameter.Min, parameter.Max)
 				end
 
 				table.insert(parameters, parameter)
@@ -370,6 +370,22 @@ module.actions = {
 		lookAtPostition(npc, position, doLerp, lerpAlpha)
 	end,
 
+	LookRandom = function(npc: Npc, doLerp, lerpAlpha, debounceTime)
+		if not npc.MindData["RandomLookPos"] then
+			npc.MindData["RandomLookPos"] = (npc.Instance:GetPivot() * CFrame.new(
+				rng:NextNumber(-0.5, 0.5),
+				0,
+				rng:NextNumber(-2, -1)
+			)).Position
+
+			task.delay(debounceTime, function()
+				npc.MindData["RandomLookPos"] = nil
+			end)
+		end
+
+		lookAtPostition(npc, npc.MindData["RandomLookPos"], doLerp, lerpAlpha)
+	end,
+
 	ChangeWalkVelocity = function(npc: Npc, goal: Vector3, lerpAlpha: number?)
 		if npc.MindData["CantMove"] and goal.Magnitude > 0 then
 			return
@@ -526,7 +542,7 @@ RunService.Heartbeat:Connect(function()
 			heartbeatFunction()
 		end
 
-		if npc:GetTarget() == Players.LocalPlayer.Character then
+		if npc:GetTarget() == Players.LocalPlayer.Character and npc.Instance:HasTag("Enemy") then
 			inCombat = true
 		end
 	end
