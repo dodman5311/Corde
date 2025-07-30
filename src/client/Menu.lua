@@ -259,7 +259,7 @@ local function updateValue(label, setting: Types.Setting)
 			label.Value.Text = tostring(setting.Value)
 		end
 	elseif setting.Type == "Slider" then
-		local pos = setting.Value / setting.Values.Max
+		local pos = label.Value.Slider.Position.X.Scale --setting.Value / setting.Values.Max
 		label.Value.Bar.Frame.Size = UDim2.fromScale(pos, 1)
 		--label.Value.Bar.UIGradient.Offset = Vector2.new(pos, 0)
 	elseif setting.Type == "KeyInput" then
@@ -304,7 +304,7 @@ local function connectSettingButtons(label, setting: Types.Setting)
 			SliderData = {
 				Start = setting.Values.Min,
 				End = setting.Values.Max,
-				Increment = 5,
+				Increment = setting.Values.Max / 100,
 				DefaultValue = setting.Value,
 			},
 			MoveInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad),
@@ -313,8 +313,15 @@ local function connectSettingButtons(label, setting: Types.Setting)
 		})
 
 		newSlider:Track()
-		newSlider.Changed:Connect(function(value)
-			changeValue(label, setting, value)
+
+		local sliderHandle: ImageButton = label.Value.Slider
+
+		sliderHandle.Changed:Connect(function(property)
+			if property ~= "Position" then
+				return
+			end
+
+			changeValue(label, setting, newSlider:GetValue())
 		end)
 
 		local nextBtn: ImageButton = label.Value.Next

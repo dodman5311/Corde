@@ -1,3 +1,4 @@
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -21,6 +22,37 @@ local function onGamepadChanged(self: Types.Setting)
 end
 
 local gameSettings = {
+	{
+		Name = "Gameplay",
+		-- {
+		-- 	Name = "Difficulty",
+		-- 	Type = "List",
+		-- 	Value = "Solemn",
+		-- 	Values = { "Hope", "Solemn", "Despair" },
+		-- 	-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
+		-- 	-- Solemn: The intended way to play.
+		-- 	-- Despair: Take more damage. Hunger goes down over time. Less ammo.
+
+		-- 	OnChanged = function() end,
+		-- },
+
+		{
+			Name = "Auto Read Notes",
+			Type = "List",
+			Value = true,
+			Values = { true, false },
+			OnChanged = function() end,
+		},
+
+		{
+			Name = "Hints",
+			Type = "List",
+			Value = false,
+			Values = { true, false },
+			OnChanged = function() end,
+		},
+	},
+
 	{
 		Name = "Audio",
 
@@ -60,6 +92,16 @@ local gameSettings = {
 		},
 
 		{
+			Name = "Brightness",
+			Type = "Slider",
+			Value = 0,
+			Values = NumberRange.new(-0.2, 0.2),
+			OnChanged = function(self: Types.Setting)
+				Lighting.ColorCorrection.Brightness = self.Value
+			end,
+		},
+
+		{
 			Name = "Screen Effects",
 			Type = "List",
 			Value = "None",
@@ -73,7 +115,16 @@ local gameSettings = {
 	},
 
 	{
-		Name = "Interface",
+		Name = "Accessibility",
+
+		{
+			Name = "Gamepad Interaction Assistance",
+			Type = "List",
+
+			Value = 50,
+			Values = NumberRange.new(0, 100),
+			OnChanged = function(self: Types.Setting) end,
+		},
 
 		{
 			Name = "Font",
@@ -97,37 +148,6 @@ local gameSettings = {
 					label.FontFace = fonts[self.Value]
 				end
 			end,
-		},
-	},
-
-	{
-		Name = "Gameplay",
-		-- {
-		-- 	Name = "Difficulty",
-		-- 	Type = "List",
-		-- 	Value = "Solemn",
-		-- 	Values = { "Hope", "Solemn", "Despair" },
-		-- 	-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
-		-- 	-- Solemn: The intended way to play.
-		-- 	-- Despair: Take more damage. Hunger goes down over time. Less ammo.
-
-		-- 	OnChanged = function() end,
-		-- },
-
-		{
-			Name = "Auto Read",
-			Type = "List",
-			Value = true,
-			Values = { true, false },
-			OnChanged = function() end,
-		},
-
-		{
-			Name = "Hints",
-			Type = "List",
-			Value = false,
-			Values = { true, false },
-			OnChanged = function() end,
 		},
 	},
 
