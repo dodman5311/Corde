@@ -1,3 +1,4 @@
+local ContextActionService = game:GetService("ContextActionService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 
@@ -11,12 +12,17 @@ local Types = require(ReplicatedStorage.Shared.Types)
 
 local function onKeyboardChanged(self: Types.Setting)
 	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Keyboard", { [self.Values] = self.Value })
+
 	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
 
 local function onGamepadChanged(self: Types.Setting)
+	print(globalInputService.inputActions[self.Name])
+
 	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Gamepad", { [self.Values] = self.Value })
+
+	print(globalInputService.inputActions[self.Name])
 	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
@@ -92,16 +98,6 @@ local gameSettings = {
 		},
 
 		{
-			Name = "Brightness",
-			Type = "Slider",
-			Value = 0,
-			Values = NumberRange.new(-0.2, 0.2),
-			OnChanged = function(self: Types.Setting)
-				Lighting.ColorCorrection.Brightness = self.Value
-			end,
-		},
-
-		{
 			Name = "Screen Effects",
 			Type = "List",
 			Value = "None",
@@ -118,11 +114,11 @@ local gameSettings = {
 		Name = "Accessibility",
 
 		{
-			Name = "Gamepad Interaction Assistance",
-			Type = "List",
+			Name = "Gamepad Assistance Strength",
+			Type = "Slider",
 
-			Value = 50,
-			Values = NumberRange.new(0, 100),
+			Value = 0.5,
+			Values = NumberRange.new(0, 1.5),
 			OnChanged = function(self: Types.Setting) end,
 		},
 
@@ -289,8 +285,8 @@ local gameSettings = {
 }
 
 local function applySettings()
-	for _, group in pairs(gameSettings) do
-		for _, setting in ipairs(group) do
+	for _, category in ipairs(gameSettings) do
+		for _, setting in ipairs(category) do
 			setting:OnChanged()
 		end
 	end
@@ -301,8 +297,8 @@ local function loadSaveData(upgradeIndex, gameState, settingsToLoad)
 		return
 	end
 
-	for _, group in pairs(gameSettings) do
-		for _, setting in ipairs(group) do
+	for _, category in ipairs(gameSettings) do
+		for _, setting in ipairs(category) do
 			local foundSetting = settingsToLoad[setting.Name]
 			if foundSetting == nil then
 				continue
@@ -315,6 +311,12 @@ local function loadSaveData(upgradeIndex, gameState, settingsToLoad)
 	end
 
 	applySettings()
+end
+
+for _, category in ipairs(gameSettings) do
+	for _, setting: Types.Setting in ipairs(category) do
+		setting["Default"] = setting.Value
+	end
 end
 
 return gameSettings

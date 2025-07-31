@@ -36,6 +36,7 @@ export type Setting = {
 	Name: string,
 	Type: "Slider" | "List" | "KeyInput",
 	Value: any,
+	Default: any?,
 	Values: any?,
 	OnChanged: (self: Setting) -> any?,
 }

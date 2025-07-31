@@ -2,7 +2,6 @@ local module = {
 	HUNGER_RATE = 0.3,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
-	ThumbstickSnapPower = 0.5,
 
 	Stats = {},
 }
@@ -364,7 +363,8 @@ local function processGamepadCursorSnap()
 		return
 	end
 
-	local inter = (math.abs(distanceToCursor - SNAP_DISTANCE) * CURSOR_INTERPOLATION) * module.ThumbstickSnapPower
+	local inter = (math.abs(distanceToCursor - SNAP_DISTANCE) * CURSOR_INTERPOLATION)
+		* util.getSetting("Accessibility", "Gamepad Assistance Strength")
 
 	cursorLocation = cursorLocation:Lerp(vector, inter)
 end

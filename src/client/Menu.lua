@@ -39,7 +39,8 @@ local saveMenu = menu.Save
 --// Values
 module.StartEvent = signal.new()
 local lockSelection = {}
-local currentPage
+local currentPage: string?
+local currentLoadedSettings = {}
 local inMainMenu = true
 
 --// Functions
@@ -396,6 +397,7 @@ local function connectSettingButtons(label, setting: Types.Setting)
 			--btn.Active = false
 			btn.Interactable = false
 			globalInputService.inputActions.MenuBack:Disable()
+			globalInputService.inputActions.ResetSettings:Disable()
 			menu.Settings.KeyPrompt.Visible = true
 
 			UserInputService.InputBegan:Once(function(input)
@@ -403,6 +405,8 @@ local function connectSettingButtons(label, setting: Types.Setting)
 				print(input)
 				if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.ButtonStart then
 					btn.Interactable = true
+					globalInputService.inputActions.ResetSettings:Enable()
+					globalInputService.inputActions.MenuBack:Enable()
 					return
 				end
 
@@ -415,6 +419,9 @@ local function connectSettingButtons(label, setting: Types.Setting)
 				changeValue(label, setting, input)
 
 				btn.Interactable = true
+
+				globalInputService.inputActions.ResetSettings:Enable()
+				globalInputService.inputActions.MenuBack:Enable()
 				--btn.Active = true
 			end)
 		end)
@@ -422,6 +429,7 @@ local function connectSettingButtons(label, setting: Types.Setting)
 end
 
 local function loadSettings(settingGroup: {})
+	currentLoadedSettings = settingGroup
 	menu.Settings.Groups.Visible = false
 	menu.Settings.SettingGroup.Visible = true
 
@@ -448,6 +456,19 @@ local function loadSettings(settingGroup: {})
 		connectSettingButtons(newLabel, setting)
 		enableButtonFunctions({ newLabel })
 	end
+end
+
+local function resetSettings()
+	if not currentLoadedSettings then
+		return
+	end
+
+	for _, setting: Types.Setting in ipairs(currentLoadedSettings) do
+		setting.Value = setting.Default
+		setting:OnChanged()
+	end
+
+	loadSettings(currentLoadedSettings)
 end
 
 local function loadSettingGroups()
@@ -649,11 +670,17 @@ module.pageFunctions = {
 	SettingValues = {
 		Enter = function(settingGroup)
 			menu.Settings.Visible = true
+			menu.Settings.Defaults.Visible = true
 			doTransition(1)
 			loadSettings(settingGroup)
+
+			globalInputService.inputActions.ResetSettings:Enable()
 		end,
 		Exit = function()
 			menu.Settings.SettingGroup.Visible = false
+			menu.Settings.Defaults.Visible = false
+
+			globalInputService.inputActions.ResetSettings:Disable()
 		end,
 		Back = function()
 			switchToPage("Settings")
@@ -789,6 +816,10 @@ module.buttonFunctions = {
 		returnPage()
 	end,
 
+	Defaults = function()
+		resetSettings()
+	end,
+
 	DeleteSlot = function(button)
 		local label = button.Parent.Parent
 		local slotFrame = label.Frame
@@ -868,6 +899,18 @@ function module.Init()
 
 		EscKey()
 	end, Enum.KeyCode.Backspace, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect })
+
+	globalInputService
+		.CreateInputAction("ResetSettings", function(inputState, input)
+			if
+				inputState ~= Enum.UserInputState.Begin or (input.KeyCode == Enum.KeyCode.ButtonY and not currentPage)
+			then
+				return
+			end
+
+			resetSettings()
+		end, Enum.KeyCode.X, Enum.KeyCode.ButtonY)
+		:Disable()
 end
 
 objectFunctions.SaveGameEvent:Connect(function()
