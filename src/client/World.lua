@@ -53,14 +53,10 @@ function module:resume()
 	end
 end
 
-local function loadContainers(saveData: Types.GameState)
-	if not saveData then
-		return
-	end
-
+local function loadContainers(layer: Types.LayerData)
 	for _, container in ipairs(CollectionService:GetTagged("Container")) do
 		local foundMatch = false
-		for _, containerData in ipairs(saveData.Containers) do
+		for _, containerData in ipairs(layer.Containers) do
 			if containerData.Position == container:GetPivot().Position then
 				foundMatch = true
 			else
@@ -81,13 +77,9 @@ local function loadContainers(saveData: Types.GameState)
 	end
 end
 
-local function loadObjects(saveData: Types.GameState)
-	if not saveData then
-		return
-	end
-
+local function loadObjects(layer: Types.LayerData)
 	for _, object: Model in ipairs(CollectionService:GetTagged("Interactable")) do
-		for _, objectData in ipairs(saveData.Objects) do
+		for _, objectData in ipairs(layer.Objects) do
 			if (objectData.Position - object:GetPivot().Position).Magnitude > 0.05 then
 				continue
 			end
@@ -109,14 +101,24 @@ local function loadObjects(saveData: Types.GameState)
 	end
 end
 
+local function loadLayer(layer: Types.LayerData)
+	if not layer then
+		return
+	end
+
+	loadContainers(layer)
+	loadObjects(layer)
+end
+
 function module.StartGame(saveData: Types.GameState?)
+	workspace:SetAttribute("CurrentLayerIndex", saveData and saveData.CurrentLayerIndex or "Demo")
+
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = -math.huge
 		shadowPart.Material = Enum.Material.ForceField
 	end
 
-	loadContainers(saveData)
-	loadObjects(saveData)
+	loadLayer(saveData and saveData.Layers[saveData.CurrentLayerIndex])
 
 	workspace:SetAttribute("StartTime", os.clock())
 

@@ -18,7 +18,7 @@ end
 
 function module.StartGame(saveData: Types.GameState)
 	if saveData then
-		for _, data in ipairs(saveData.Npcs) do
+		for _, data in ipairs(saveData.Layers[saveData.CurrentLayerIndex].Npcs) do
 			module:SpawnFromData(data.Name, data.Position, data.Direction, data.Health)
 		end
 	end

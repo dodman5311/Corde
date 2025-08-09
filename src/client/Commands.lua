@@ -2,6 +2,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local items = require(ReplicatedStorage.Shared.Items)
+local Net = require(ReplicatedStorage.Packages.Net)
 
 local function convertToArray(dictionary)
 	local array = {}
@@ -63,6 +64,21 @@ local commands = {
 
 			Execute = function(_, slot)
 				print(require(script.Parent.SaveLoad):SaveGame(slot))
+			end,
+		},
+		ClearAllData = {
+			Parameters = function()
+				return {
+					{ Name = "Confirm?", Options = { true, false } },
+				}
+			end,
+
+			Execute = function(_, confirm)
+				if not confirm then
+					return
+				end
+
+				Net:RemoteEvent("ClearAllData"):FireServer()
 			end,
 		},
 	},

@@ -330,7 +330,7 @@ function Inventory:pickupFromContainer(object)
 		end
 		table.insert(toRemove, item)
 
-		if util.getSetting("Gameplay", "Auto Read") and item.Use == "Read" then
+		if util.getSetting("Gameplay", "Auto Read Notes") and item.Use == "Read" then
 			Inventory:OpenInventory()
 			Inventory:UseItem(UI.Inventory.Slots:FindFirstChild(slot))
 		end

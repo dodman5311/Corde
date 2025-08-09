@@ -8,6 +8,7 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local Net = require(ReplicatedStorage.Packages.Net)
 Net:RemoteFunction("SaveGameState")
 Net:RemoteFunction("GetSavedGame")
+Net:RemoteEvent("ClearAllData")
 
 local function deserializeVector3(tbl: { x: number, y: number, z: number }): Vector3
 	return Vector3.new(tbl.X, tbl.Y, tbl.Z)
@@ -54,22 +55,35 @@ local function getSavedGame(player: Player, saveSlot: number): Types.GameState
 
 	data.PlayerStats.Position = deserializeVector3(data.PlayerStats.Position)
 
-	for _, container in ipairs(data.Containers) do
-		container.Position = deserializeVector3(container.Position)
+	if not data.Layers then
+		return
 	end
 
-	for _, object in ipairs(data.Objects) do
-		object.Position = deserializeVector3(object.Position)
-	end
+	for _, layer in pairs(data.Layers) do
+		for _, container in ipairs(layer.Containers) do
+			container.Position = deserializeVector3(container.Position)
+		end
 
-	for _, npc in ipairs(data.Npcs) do
-		npc.Position = deserializeVector3(npc.Position)
+		for _, object in ipairs(layer.Objects) do
+			object.Position = deserializeVector3(object.Position)
+		end
+
+		for _, npc in ipairs(layer.Npcs) do
+			npc.Position = deserializeVector3(npc.Position)
+		end
 	end
 
 	return data
 end
 
+local function clear(player: Player)
+	for slot = 0, 2 do
+		saveGameState(player, slot, {})
+	end
+end
+
 Net:Handle("GetSavedGame", getSavedGame)
 Net:Handle("SaveGameState", saveGameState)
+Net:Connect("ClearAllData", clear)
 
 return storeData

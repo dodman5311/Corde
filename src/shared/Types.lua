@@ -1,16 +1,4 @@
-export type GameState = {
-	Date: string,
-	PlayTime: number,
-	Area: string,
-
-	PlayerStats: {
-		Position: { X: number, Y: number, Z: number },
-		HasNet: boolean,
-		Health: number,
-		Hunger: number,
-		Inventory: {},
-	},
-
+export type LayerData = {
 	Npcs: {
 		{
 			Name: string,
@@ -30,6 +18,24 @@ export type GameState = {
 			Tags: { string },
 		}
 	},
+}
+
+export type GameState = {
+	Date: string,
+	PlayTime: number,
+	Area: string,
+	CurrentLayerIndex: string,
+
+	PlayerStats: {
+		Position: { X: number, Y: number, Z: number },
+		HasNet: boolean,
+		Health: number,
+		Hunger: number,
+		Inventory: {},
+		StoreBox: {},
+	},
+
+	Layers: { LayerData },
 }
 
 export type Setting = {

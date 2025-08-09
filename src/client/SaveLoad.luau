@@ -18,6 +18,7 @@ local Areas = require(script.Parent.Areas)
 
 --// Values
 local interactables = {} -- Hackable, interest, interactable
+local layersData = {}
 
 local function getDataStoreSize(data)
 	local size = #HttpService:JSONEncode(data)
@@ -62,11 +63,17 @@ local function getInteractables()
 end
 
 function getGameState(): Types.GameState
+	local currentLayerIndex = workspace:GetAttribute("CurrentLayerIndex")
+	if not layersData[currentLayerIndex] then
+		layersData[currentLayerIndex] = { Npcs = {}, Containers = {}, Objects = {} }
+	end
+
 	local character = player.Character
 	local gameState: Types.GameState = {
 		Date = DateTime.now():FormatLocalTime("lll", "en-us"),
 		PlayTime = (os.clock() - workspace:GetAttribute("StartTime")) + workspace:GetAttribute("PlayTime"),
 		Area = Areas.currentArea and Areas.currentArea.Name or "Unknown",
+		CurrentLayerIndex = currentLayerIndex,
 
 		PlayerStats = {
 			Position = serializeVector3(character:GetPivot().Position),
@@ -76,13 +83,13 @@ function getGameState(): Types.GameState
 			Inventory = packInventory(),
 		},
 
-		Npcs = {},
-		Containers = {},
-		Objects = {},
+		Layers = layersData,
 	}
 
+	local currentLayer: Types.LayerData = gameState.Layers[currentLayerIndex]
+
 	for _, object in pairs(interactables) do
-		table.insert(gameState.Objects, {
+		table.insert(currentLayer.Objects, {
 			Name = object.Name,
 			Position = serializeVector3(object:GetPivot().Position),
 			Locked = object:GetAttribute("Locked"),
@@ -95,9 +102,8 @@ function getGameState(): Types.GameState
 		local model: Model = npc.Instance
 
 		local _, y = model:GetPivot().Rotation:ToOrientation()
-		--local direction = math.deg(y)
 
-		table.insert(gameState.Npcs, {
+		table.insert(currentLayer.Npcs, {
 			Name = npc.Name,
 			Position = serializeVector3(model:GetPivot().Position),
 			Direction = y,
@@ -109,13 +115,14 @@ function getGameState(): Types.GameState
 		if container:GetAttribute("DroppedAt") then
 			continue
 		end
-		table.insert(gameState.Containers, {
+		table.insert(currentLayer.Containers, {
 			Name = container.Name,
 			Position = serializeVector3(container:GetPivot().Position),
 			Contents = require(container.Container),
 		})
 	end
 
+	print(gameState)
 	return gameState
 end
 
@@ -137,7 +144,8 @@ function saveLoad:GetSaveData(saveSlot: number)
 end
 
 function saveLoad:LoadGame(saveSlot: number)
-	local gameState = self:GetSaveData(saveSlot)
+	local gameState: Types.GameState = self:GetSaveData(saveSlot)
+	layersData = gameState and gameState.Layers or {}
 	-- CHANGE SECTION
 
 	getInteractables()
