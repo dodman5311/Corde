@@ -59,6 +59,8 @@ local thumbstick2Pos = Vector3.zero
 local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
 
+local saveLoaded = false
+
 local MOVEMENT_THRESHOLD = 0.5
 local THUMBSTICK_THRESHOLD = 0.25
 local CURSOR_INTERPOLATION = 0.05
@@ -89,6 +91,10 @@ local function checkEquippedStem(healthPercent: number)
 end
 
 local function playerDamaged(character, healthPercent, damageDealt)
+	if not saveLoaded then
+		return
+	end
+
 	local damageUi = HUD.DamageEffects
 	local invertedHealthPercent = math.abs(healthPercent - 1)
 
@@ -298,7 +304,7 @@ function module.ConsumeItem(item, use)
 		module:ChangePlayerHealth(item.Value.Health, "Add")
 	end
 
-	util.PlaySound(sounds[use], 0.15)
+	util.PlaySound(sounds[use], 0.05)
 	inventory:RemoveItem(item.Name)
 end
 
@@ -585,6 +591,8 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
 		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
 	end
+
+	saveLoaded = true
 end
 
 function module.Init()

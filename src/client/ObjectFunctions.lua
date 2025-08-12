@@ -71,6 +71,7 @@ local objectFunctions = {
 	end,
 
 	Catwalk = function(object: Model, instant: boolean?)
+		print("CALL")
 		local ti = TweenInfo.new(7, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut)
 		local platform = object.Platform
 

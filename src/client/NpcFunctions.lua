@@ -423,15 +423,26 @@ module.actions = {
 		module.actions.ChangeWalkVelocity(npc, Vector3.zero, lerpAlpha)
 	end,
 
-	MoveTowardsTarget = function(npc: Npc, lerpAlpha: number?)
+	LookAtPath = function(npc: Npc, lerpAlpha: number?)
 		local target = npc:GetTarget()
 		if not target then
 			return
 		end
 
-		local newPath = PathfindingService:FindPathAsync(npc.Instance:GetPivot().Position, target:GetPivot().Position)
+		local doLerp = lerpAlpha and true or false
 
-		module.actions.MoveTowardsPoint(npc, newPath:GetWaypoints()[1].Position, lerpAlpha)
+		if not npc.MindData.OnPathReached then
+			npc.MindData.OnPathReached = npc.Path.Reached:Connect(function(_, finalWaypoint)
+				lookAtPostition(npc, finalWaypoint.Position, doLerp, lerpAlpha)
+			end)
+			npc.Janitor:Add(npc.MindData.OnPathReached)
+			npc.MindData.OnWaypointReached = npc.Path.WaypointReached:Connect(function(_, _, nextWaypoint)
+				lookAtPostition(npc, nextWaypoint.Position, doLerp, lerpAlpha)
+			end)
+			npc.Janitor:Add(npc.MindData.OnWaypointReached)
+		end
+
+		npc.Path:Run(target:GetPivot().Position)
 	end,
 
 	PathfindToLastTarget = function(npc: Npc, lerpAlpha: number?)

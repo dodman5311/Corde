@@ -102,6 +102,7 @@ local function loadObjects(layer: Types.LayerData)
 end
 
 local function loadLayer(layer: Types.LayerData)
+	print("AttemptLoad")
 	if not layer then
 		return
 	end

@@ -64,9 +64,8 @@ end
 
 function getGameState(): Types.GameState
 	local currentLayerIndex = workspace:GetAttribute("CurrentLayerIndex")
-	if not layersData[currentLayerIndex] then
-		layersData[currentLayerIndex] = { Npcs = {}, Containers = {}, Objects = {} }
-	end
+
+	layersData[currentLayerIndex] = { Npcs = {}, Containers = {}, Objects = {} }
 
 	local character = player.Character
 	local gameState: Types.GameState = {
@@ -86,10 +85,8 @@ function getGameState(): Types.GameState
 		Layers = layersData,
 	}
 
-	local currentLayer: Types.LayerData = gameState.Layers[currentLayerIndex]
-
 	for _, object in pairs(interactables) do
-		table.insert(currentLayer.Objects, {
+		table.insert(gameState.Layers[currentLayerIndex].Objects, {
 			Name = object.Name,
 			Position = serializeVector3(object:GetPivot().Position),
 			Locked = object:GetAttribute("Locked"),
@@ -103,7 +100,7 @@ function getGameState(): Types.GameState
 
 		local _, y = model:GetPivot().Rotation:ToOrientation()
 
-		table.insert(currentLayer.Npcs, {
+		table.insert(gameState.Layers[currentLayerIndex].Npcs, {
 			Name = npc.Name,
 			Position = serializeVector3(model:GetPivot().Position),
 			Direction = y,
@@ -115,7 +112,7 @@ function getGameState(): Types.GameState
 		if container:GetAttribute("DroppedAt") then
 			continue
 		end
-		table.insert(currentLayer.Containers, {
+		table.insert(gameState.Layers[currentLayerIndex].Containers, {
 			Name = container.Name,
 			Position = serializeVector3(container:GetPivot().Position),
 			Contents = require(container.Container),

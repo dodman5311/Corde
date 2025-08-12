@@ -1,5 +1,3 @@
-local ContextActionService = game:GetService("ContextActionService")
-local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -18,11 +16,8 @@ local function onKeyboardChanged(self: Types.Setting)
 end
 
 local function onGamepadChanged(self: Types.Setting)
-	print(globalInputService.inputActions[self.Name])
-
 	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Gamepad", { [self.Values] = self.Value })
 
-	print(globalInputService.inputActions[self.Name])
 	self.Values = self.Value
 	globalInputService:CheckKeyPrompts()
 end
@@ -119,7 +114,7 @@ local gameSettings = {
 
 			Value = 0.5,
 			Values = NumberRange.new(0, 1.5),
-			OnChanged = function(self: Types.Setting) end,
+			OnChanged = function() end,
 		},
 
 		{
@@ -127,12 +122,11 @@ local gameSettings = {
 			Type = "List",
 
 			Value = "Silkscreen",
-			Values = { "Silkscreen", "Arcade", "Inconsolata", "Arial" },
+			Values = { "Silkscreen", "Arcade", "Inconsolata" },
 			OnChanged = function(self: Types.Setting)
 				local fonts = {
 					Silkscreen = Font.fromId(12187371840),
 					["Arcade"] = Font.fromEnum(Enum.Font.Arcade),
-					["Arial"] = Font.fromEnum(Enum.Font.Arial),
 					["Inconsolata"] = Font.fromEnum(Enum.Font.Code),
 				}
 
