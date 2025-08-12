@@ -59,8 +59,6 @@ local thumbstick2Pos = Vector3.zero
 local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
 
-local saveLoaded = false
-
 local MOVEMENT_THRESHOLD = 0.5
 local THUMBSTICK_THRESHOLD = 0.25
 local CURSOR_INTERPOLATION = 0.05
@@ -90,11 +88,21 @@ local function checkEquippedStem(healthPercent: number)
 	module.ConsumeItem(currentStimEquipped, "Heal")
 end
 
-local function playerDamaged(character, healthPercent, damageDealt)
-	if not saveLoaded then
-		return
-	end
+local function showHealthAmountFeedback(timeScale, healthPercent)
+	local damageUi = HUD.DamageEffects
+	local ti = TweenInfo.new(timeScale, Enum.EasingStyle.Linear)
 
+	damageUi.Vignette.ImageTransparency = healthPercent
+	HUD.Glitch.Image.ImageTransparency = healthPercent * 2
+
+	util.tween(damageUi.Vignette, ti, { ImageTransparency = healthPercent * 2 }, false, function()
+		local ti2 = TweenInfo.new(6, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 8)
+		util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = healthPercent + 0.5 })
+		util.tween(sounds.Heartbeat, ti2, { Volume = 0 })
+	end, Enum.PlaybackState.Completed)
+end
+
+local function playerDamaged(character, healthPercent, damageDealt)
 	local damageUi = HUD.DamageEffects
 	local invertedHealthPercent = math.abs(healthPercent - 1)
 
@@ -141,15 +149,9 @@ local function playerDamaged(character, healthPercent, damageDealt)
 			glitchToPlay.Visible = false
 		end)
 
-	damageUi.Vignette.ImageTransparency = healthPercent
-	HUD.Glitch.Image.ImageTransparency = healthPercent * 2
 	util.tween(sounds.Heartbeat, ti, { Volume = math.clamp((invertedHealthPercent - 0.5) * 2, 0, 1) })
 
-	util.tween(damageUi.Vignette, ti, { ImageTransparency = healthPercent * 2 }, false, function()
-		local ti2 = TweenInfo.new(6, Enum.EasingStyle.Quart, Enum.EasingDirection.In, 0, false, 8)
-		util.tween({ damageUi.Vignette, HUD.Glitch.Image }, ti2, { ImageTransparency = healthPercent + 0.5 })
-		util.tween(sounds.Heartbeat, ti2, { Volume = 0 })
-	end, Enum.PlaybackState.Completed)
+	showHealthAmountFeedback(timeScale, healthPercent)
 
 	if not character.Parent then
 		return
@@ -231,6 +233,8 @@ function module.spawnCharacter(saveData: Types.GameState?)
 		character:PivotTo(CFrame.new(saveData.PlayerStats.Position))
 	end
 	character.Parent = workspace
+	character:SetAttribute("Health", saveData.PlayerStats.Health)
+	showHealthAmountFeedback(0, character:GetAttribute("Health") / character:GetAttribute("MaxHealth"))
 
 	logHealth = character:GetAttribute("Health")
 
@@ -316,7 +320,7 @@ end
 
 local function getClosestInteractable()
 	local character = player.Character
-	if not character then
+	if not character or interact.Disabled:Check() then
 		return
 	end
 
@@ -587,12 +591,9 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 	cameraService.followViewDistance.current = cameraService.followViewDistance.default
 
 	if saveData then
-		character:SetAttribute("Health", saveData.PlayerStats.Health)
 		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
 		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
 	end
-
-	saveLoaded = true
 end
 
 function module.Init()
@@ -709,7 +710,7 @@ inventory.ItemUsed:Connect(function(use, item)
 	itemFunctions[use](item, use)
 end)
 
-inventory.InvetoryToggled:Connect(function(value)
+interact.Disabled.Changed:Connect(function(value)
 	cursor.Enabled = not (globalInputService:GetInputSource().Type == "Gamepad" and value)
 end)
 

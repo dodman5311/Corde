@@ -7,8 +7,7 @@ export type Scale = {
 	Check: (self: Scale) -> boolean,
 	Add: (self: Scale, index: string | number?, value: any?) -> boolean,
 	Remove: (self: Scale, index: string | number?) -> boolean,
-	Gained: signal.Signal,
-	Lost: signal.Signal,
+	Changed: signal.Signal,
 }
 
 local scales = {
@@ -25,17 +24,19 @@ end
 
 local function checkForSignal(scale: Scale)
 	local isOverThreshold = scale:Check()
-	if isOverThreshold then
-		scale.Gained:Fire()
-	else
-		scale.Lost:Fire()
+
+	if scale.LastCheck ~= isOverThreshold then
+		scale.Changed:Fire(isOverThreshold)
 	end
+
+	scale.LastCheck = isOverThreshold
 
 	return isOverThreshold
 end
 
 function scales.new(index: string?): Scale
 	local scale: Scale = {
+		LastCheck = false,
 		Contents = {},
 		Threshold = 1,
 		Check = function(self: Scale)
@@ -53,7 +54,9 @@ function scales.new(index: string?): Scale
 
 			return checkForSignal(self)
 		end,
-		Remove = function(self: Scale, index: string | number)
+		Remove = function(self: Scale, index: string | number?)
+			index = index or 1
+
 			if tonumber(index) then
 				table.remove(self.Contents, index)
 			else
@@ -63,8 +66,7 @@ function scales.new(index: string?): Scale
 			return checkForSignal(self)
 		end,
 
-		Gained = signal.new(),
-		Lost = signal.new(),
+		Changed = signal.new(),
 	}
 
 	if index then

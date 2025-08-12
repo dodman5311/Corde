@@ -37,6 +37,7 @@ local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local timer = require(client.Timer)
 local itemsList = require(ReplicatedStorage.Shared.Items)
+local scales = require(client.Scales)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 type item = Types.item
@@ -1072,6 +1073,7 @@ function Inventory.OpenInventory()
 	globalInputService.inputActions.Interact:Disable()
 
 	Inventory.InventoryInteract:Enable()
+	scales.activeScales["InteractDisabled"]:Add()
 
 	if not acts:checkAct("InDialogue") then
 		cameraService.followViewDistance.current = 1
@@ -1109,6 +1111,7 @@ function Inventory.CloseInventory()
 	globalInputService.inputActions.Interact:Enable()
 
 	Inventory.InventoryInteract:Disable()
+	scales.activeScales["InteractDisabled"]:Remove()
 	closeNote()
 
 	if not acts:checkAct("InDialogue") then

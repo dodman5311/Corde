@@ -446,9 +446,6 @@ function module:EnterNetMode()
 
 	util.PlaySound(sounds.NetOpen)
 
-	SoundService.Music.NetEffect.Enabled = true
-	SoundService.SoundEffects.NetEffect.Enabled = true
-
 	util.tween(Lighting.NETColor, ti, {
 		TintColor = Color3.fromRGB(185, 255, 250),
 		Brightness = 0.35,
@@ -468,9 +465,6 @@ function module:ExitNetMode()
 	clearNetPoints()
 
 	util.PlaySound(sounds.NetClose, 0, 0.25)
-
-	SoundService.Music.NetEffect.Enabled = false
-	SoundService.SoundEffects.NetEffect.Enabled = false
 
 	util.tween(Lighting.NETColor, ti, {
 		TintColor = Color3.new(1, 1, 1),

@@ -24,6 +24,7 @@ local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
 local CameraService = require(Client.Camera)
 local signal = require(ReplicatedStorage.Packages.Signal)
+local scales = require(Client.Scales)
 
 module.OnEnded = signal.new()
 
@@ -44,8 +45,11 @@ function module:beginSequence(sequenceName, ...)
 	local params = { ... }
 
 	task.spawn(function()
+		scales.activeScales["InteractDisabled"]:Add("InSequence")
 		acts:createTempAct("InSequence", module[sequenceName], nil, table.unpack(params))
+
 		module.OnEnded:Fire(sequenceName)
+		scales.activeScales["InteractDisabled"]:Remove("InSequence")
 	end)
 end
 
@@ -211,6 +215,7 @@ function module.keyhole(object: Model)
 	fade.BackgroundTransparency = 0
 	util.tween(fade, ti, { BackgroundTransparency = 1 })
 
+	scales.activeScales["InteractDisabled"]:Remove("InSequence")
 	globalInputService.inputActions["Inventory"]:Enable()
 	player:SetAttribute("MovementEnabled", true)
 

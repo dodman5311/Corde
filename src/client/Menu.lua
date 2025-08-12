@@ -23,6 +23,7 @@ local gameSettings = require(script.Parent.GameSettings)
 local slider = require(script.Parent.Slider)
 local world = require(script.Parent.World)
 local acts = require(script.Parent.Acts)
+local scales = require(script.Parent.Scales)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -88,6 +89,8 @@ end
 
 local function closeGui(transitionTime: number?)
 	acts:createAct("InMenuTransition")
+
+	scales.activeScales["InteractDisabled"]:Remove("Menu")
 	if globalInputService.actionGroups["PlayerControl"] then
 		globalInputService.actionGroups.PlayerControl:Enable()
 	end
@@ -164,6 +167,7 @@ local function enterPage(page: string, ...)
 	end
 	currentPage = page
 
+	scales.activeScales["InteractDisabled"]:Add("Menu")
 	if globalInputService.actionGroups["PlayerControl"] then
 		globalInputService.actionGroups.PlayerControl:Disable()
 	end

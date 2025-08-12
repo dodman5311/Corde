@@ -1,21 +1,12 @@
 give enemies pathfinding and better turning *
 
-Make enable/disable interaction (Hide cursor if on console)
-
-Remove audio distortion for hacking
-
 Add dead bodies
 
 Make storage system!
 
-make the health set on load not play the effect
-
-
 Security robots
 
 Change dialogue box input type
-
-stop cursor when in gamepad selection
 
 Settings to add:
 Particles

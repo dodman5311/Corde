@@ -34,9 +34,16 @@ local objectsView = require(Client.ObjectsView)
 local objectFunctions = require(Client.ObjectFunctions)
 local sequences = require(Client.Sequences)
 local castTo = require(Client.CastTo)
+local scales = require(Client.Scales)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
+
+local INTEREST_ICON_SPEED = 0.045
+
+module.Disabled = scales.new("InteractDisabled")
+
+--// Functions //--
 
 local function checkSightline(object: Instance): boolean
 	if acts:checkAct("InObjectView") then
@@ -138,8 +145,6 @@ local function hideInteract(cursor)
 
 	interactTimer:Cancel()
 end
-
-local INTEREST_ICON_SPEED = 0.045
 
 local function showInterest(cursor, broken)
 	cursor.Parent.Center.Visible = false
@@ -310,17 +315,14 @@ local function processCrosshair()
 
 	local distanceToMouse = (v2CharacterPosition - v2CursorPosition).Magnitude
 
-	if distanceToMouse > module.INTERACT_DISTANCE and not acts:checkAct("InObjectView") then
+	if
+		(distanceToMouse > module.INTERACT_DISTANCE and not acts:checkAct("InObjectView")) or module.Disabled:Check()
+	then
 		mouseTarget.Value = nil
 	else
 		mouseTarget.Value = target and (target:FindFirstAncestorOfClass("Model") or target)
 
 		if objectPlacedAt then
-			print(
-				os.clock() - objectPlacedAt,
-				inventory.DROPPED_ITEM_LIFETIME,
-				(os.clock() - objectPlacedAt) / inventory.DROPPED_ITEM_LIFETIME
-			)
 			updateRadialProgress(cursorUi.Cursor, (os.clock() - objectPlacedAt) / inventory.DROPPED_ITEM_LIFETIME)
 		end
 	end
