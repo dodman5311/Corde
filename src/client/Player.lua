@@ -231,9 +231,9 @@ function module.spawnCharacter(saveData: Types.GameState?)
 	player.Character = character
 	if saveData then
 		character:PivotTo(CFrame.new(saveData.PlayerStats.Position))
+		character:SetAttribute("Health", saveData.PlayerStats.Health)
 	end
 	character.Parent = workspace
-	character:SetAttribute("Health", saveData.PlayerStats.Health)
 	showHealthAmountFeedback(0, character:GetAttribute("Health") / character:GetAttribute("MaxHealth"))
 
 	logHealth = character:GetAttribute("Health")

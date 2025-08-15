@@ -16,6 +16,20 @@ end
 
 local commands = {
 
+	Gui = {
+		Play_Sequence = {
+			Parameters = function()
+				return {
+					{ Name = "Sequence", Options = { "InstallModule" } },
+				}
+			end,
+
+			Execute = function(_, Value)
+				require(script.Parent.Sequences):beginSequence(Value)
+			end,
+		},
+	},
+
 	Player = {
 
 		God_Mode = {

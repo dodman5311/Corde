@@ -185,6 +185,156 @@ function module.UseMirror()
 	end
 end
 
+function module.InstallModule()
+	player:SetAttribute("MovementEnabled", false)
+	showBars()
+	local ti = TweenInfo.new(2.5, Enum.EasingStyle.Quad)
+	local ti_0 = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
+	local ti_1 = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	local sequenceFrame = loadSequence("Install")
+
+	local background: ImageLabel = sequenceFrame.Background
+	local imageFrame: Frame = sequenceFrame.Frame
+	local eyeFrame: Frame = sequenceFrame.EyeFrame
+	local smudge: ImageLabel = sequenceFrame.Smudge
+
+	------------------------------------------------------------------------ INTRO
+
+	util.tween(UI.Fade, ti, { BackgroundTransparency = 0 }, true)
+	util.tween(UI.Fade, ti_0, { BackgroundTransparency = 1 })
+
+	sequenceFrame.Visible = true
+
+	util.PlaySound(sequenceSounds.Cloth)
+
+	for _ = 0, 5 do
+		local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
+		animation:OnFrameRached(3):Wait()
+		uiAnimationService.StopAnimation(imageFrame)
+		task.wait(0.15)
+	end
+
+	local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
+
+	animation:OnFrameRached(7):Wait()
+	animation:Pause()
+	task.wait(0.2)
+	animation:Resume()
+
+	animation:OnFrameRached(17):Wait()
+	animation:Pause()
+	task.wait(0.3)
+	animation:Resume()
+
+	animation:OnFrameRached(21):Wait()
+
+	sequenceFrame.Glitch.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.0125):OnFrameRached(25):Wait()
+	sequenceFrame.Glitch.Visible = false
+	background.Visible = false
+	smudge.Visible = false
+	imageFrame.Visible = false
+
+	task.wait(2)
+
+	------------------------------------------------------------------------
+
+	local step = RunService.RenderStepped:Connect(function()
+		for _, child in ipairs(sequenceFrame.ScreenText:GetChildren()) do
+			if child.Name == "Main" then
+				child.Position = UDim2.fromOffset(math.random(-1, 1), math.random(-1, 1))
+				continue
+			end
+
+			child.Position = UDim2.fromOffset(math.random(-10, 10), math.random(-10, 10))
+		end
+
+		sequenceFrame.RedX.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
+	end)
+
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "Someday" })
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(2.5)
+	sequenceFrame.ScreenText.Visible = false
+	sequenceFrame.RedX.Visible = true
+
+	task.wait(1)
+	sequenceFrame.RedX.Visible = false
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "You will see like me." }
+	)
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(3)
+	sequenceFrame.ScreenText.Visible = false
+	task.wait(3) -- VOID VISIONS
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "A metal man sings a black bird's song," }
+	)
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(3)
+	sequenceFrame.ScreenText.Visible = false
+	task.wait(3) -- MONSTER VISIONS
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "and the sun dies for a plastic reason." }
+	)
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(3)
+	sequenceFrame.ScreenText.Visible = false
+	task.wait(3) -- BLOOD VISIONS
+
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "This has gone too far" }
+	)
+	sequenceFrame.ScreenText.Visible = true
+
+	task.wait(3)
+	sequenceFrame.ScreenText.Visible = false
+	sequenceFrame.SecondFrame.Visible = true
+	eyeFrame.Visible = true
+
+	background.Visible = true
+	smudge.Visible = true
+
+	sequenceFrame.SecondFrame.Image.Position = UDim2.new(-1, 0)
+	eyeFrame.Image.Position = UDim2.new(-1, 0)
+
+	task.wait(0.2)
+
+	sequenceFrame.SecondFrame.Image.Position = UDim2.new(-2, 0)
+	eyeFrame.Image.Position = UDim2.new(-2, 0)
+
+	task.wait(3)
+
+	util.PlaySound(sequenceSounds.Breath)
+	util.PlaySound(sequenceSounds.Cloth).PlaybackSpeed = 0.7
+
+	util.tween(UI.Fade, ti_1, { BackgroundTransparency = 0 }, false, function()
+		step:Disconnect()
+		sequenceFrame:Destroy()
+		hideBars()
+		util.tween(UI.Fade, ti, { BackgroundTransparency = 1 })
+
+		player:SetAttribute("MovementEnabled", true)
+	end)
+
+	for i = -2, 0, 1 do
+		sequenceFrame.SecondFrame.Image.Position = UDim2.new(i, 0)
+		eyeFrame.Image.Position = UDim2.new(i, 0)
+		task.wait(0.25)
+	end
+end
+
 function module.keyhole(object: Model)
 	object:RemoveTag("Interactable")
 

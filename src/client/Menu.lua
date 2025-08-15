@@ -502,8 +502,32 @@ end
 function module:ShowDisclaimer()
 	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
 
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 }, true)
-	task.wait(3)
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 })
+
+	local inputSignal
+	inputSignal = UserInputService.InputBegan:Connect(function(input)
+		if
+			input.KeyCode == Enum.KeyCode.ButtonA
+			or input.KeyCode == Enum.KeyCode.ButtonX
+			or input.KeyCode == Enum.KeyCode.ButtonB
+			or input.KeyCode == Enum.KeyCode.ButtonY
+			or input.KeyCode == Enum.KeyCode.Space
+			or input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			inputSignal:Disconnect()
+			inputSignal = nil
+		end
+	end)
+
+	local start = os.clock()
+	repeat
+		task.wait()
+	until not inputSignal or os.clock() - start >= 4
+
+	if inputSignal then
+		inputSignal:Disconnect()
+	end
 
 	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
 end
