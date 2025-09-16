@@ -1,12 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local signal = require(ReplicatedStorage.Packages.Signal)
+local Signal = require(ReplicatedStorage.Packages.Signal)
 export type Scale = {
 	Contents: {},
 	Threshold: number, -- 1 Default
 	Check: (self: Scale) -> boolean,
 	Add: (self: Scale, index: string | number?, value: any?) -> boolean,
 	Remove: (self: Scale, index: string | number?) -> boolean,
-	Changed: signal.Signal,
+	Changed: Signal.Signal,
 }
 
 local scales = {
@@ -33,11 +33,6 @@ local function checkForSignal(scale: Scale)
 	return isOverThreshold
 end
 
---[[
-	Yhea
-	@param yup
-	@return Awesome!
-]]
 function scales.new(index: string?): Scale
 	local scale: Scale = {
 		LastCheck = false,
@@ -70,7 +65,7 @@ function scales.new(index: string?): Scale
 			return checkForSignal(self)
 		end,
 
-		Changed = signal.new(),
+		Changed = Signal.new(),
 	}
 
 	if index then

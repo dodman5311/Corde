@@ -20,7 +20,7 @@
 
     "ReplicatedStorage": {
       "Packages": {
-        "$path": "src/Packages"
+        "$path": "src/roblox_packages"
       },
 
       "Shared": {
