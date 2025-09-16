@@ -127,7 +127,7 @@ function Inventory:CheckSlot(slot: string | number)
 	return self[slot]
 end
 
-function Inventory:GetFirstEmptySlot(): string -- returns slot index, (String)
+function Inventory:GetFirstEmptySlot(): string? -- returns slot index, (String)
 	for slotIndex = 1, 12 do
 		if self:CheckSlot("slot_" .. slotIndex) then
 			continue
@@ -135,6 +135,8 @@ function Inventory:GetFirstEmptySlot(): string -- returns slot index, (String)
 
 		return "slot_" .. slotIndex
 	end
+
+	return
 end
 
 local combineActions = {
@@ -332,7 +334,7 @@ function Inventory:pickupFromContainer(object)
 		table.insert(toRemove, item)
 
 		if util.getSetting("Gameplay", "Auto Read Notes") and item.Use == "Read" then
-			Inventory:OpenInventory()
+			Inventory.OpenInventory()
 			Inventory:UseItem(UI.Inventory.Slots:FindFirstChild(slot))
 		end
 	end
@@ -360,8 +362,8 @@ local function assignItemColor(slotUi, item)
 	end
 end
 
-local function setUpSlots(isOpening)
-	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
+local function setUpSlots(slotParent, isOpening)
+	for _, slotUi in ipairs(slotParent:GetChildren()) do
 		if not slotUi:IsA("Frame") then
 			continue
 		end
@@ -672,7 +674,9 @@ local function hideDescription()
 end
 
 local function refreshGui(isOpening)
-	setUpSlots(isOpening)
+	setUpSlots(UI.Inventory.Slots, isOpening)
+	setUpSlots(UI.Storage.Slots_Storage, isOpening)
+	setUpSlots(UI.Storage.Slots_Inventory, isOpening)
 	setUpWeapon()
 	UI.Inventory.WeaponCompare.Visible = false
 end
@@ -710,11 +714,24 @@ function Inventory:UseItem(slotUi)
 	task.delay(0.05, refreshGui)
 end
 
+local function createGuiSlot(parent, index)
+	local newSlot = UI.Slot_Template:Clone()
+		newSlot.Name = "slot_" .. index
+		newSlot.Parent = parent
+		newSlot.Visible = true
+end
+
 local function createGuiSlots()
-	for slotIndex = 2, 12 do
-		local newSlot = UI.Inventory.Slots.slot_1:Clone()
-		newSlot.Name = "slot_" .. slotIndex
-		newSlot.Parent = UI.Inventory.Slots
+	for slotIndex = 1, 12 do
+		createGuiSlot(UI.Inventory.Slots, slotIndex)
+	end
+
+	for slotIndex = 1, 12 do
+		createGuiSlot(UI.Storage.Slots_Inventory, slotIndex)
+	end
+
+	for slotIndex = 14, 25 do
+		createGuiSlot(UI.Storage.Slots_Storage, slotIndex)
 	end
 end
 
@@ -1063,14 +1080,25 @@ local function initGui()
 	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
 		connectSlotButton(slotUi)
 	end
+
+	for _, slotUi in ipairs(UI.Storage.Slots_Inventory:GetChildren()) do
+		connectSlotButton(slotUi)
+	end
+
+	for _, slotUi in ipairs(UI.Storage.Slots_Storage:GetChildren()) do
+		connectSlotButton(slotUi)
+	end
 end
 
-function Inventory.OpenInventory()
+function Inventory.OpenInventory(isStorage : boolean?)
+	local ti = TweenInfo.new(0.25)
+	local ti_0 = TweenInfo.new(0.75, Enum.EasingStyle.Quint)
+
 	Inventory.InvetoryToggled:Fire(true)
 
 	globalInputService.inputActions["N.E.T"]:Disable()
 	globalInputService.inputActions["Ready Weapon"]:Disable()
-	globalInputService.inputActions.Interact:Disable()
+	globalInputService.inputActions["Interact"]:Disable()
 
 	Inventory.InventoryInteract:Enable()
 	scales.activeScales["InteractDisabled"]:Add()
@@ -1085,24 +1113,27 @@ function Inventory.OpenInventory()
 	acts:createAct("InventoryOpening")
 	Inventory.InventoryOpen = true
 
-	local ti = TweenInfo.new(0.25)
-	local ti_0 = TweenInfo.new(0.75, Enum.EasingStyle.Quint)
-
 	refreshGui(true)
 
-	UI.Inventory.Size = UDim2.fromScale(0.925, 0.925)
 	UI.Inventory.Visible = false
+	UI.Storage.Visible = false
 	UI.Enabled = true
-
 	util.tween(Lighting.InventoryBlur, ti, { Size = 18 })
 
-	--task.wait(0.2)
-	util.tween(UI.Inventory, ti_0, { Size = UDim2.fromScale(0.975, 0.975) })
-	util.flickerUi(UI.Inventory, 0.01, 6)
-
+	if isStorage then
+		UI.Storage.Size = UDim2.fromScale(0.925, 0.925)
+		util.tween(UI.Storage, ti_0, { Size = UDim2.fromScale(0.975, 0.975) })
+		util.flickerUi(UI.Storage, 0.01, 6)
+		globalInputService:SelectGui(UI.Storage.Slots_Inventory)
+	else
+		UI.Inventory.Size = UDim2.fromScale(0.925, 0.925)
+		util.tween(UI.Inventory, ti_0, { Size = UDim2.fromScale(0.975, 0.975) })
+		util.flickerUi(UI.Inventory, 0.01, 6)
+		globalInputService:SelectGui(UI.Inventory.Slots)
+	end
+	
 	acts:removeAct("InventoryOpening")
-
-	globalInputService:SelectGui(UI.Inventory.Slots)
+	
 end
 
 function Inventory.CloseInventory()
@@ -1123,7 +1154,13 @@ function Inventory.CloseInventory()
 
 	local ti = TweenInfo.new(0.5)
 
-	util.flickerUi(UI.Inventory, 0.01, 6)
+	if UI.Inventory.Visible then
+		util.flickerUi(UI.Inventory, 0.01, 6)
+	end
+	if UI.Inventory.Visible then
+		util.flickerUi(UI.Storage, 0.01, 6)
+	end
+	
 
 	util.tween(Lighting.InventoryBlur, ti, { Size = 0 })
 
@@ -1140,6 +1177,8 @@ function Inventory.CloseInventory()
 
 	holdingObject = {}
 	UI.MoveObject.Visible = false
+
+	print(Inventory)
 end
 
 local function noteNavigationInput(state, input)

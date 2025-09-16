@@ -35,7 +35,7 @@ end
 local function packInventory()
 	local inv = {}
 
-	for i = 1, 13 do
+	for i = 1, 25 do
 		inv["slot_" .. i] = Inventory["slot_" .. i]
 	end
 

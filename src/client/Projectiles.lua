@@ -25,7 +25,7 @@ export type Projectile = {
 	["Speed"]: number,
 	["LifeTime"]: number,
 	["Age"]: number,
-	["Info"]: table,
+	["Info"]: {},
 	["Damage"]: number,
 }
 

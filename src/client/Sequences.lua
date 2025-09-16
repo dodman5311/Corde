@@ -252,7 +252,7 @@ function module.InstallModule()
 		sequenceFrame.RedX.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
 	end)
 
-	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "Someday" })
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "They are waiting for you." })
 	sequenceFrame.ScreenText.Visible = true
 
 	task.wait(2.5)
@@ -264,7 +264,7 @@ function module.InstallModule()
 
 	changePropertyForTable(
 		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "You will see like me." }
+		{ TextColor3 = Color3.new(1), Text = "Do you hear them?" }
 	)
 	sequenceFrame.ScreenText.Visible = true
 
@@ -294,7 +294,7 @@ function module.InstallModule()
 
 	changePropertyForTable(
 		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "This has gone too far" }
+		{ TextColor3 = Color3.new(1), Text = "Yet they live." }
 	)
 	sequenceFrame.ScreenText.Visible = true
 

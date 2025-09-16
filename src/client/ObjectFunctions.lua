@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
+
 local util = require(client.Util)
 local sequences = require(client.Sequences)
 local acts = require(client.Acts)
@@ -139,6 +140,16 @@ local objectFunctions = {
 
 	RemoveDoor = function(object: Model)
 		object.Door:Destroy()
+	end,
+
+	OpenStorage = function(object: Model)
+		local Inventory = require(script.Parent.Inventory)
+
+		if Inventory.InventoryOpen then
+			return
+		end
+
+		Inventory.OpenInventory(true)
 	end,
 }
 
