@@ -5,8 +5,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local globalInputService = require(script.Parent.GlobalInputService)
 local Types = require(ReplicatedStorage.Shared.Types)
+local globalInputService = require(script.Parent.GlobalInputService)
 
 local function onKeyboardChanged(self: Types.Setting)
 	globalInputService.inputActions[self.Name]:ReplaceKeybinds("Keyboard", { [self.Values] = self.Value })
@@ -30,9 +30,9 @@ local gameSettings = {
 		-- 	Type = "List",
 		-- 	Value = "Solemn",
 		-- 	Values = { "Hope", "Solemn", "Despair" },
-		-- 	-- Hope: Take less damage. Empty Hunger doesn't increase damage taken.
-		-- 	-- Solemn: The intended way to play.
-		-- 	-- Despair: Take more damage. Hunger goes down over time. Less ammo.
+		-- 	-- Hope: Take less damage. Hunger reduction is halved. 12 Inventory Slots
+		-- 	-- Solemn: 10 Inventory Slots. The intended way to play.
+		-- 	-- Despair: Take more and deal less damage. Hunger goes down over time. 8 Inventory Slots
 
 		-- 	OnChanged = function() end,
 		-- },

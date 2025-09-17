@@ -13,3 +13,8 @@ Particles
 
 vibration
 screen shake
+
+add difficulties
+-- Hope: Take less damage. Hunger reduction is halved. 12 Inventory Slots
+-- Solemn: 10 Inventory Slots. The intended way to play.
+-- Despair: Take more and deal less damage. Hunger goes down over time. 8 Inventory Slots

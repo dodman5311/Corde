@@ -69,7 +69,7 @@ Inventory.InvetoryToggled = signal.new()
 
 Inventory.statusPumpTimer = timer:new("HealthPump", 1)
 
-local INVENTORY_SIZE = 8
+local InventorySize = 8
 local STORAGE_SIZE = 12
 
 --// Functions
@@ -137,7 +137,7 @@ function Inventory:CheckSlot(slot: string | number): item?
 end
 
 function Inventory:GetFirstEmptySlot(): string? -- returns slot index, (String)
-	for slotIndex = 1, INVENTORY_SIZE do
+	for slotIndex = 1, InventorySize do
 		if self:CheckSlot("slot_" .. slotIndex) then
 			continue
 		end
@@ -706,7 +706,7 @@ local function getSlotIndexFromUi(slotUi: Frame): number?
 end
 
 function Inventory:UseItem(slotUi)
-	if getSlotIndexFromUi(slotUi) > INVENTORY_SIZE then
+	if getSlotIndexFromUi(slotUi) > InventorySize then
 		util.PlaySound(sounds.Deny)
 		return
 	end
@@ -740,15 +740,15 @@ local function createGuiSlot(parent, index)
 end
 
 local function createGuiSlots()
-	for slotIndex = 1, INVENTORY_SIZE do
+	for slotIndex = 1, InventorySize do
 		createGuiSlot(UI.Inventory.Slots, slotIndex)
 	end
 
-	for slotIndex = 1, INVENTORY_SIZE do
+	for slotIndex = 1, InventorySize do
 		createGuiSlot(UI.Storage.Slots_Inventory, slotIndex)
 	end
 
-	local nextIndex = INVENTORY_SIZE + 1
+	local nextIndex = InventorySize + 1
 	for slotIndex = nextIndex, nextIndex + STORAGE_SIZE do
 		createGuiSlot(UI.Storage.Slots_Storage, slotIndex)
 	end
@@ -1012,7 +1012,7 @@ local function connectSlotButton(slotUi)
 		if holdingObject.Action == "Move" then
 			local item = Inventory:CheckSlot(holdingObject.SlotFrame.Name)
 
-			if item and item.InUse and slotNumberIndex > INVENTORY_SIZE then
+			if item and item.InUse and slotNumberIndex > InventorySize then
 				util.PlaySound(sounds.Deny)
 			else
 				local clickSound = util.PlaySound(sounds.OptionClick)
@@ -1053,8 +1053,6 @@ local function initGui()
 	UI = UITemplate
 	UI.Parent = player.PlayerGui
 	UI.Enabled = false
-
-	createGuiSlots()
 
 	-- set up note
 	UI.Note.GroupTransparency = 1
@@ -1099,18 +1097,6 @@ local function initGui()
 		end)
 
 		mouseLeave:Connect(hideDescription)
-	end
-
-	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
-		connectSlotButton(slotUi)
-	end
-
-	for _, slotUi in ipairs(UI.Storage.Slots_Inventory:GetChildren()) do
-		connectSlotButton(slotUi)
-	end
-
-	for _, slotUi in ipairs(UI.Storage.Slots_Storage:GetChildren()) do
-		connectSlotButton(slotUi)
 	end
 end
 
@@ -1313,7 +1299,29 @@ end
 function Inventory.StartGame()
 	Inventory.ToggleInventoryInput:Enable()
 
-	if Inventory:CheckSlot("Weapon_Slot") then
+	local difficulty = workspace:GetAttribute("Difficulty")
+	InventorySize += math.abs(difficulty - 2) * 2 -- @Difficulty set slots
+
+	local padSize = UDim.new(difficulty * 0.0075, 0)
+
+	local slots = UI.Inventory.Slots
+	local storageInvSlots = UI.Storage.Slots_Inventory
+
+	slots.UIListLayout.Padding = padSize
+	storageInvSlots.UIListLayout.Padding = padSize
+
+	createGuiSlots()
+
+	for _, slotUi in ipairs(UI.Inventory.Slots:GetChildren()) do
+		connectSlotButton(slotUi)
+	end
+
+	for _, slotUi in ipairs(UI.Storage.Slots_Inventory:GetChildren()) do
+		connectSlotButton(slotUi)
+	end
+
+	for _, slotUi in ipairs(UI.Storage.Slots_Storage:GetChildren()) do
+		connectSlotButton(slotUi)
 	end
 end
 

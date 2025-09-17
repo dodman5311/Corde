@@ -1,5 +1,5 @@
 local module = {
-	HUNGER_RATE = 0.6,
+	HUNGER_RATE = 0.5,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 
@@ -279,6 +279,12 @@ end
 function module:DamagePlayer(damage: number, damageType: string)
 	if player:GetAttribute("GodMode") then
 		return
+	end
+
+	if workspace:GetAttribute("Difficulty") == 0 then -- @Difficulty handle damage taken
+		damage *= 0.75
+	elseif workspace:GetAttribute("Difficulty") == 2 then
+		damage *= 1.5
 	end
 
 	if player.Character:GetAttribute("Hunger") <= 0 then
@@ -644,8 +650,21 @@ RunService.Heartbeat:Connect(function()
 			player.Character:SetAttribute("Hunger", 100)
 		end
 
-		if player.Character:GetAttribute("Hunger") > 0 and checkIsSprinting() then
-			local rate = (os.clock() - lastHeartbeat) * module.HUNGER_RATE
+		local modifiedHungerRate = module.HUNGER_RATE
+		if workspace:GetAttribute("Difficulty") == 0 then -- @Difficulty reduce hunger loss
+			modifiedHungerRate = module.HUNGER_RATE / 2
+		end
+
+		if not checkIsSprinting() then
+			if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty hunger goes down over time
+				modifiedHungerRate = module.HUNGER_RATE / 3
+			else
+				modifiedHungerRate = 0
+			end
+		end
+
+		if player.Character:GetAttribute("Hunger") > 0 and modifiedHungerRate > 0 then
+			local rate = (os.clock() - lastHeartbeat) * modifiedHungerRate
 			player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") - rate)
 		end
 

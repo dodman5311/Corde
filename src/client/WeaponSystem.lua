@@ -404,15 +404,19 @@ end
 
 local function createBullet(weaponData)
 	local character = player.Character
-	if not player.Character then
+	if not player.Character or not currentWeapon then
 		return
 	end
 
 	local torso = character.Torso
 
+	local damage = currentWeapon.Value.Damage
+	if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty Reduce damage dealt
+		damage *= 0.75
+	end
+
 	local projectileSpread = weaponData.Spread + accuracyReduction.Position
-	local newProjectile =
-		projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", currentWeapon.Value.Damage)
+	local newProjectile = projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", damage)
 	newProjectile.HitEvent:Once(registerShot)
 
 	rp.FilterType = Enum.RaycastFilterType.Exclude
