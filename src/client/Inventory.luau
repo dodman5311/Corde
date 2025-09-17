@@ -28,28 +28,34 @@ local currentSelectedSlot
 local camera = workspace.CurrentCamera
 
 --// Modules
-local signal = require(ReplicatedStorage.Packages.Signal)
+local Types = require(ReplicatedStorage.Shared.Types)
 local UIAnimationService = require(client.UIAnimationService)
-local util = require(client.Util)
 local acts = require(client.Acts)
-local mouseOver = require(client.MouseOver)
 local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
-local timer = require(client.Timer)
 local itemsList = require(ReplicatedStorage.Shared.Items)
+local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
+local mouseOver = require(client.MouseOver)
 local scales = require(client.Scales)
-local Types = require(ReplicatedStorage.Shared.Types)
+local signal = require(ReplicatedStorage.Packages.Signal)
+local timer = require(client.Timer)
+local util = require(client.Util)
 
 type item = Types.item
+type holdingObject = {
+	Action: string?,
+	SlotFrame: Frame?,
+	Connection: RBXScriptConnection?,
+}
 
 --// Values
 local currentNoteIndex = 0
 local currentNoteItem: item
 local rng = Random.new()
 local inAction = false
-local holdingObject = {
-	Action = "",
-	Object = nil,
+local holdingObject: holdingObject = {
+	Action = nil,
+	SlotFrame = nil,
 	Connection = nil,
 }
 
@@ -120,7 +126,7 @@ end
 -- 	end
 -- end
 
-function Inventory:CheckSlot(slot: string | number)
+function Inventory:CheckSlot(slot: string | number): item?
 	if tonumber(slot) then
 		slot = "slot_" .. slot
 	end
@@ -714,11 +720,15 @@ function Inventory:UseItem(slotUi)
 	task.delay(0.05, refreshGui)
 end
 
+local function getSlotIndexFromUi(slotUi: Frame): number?
+	return tonumber(string.sub(slotUi.Name, 6))
+end
+
 local function createGuiSlot(parent, index)
 	local newSlot = UI.Slot_Template:Clone()
-		newSlot.Name = "slot_" .. index
-		newSlot.Parent = parent
-		newSlot.Visible = true
+	newSlot.Name = "slot_" .. index
+	newSlot.Parent = parent
+	newSlot.Visible = true
 end
 
 local function createGuiSlots()
@@ -745,7 +755,7 @@ local function showFrameDescription(frame)
 	infoFrame.Description.Text = frame:GetAttribute("Description")
 end
 
-local function showItemDesciption(item: item)
+local function showItemDesciption(item: item?)
 	if not item then
 		return
 	end
@@ -808,7 +818,7 @@ local function holdSlot(slotUi: Frame, action: "Move" | "Combine")
 	end
 
 	holdingObject.Action = action
-	holdingObject.Object = slotUi
+	holdingObject.SlotFrame = slotUi
 
 	UI.MoveObject.Image.Image = slotUi:GetAttribute("ImageId")
 	UIAnimationService.PlayAnimation(UI.MoveObject, 0.075, true)
@@ -830,7 +840,11 @@ end
 
 local optionFunctions = {
 	Use = function(slotUi)
-		Inventory:UseItem(slotUi)
+		if getSlotIndexFromUi(slotUi) > 13 then
+			util.PlaySound(sounds.Deny)
+		else
+			Inventory:UseItem(slotUi)
+		end
 	end,
 	Drop = function(slotUi)
 		Inventory:DropItem(slotUi.ItemName.Text)
@@ -884,7 +898,7 @@ local function openOptionsMenu(slotUi)
 	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Quart)
 	local ti_0 = TweenInfo.new(0.1, Enum.EasingStyle.Quart)
 	local ti_1 = TweenInfo.new(0.25, Enum.EasingStyle.Quint)
-	local slotNumber = tonumber(string.sub(slotUi.Name, 6, -1))
+	local slotNumber = getSlotIndexFromUi(slotUi)
 
 	actionsFrame.Parent = slotUi
 	currentSelectedSlot = slotUi
@@ -948,6 +962,7 @@ local function connectSlotButton(slotUi)
 	end
 
 	local button: ImageButton = slotUi.Button
+	local slotNumberIndex = getSlotIndexFromUi(slotUi)
 
 	button.MouseEnter:Connect(function()
 		if inAction then
@@ -971,8 +986,6 @@ local function connectSlotButton(slotUi)
 		slotUiExited(slotUi)
 	end)
 
-	local button: TextButton = slotUi.Button
-
 	button.MouseButton2Click:Connect(function()
 		Inventory:UseItem(slotUi)
 		closeOptionsMenu()
@@ -986,17 +999,23 @@ local function connectSlotButton(slotUi)
 			holdingObject.Connection:Disconnect()
 		end
 
-		if not holdingObject.Object then
+		if not holdingObject.SlotFrame then
 			openOptionsMenu(slotUi)
-
 			return
 		end
 
 		if holdingObject.Action == "Move" then
-			util.PlaySound(sounds.OptionClick).PlaybackSpeed = 0.8
-			Inventory:ChangeSlot(holdingObject.Object.Name, slotUi.Name)
+			local item = Inventory:CheckSlot(holdingObject.SlotFrame.Name)
+
+			if item and item.InUse and slotNumberIndex > 13 then
+				util.PlaySound(sounds.Deny)
+			else
+				local clickSound = util.PlaySound(sounds.OptionClick)
+				clickSound.PlaybackSpeed = 0.8
+				Inventory:ChangeSlot(holdingObject.SlotFrame.Name, slotUi.Name)
+			end
 		elseif holdingObject.Action == "Combine" then
-			if Inventory:CombineSlots(holdingObject.Object.Name, slotUi.Name) then
+			if Inventory:CombineSlots(holdingObject.SlotFrame.Name, slotUi.Name) then
 				util.PlaySound(sounds.Confirm)
 			else
 				util.PlaySound(sounds.Deny)
@@ -1090,7 +1109,7 @@ local function initGui()
 	end
 end
 
-function Inventory.OpenInventory(isStorage : boolean?)
+function Inventory.OpenInventory(isStorage: boolean?)
 	local ti = TweenInfo.new(0.25)
 	local ti_0 = TweenInfo.new(0.75, Enum.EasingStyle.Quint)
 
@@ -1131,9 +1150,8 @@ function Inventory.OpenInventory(isStorage : boolean?)
 		util.flickerUi(UI.Inventory, 0.01, 6)
 		globalInputService:SelectGui(UI.Inventory.Slots)
 	end
-	
+
 	acts:removeAct("InventoryOpening")
-	
 end
 
 function Inventory.CloseInventory()
@@ -1160,7 +1178,6 @@ function Inventory.CloseInventory()
 	if UI.Inventory.Visible then
 		util.flickerUi(UI.Storage, 0.01, 6)
 	end
-	
 
 	util.tween(Lighting.InventoryBlur, ti, { Size = 0 })
 
