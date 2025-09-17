@@ -698,7 +698,16 @@ local function emptyWeaponSlot()
 	refreshGui()
 end
 
+local function getSlotIndexFromUi(slotUi: Frame): number?
+	return tonumber(string.sub(slotUi.Name, 6))
+end
+
 function Inventory:UseItem(slotUi)
+	if getSlotIndexFromUi(slotUi) > 13 then
+		util.PlaySound(sounds.Deny)
+		return
+	end
+
 	if slotUi.Name == "Weapon" then
 		emptyWeaponSlot()
 		return
@@ -720,10 +729,6 @@ function Inventory:UseItem(slotUi)
 	task.delay(0.05, refreshGui)
 end
 
-local function getSlotIndexFromUi(slotUi: Frame): number?
-	return tonumber(string.sub(slotUi.Name, 6))
-end
-
 local function createGuiSlot(parent, index)
 	local newSlot = UI.Slot_Template:Clone()
 	newSlot.Name = "slot_" .. index
@@ -732,11 +737,11 @@ local function createGuiSlot(parent, index)
 end
 
 local function createGuiSlots()
-	for slotIndex = 1, 12 do
+	for slotIndex = 1, 10 do
 		createGuiSlot(UI.Inventory.Slots, slotIndex)
 	end
 
-	for slotIndex = 1, 12 do
+	for slotIndex = 1, 10 do
 		createGuiSlot(UI.Storage.Slots_Inventory, slotIndex)
 	end
 
@@ -755,11 +760,11 @@ local function showFrameDescription(frame)
 	infoFrame.Description.Text = frame:GetAttribute("Description")
 end
 
-local function showItemDesciption(item: item?)
+local function showItemDesciption(item: item?, infoFrameParent)
 	if not item then
 		return
 	end
-	local infoFrame = UI.Inventory.Info
+	local infoFrame = infoFrameParent.Info
 	infoFrame.Visible = true
 
 	infoFrame.DescriptionIndex.Text = item.Name
@@ -794,7 +799,7 @@ local function slotUiHovered(slotUi)
 		compareWeapon(item)
 	end
 
-	showItemDesciption(item)
+	showItemDesciption(item, slotUi.Parent.Parent)
 end
 
 local function slotUiExited(slotUi)
@@ -840,11 +845,7 @@ end
 
 local optionFunctions = {
 	Use = function(slotUi)
-		if getSlotIndexFromUi(slotUi) > 13 then
-			util.PlaySound(sounds.Deny)
-		else
-			Inventory:UseItem(slotUi)
-		end
+		Inventory:UseItem(slotUi)
 	end,
 	Drop = function(slotUi)
 		Inventory:DropItem(slotUi.ItemName.Text)
@@ -1073,7 +1074,7 @@ local function initGui()
 	weaponDisplay.MouseEnter:Connect(function()
 		util.PlaySound(sounds.InventoryHover)
 		task.wait(0.05)
-		showItemDesciption(Inventory:CheckSlot(13))
+		showItemDesciption(Inventory:CheckSlot(13), UI.Inventory)
 	end)
 
 	weaponDisplay.MouseLeave:Connect(hideDescription)
@@ -1081,7 +1082,7 @@ local function initGui()
 	weaponDisplay.SelectionGained:Connect(function()
 		util.PlaySound(sounds.InventoryHover)
 		task.wait(0.05)
-		showItemDesciption(Inventory:CheckSlot(13))
+		showItemDesciption(Inventory:CheckSlot(13), UI.Inventory)
 	end)
 
 	weaponDisplay.SelectionLost:Connect(hideDescription)
