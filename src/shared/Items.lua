@@ -457,7 +457,6 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		Icon = "rbxassetid://82487541380359",
 		Use = "Read",
 		InUse = false,
-		CanArchive = true,
 	},
 
 	RationsPoster = {

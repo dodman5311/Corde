@@ -1,5 +1,5 @@
 local module = {
-	HUNGER_RATE = 0.3,
+	HUNGER_RATE = 0.6,
 	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 
@@ -7,10 +7,10 @@ local module = {
 }
 
 local CollectionService = game:GetService("CollectionService")
-local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local moveDirection = Vector2.zero
@@ -19,23 +19,23 @@ local logPlayerDirection = 0
 local camera = workspace.CurrentCamera
 local Client = player.PlayerScripts.Client
 
-local uiAnimationService = require(Client.UIAnimationService)
+local acts = require(Client.Acts)
 local inventory = require(Client.Inventory)
+local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 local weapons = require(Client.WeaponSystem)
-local acts = require(Client.Acts)
 local lastHeartbeat = os.clock()
-local interact = require(Client.Interact)
+local Types = require(ReplicatedStorage.Shared.Types)
+local areas = require(Client.Areas)
 local cameraService = require(Client.Camera)
 local cameraShaker = require(Client.CameraShaker)
-local haptics = require(Client.Haptics)
-local globalInputService = require(Client.GlobalInputService)
 local controller = require(player.PlayerScripts.PlayerModule):GetControls()
-local areas = require(Client.Areas)
 local dialogue = require(Client.Dialogue)
-local sequences = require(Client.Sequences)
+local globalInputService = require(Client.GlobalInputService)
+local haptics = require(Client.Haptics)
+local interact = require(Client.Interact)
 local net = require(ReplicatedStorage.Packages.Net)
-local Types = require(ReplicatedStorage.Shared.Types)
+local sequences = require(Client.Sequences)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds

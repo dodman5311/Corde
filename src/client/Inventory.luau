@@ -69,6 +69,9 @@ Inventory.InvetoryToggled = signal.new()
 
 Inventory.statusPumpTimer = timer:new("HealthPump", 1)
 
+local INVENTORY_SIZE = 8
+local STORAGE_SIZE = 12
+
 --// Functions
 function Inventory:ShowNotification(itemName: string, notificationMessage: string, color: Color3?)
 	local newNotification = gui.Notification:Clone()
@@ -134,7 +137,7 @@ function Inventory:CheckSlot(slot: string | number): item?
 end
 
 function Inventory:GetFirstEmptySlot(): string? -- returns slot index, (String)
-	for slotIndex = 1, 12 do
+	for slotIndex = 1, INVENTORY_SIZE do
 		if self:CheckSlot("slot_" .. slotIndex) then
 			continue
 		end
@@ -225,7 +228,7 @@ function Inventory:ChangeSlot(slot, slotToChangeTo)
 		return
 	end
 
-	if slotToChangeTo == "slot_13" and typeof(item.Value) ~= "table" then
+	if slotToChangeTo == "Weapon_Slot" and typeof(item.Value) ~= "table" then
 		return
 	end
 
@@ -408,7 +411,7 @@ local function getRecoil(stats)
 end
 
 local function setUpWeapon()
-	local weapon: item = Inventory["slot_13"]
+	local weapon: item = Inventory["Weapon_Slot"]
 
 	local weaponUi = UI.Inventory.Weapon
 
@@ -468,7 +471,7 @@ local function setUpWeapon()
 end
 
 local function compareWeapon(baseWeapon: item)
-	local weapon: item? = Inventory["slot_13"]
+	local weapon: item? = Inventory["Weapon_Slot"]
 
 	local weaponUi = UI.Inventory.WeaponCompare
 
@@ -694,7 +697,7 @@ local function emptyWeaponSlot()
 
 	util.PlayFrom(player.Character, sounds.Unequip)
 
-	Inventory:ChangeSlot("slot_13", Inventory:GetFirstEmptySlot())
+	Inventory:ChangeSlot("Weapon_Slot", Inventory:GetFirstEmptySlot())
 	refreshGui()
 end
 
@@ -703,7 +706,7 @@ local function getSlotIndexFromUi(slotUi: Frame): number?
 end
 
 function Inventory:UseItem(slotUi)
-	if getSlotIndexFromUi(slotUi) > 13 then
+	if getSlotIndexFromUi(slotUi) > INVENTORY_SIZE then
 		util.PlaySound(sounds.Deny)
 		return
 	end
@@ -719,7 +722,7 @@ function Inventory:UseItem(slotUi)
 	end
 
 	if item.Use == "EquipWeapon" then
-		Inventory:ChangeSlot(slotUi.Name, "slot_13")
+		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
 	elseif item.Use == "Read" then
 		openNote(item)
 	else
@@ -737,15 +740,16 @@ local function createGuiSlot(parent, index)
 end
 
 local function createGuiSlots()
-	for slotIndex = 1, 10 do
+	for slotIndex = 1, INVENTORY_SIZE do
 		createGuiSlot(UI.Inventory.Slots, slotIndex)
 	end
 
-	for slotIndex = 1, 10 do
+	for slotIndex = 1, INVENTORY_SIZE do
 		createGuiSlot(UI.Storage.Slots_Inventory, slotIndex)
 	end
 
-	for slotIndex = 14, 25 do
+	local nextIndex = INVENTORY_SIZE + 1
+	for slotIndex = nextIndex, nextIndex + STORAGE_SIZE do
 		createGuiSlot(UI.Storage.Slots_Storage, slotIndex)
 	end
 end
@@ -1008,7 +1012,7 @@ local function connectSlotButton(slotUi)
 		if holdingObject.Action == "Move" then
 			local item = Inventory:CheckSlot(holdingObject.SlotFrame.Name)
 
-			if item and item.InUse and slotNumberIndex > 13 then
+			if item and item.InUse and slotNumberIndex > INVENTORY_SIZE then
 				util.PlaySound(sounds.Deny)
 			else
 				local clickSound = util.PlaySound(sounds.OptionClick)
@@ -1074,7 +1078,7 @@ local function initGui()
 	weaponDisplay.MouseEnter:Connect(function()
 		util.PlaySound(sounds.InventoryHover)
 		task.wait(0.05)
-		showItemDesciption(Inventory:CheckSlot(13), UI.Inventory)
+		showItemDesciption(Inventory:CheckSlot("Weapon_Slot"), UI.Inventory)
 	end)
 
 	weaponDisplay.MouseLeave:Connect(hideDescription)
@@ -1082,7 +1086,7 @@ local function initGui()
 	weaponDisplay.SelectionGained:Connect(function()
 		util.PlaySound(sounds.InventoryHover)
 		task.wait(0.05)
-		showItemDesciption(Inventory:CheckSlot(13), UI.Inventory)
+		showItemDesciption(Inventory:CheckSlot("Weapon_Slot"), UI.Inventory)
 	end)
 
 	weaponDisplay.SelectionLost:Connect(hideDescription)
@@ -1309,7 +1313,7 @@ end
 function Inventory.StartGame()
 	Inventory.ToggleInventoryInput:Enable()
 
-	if Inventory:CheckSlot(13) then
+	if Inventory:CheckSlot("Weapon_Slot") then
 	end
 end
 

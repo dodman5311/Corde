@@ -14,20 +14,20 @@ local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 local camera = workspace.CurrentCamera
 
-local uiAnimationService = require(Client.UIAnimationService)
-local inventory = require(Client.Inventory)
-local acts = require(Client.Acts)
-local util = require(Client.Util)
-local spring = require(Client.Spring)
+local Types = require(ReplicatedStorage.Shared.Types)
 local actionPrompt = require(Client.ActionPrompt)
-local projectiles = require(Client.Projectiles)
-local sequences = require(Client.Sequences)
+local acts = require(Client.Acts)
 local cameraService = require(Client.Camera)
 local cameraShaker = require(Client.CameraShaker)
-local haptics = require(Client.Haptics)
-local signal = require(ReplicatedStorage.Packages.Signal)
 local globalInputService = require(Client.GlobalInputService)
-local Types = require(ReplicatedStorage.Shared.Types)
+local haptics = require(Client.Haptics)
+local inventory = require(Client.Inventory)
+local projectiles = require(Client.Projectiles)
+local sequences = require(Client.Sequences)
+local signal = require(ReplicatedStorage.Packages.Signal)
+local spring = require(Client.Spring)
+local uiAnimationService = require(Client.UIAnimationService)
+local util = require(Client.Util)
 
 local currentWeapon: Types.weapon?
 local fireKeyDown = false
@@ -518,7 +518,7 @@ local function fireWeapon(input)
 end
 
 inventory.SlotValueChanged:Connect(function(slot, value)
-	if slot ~= "slot_13" then
+	if slot ~= "Weapon_Slot" then
 		return
 	end
 
@@ -564,7 +564,7 @@ inventory.ItemRemoved:Connect(function(item)
 end)
 
 function module.StartGame()
-	module.equipWeapon(inventory:CheckSlot("slot_13"))
+	module.equipWeapon(inventory:CheckSlot("Weapon_Slot"))
 
 	print(currentWeapon)
 
