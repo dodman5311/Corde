@@ -2,11 +2,11 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 
-local util = require(client.Util)
-local sequences = require(client.Sequences)
 local acts = require(client.Acts)
-local globalInputService = require(client.GlobalInputService)
 local dialogue = require(client.Dialogue)
+local globalInputService = require(client.GlobalInputService)
+local sequences = require(client.Sequences)
+local util = require(client.Util)
 
 local assets = ReplicatedStorage.Assets
 local HUD
