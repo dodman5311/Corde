@@ -2,28 +2,28 @@ local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
 local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
-local signal = require(ReplicatedStorage.Packages.Signal)
-local mouseOver = require(script.Parent.MouseOver)
-local uiAnimationService = require(script.Parent.UIAnimationService)
-local musicService = require(script.Parent.MusicService)
-local util = require(script.Parent.Util)
-local globalInputService = require(script.Parent.GlobalInputService)
-local saveLoad = require(script.Parent.SaveLoad)
 local Types = require(ReplicatedStorage.Shared.Types)
-local objectFunctions = require(script.Parent.ObjectFunctions)
-local gameSettings = require(script.Parent.GameSettings)
-local slider = require(script.Parent.Slider)
-local world = require(script.Parent.World)
 local acts = require(script.Parent.Acts)
+local gameSettings = require(script.Parent.GameSettings)
+local globalInputService = require(script.Parent.GlobalInputService)
+local mouseOver = require(script.Parent.MouseOver)
+local musicService = require(script.Parent.MusicService)
+local objectFunctions = require(script.Parent.ObjectFunctions)
+local saveLoad = require(script.Parent.SaveLoad)
 local scales = require(script.Parent.Scales)
+local signal = require(ReplicatedStorage.Packages.Signal)
+local slider = require(script.Parent.Slider)
+local uiAnimationService = require(script.Parent.UIAnimationService)
+local util = require(script.Parent.Util)
+local world = require(script.Parent.World)
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -105,6 +105,7 @@ local function closeGui(transitionTime: number?)
 	menu.Settings.Visible = false
 	menu.Main.Visible = false
 	menu.Background.Visible = false
+	menu.Difficulty.Visible = false
 
 	task.wait(transitionTime / 3.5)
 
@@ -115,30 +116,51 @@ local function closeGui(transitionTime: number?)
 	end, Enum.PlaybackState.Completed)
 end
 
+local function showDifficulty()
+	doTransition()
+	menu.Save.Visible = false
+
+	local difficultyFrame = menu.Difficulty
+	difficultyFrame.Size = UDim2.fromScale(0.95, 0.95)
+
+	difficultyFrame.Visible = false
+	util.tween(difficultyFrame, TweenInfo.new(0.25), { Size = UDim2.fromScale(1, 1) })
+	util.flickerUi(difficultyFrame, 0.025, 8, false)
+
+	globalInputService:SelectGui(difficultyFrame.Options.Solemn)
+end
+
 local function SaveLoadGame(button: GuiButton, newGame: boolean?)
 	saveMenu.Slot_0.SaveSlot.Visible = false
 	saveMenu.Slot_1.SaveSlot.Visible = false
 	saveMenu.Slot_2.SaveSlot.Visible = false
 
 	util.PlaySound(sounds.CloseSave)
-
-	closeGui()
-
 	sounds.InventoryAmbience:Stop()
 	-- load game
 
 	if newGame == true then
-		module.StartEvent:Fire()
+		showDifficulty()
 		return
 	elseif newGame == false then
+		closeGui()
 		return
 	end
 
 	local slotIndex = button:GetAttribute("SlotIndex")
 	if menu.Save:GetAttribute("Type") == "Load" then
-		module.StartEvent:Fire(saveLoad:LoadGame(slotIndex))
+		local loadedData = saveLoad:LoadGame(slotIndex)
+
+		if loadedData then
+			workspace:SetAttribute("Difficulty", loadedData["Difficulty"] or 1)
+			module.StartEvent:Fire(loadedData)
+			closeGui()
+		else
+			showDifficulty()
+		end
 	else
 		saveLoad:SaveGame(slotIndex)
+		closeGui()
 	end
 end
 
@@ -458,7 +480,7 @@ local function loadSettings(settingGroup: {})
 		end
 
 		connectSettingButtons(newLabel, setting)
-		enableButtonFunctions({ newLabel })
+		enableButtonFunctions { newLabel }
 	end
 end
 
@@ -495,7 +517,7 @@ local function loadSettingGroups()
 			switchToPage("SettingValues", settingGroup)
 		end)
 
-		enableButtonFunctions({ newGroupButton })
+		enableButtonFunctions { newGroupButton }
 	end
 end
 
@@ -648,6 +670,27 @@ module.hoverFunctions = { -- SAVE MENU
 			buttonImage.Parent.SaveSlot.Active = true
 		end,
 	},
+
+	DifficultyOption = {
+		Enter = function(button: GuiButton)
+			local ti = TweenInfo.new(0.25)
+
+			util.tween(button.DescriptionFrame, ti, { BackgroundTransparency = 0 })
+			util.tween(button.DescriptionFrame.Description, ti, { TextTransparency = 0 })
+
+			local size = button.Parent:GetAttribute("DefaultSize")
+			util.tween(button.Parent, ti, { Size = UDim2.fromScale(size.X.Scale + 0.01, size.Y.Scale + 0.01) })
+		end,
+
+		Exit = function(button: GuiButton)
+			local ti = TweenInfo.new(0.25)
+
+			util.tween(button.DescriptionFrame, ti, { BackgroundTransparency = 1 })
+			util.tween(button.DescriptionFrame.Description, ti, { TextTransparency = 1 })
+
+			util.tween(button.Parent, ti, { Size = button.Parent:GetAttribute("DefaultSize") })
+		end,
+	},
 }
 
 module.pageFunctions = {
@@ -753,6 +796,20 @@ module.pageFunctions = {
 						saveFrame.Area.Text = saveData.Area
 						saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
 
+						local difficulty = "Solemn"
+						saveFrame.Difficulty.TextColor3 = Color3.new(1, 1, 1)
+
+						if saveData["Difficulty"] then
+							if saveData.Difficulty == 0 then
+								difficulty = "Hope"
+							elseif saveData.Difficulty == 2 then
+								difficulty = "Despair"
+								saveFrame.Difficulty.TextColor3 = Color3.new(1)
+							end
+						end
+
+						saveFrame.Difficulty.Text = "Difficulty: " .. difficulty
+
 						saveFrame.Visible = true
 						label.LoadGame.Visible = true
 						label.NewGame.Visible = false
@@ -857,7 +914,7 @@ module.buttonFunctions = {
 
 		globalInputService:SelectGui(deletePrompt.CancelBtn)
 
-		lockSelectionTo({ deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button })
+		lockSelectionTo { deletePrompt.CancelBtn.Button, deletePrompt.ConfirmBtn.Button }
 
 		local cancelConnect
 		local confirmConnect
@@ -887,6 +944,12 @@ module.buttonFunctions = {
 			lockSelection = {}
 		end)
 	end,
+
+	SetDifficulty = function(button)
+		workspace:SetAttribute("Difficulty", button:GetAttribute("DifficultyValue"))
+		closeGui()
+		module.StartEvent:Fire()
+	end,
 }
 
 local function EscKey()
@@ -908,6 +971,10 @@ function module.Init()
 		switchToPage("Main")
 	end)
 	enableButtonFunctions()
+
+	for _, optionFrame in ipairs(menu.Difficulty.Options:GetChildren()) do
+		optionFrame:SetAttribute("DefaultSize", optionFrame.Size)
+	end
 
 	UserInputService.InputBegan:Once(function()
 		mainFrame.PressKeyPrompt.Visible = false

@@ -25,6 +25,7 @@ export type GameState = {
 	PlayTime: number,
 	Area: string,
 	CurrentLayerIndex: string,
+	Difficulty: number,
 
 	PlayerStats: {
 		Position: { X: number, Y: number, Z: number },
@@ -32,7 +33,6 @@ export type GameState = {
 		Health: number,
 		Hunger: number,
 		Inventory: {},
-		StoreBox: {},
 	},
 
 	Layers: { LayerData },

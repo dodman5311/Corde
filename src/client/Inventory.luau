@@ -1185,8 +1185,6 @@ function Inventory.CloseInventory()
 
 	holdingObject = {}
 	UI.MoveObject.Visible = false
-
-	print(Inventory)
 end
 
 local function noteNavigationInput(state, input)

@@ -1,8 +1,8 @@
 local saveLoad = {}
 
 --// Services
-local HttpService = game:GetService("HttpService")
 local CollectionService = game:GetService("CollectionService")
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -10,11 +10,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
 --// Modules
-local NpcFunctions = require(script.Parent.NpcFunctions)
+local Areas = require(script.Parent.Areas)
 local Inventory = require(script.Parent.Inventory)
 local Net = require(ReplicatedStorage.Packages.Net)
+local NpcFunctions = require(script.Parent.NpcFunctions)
 local Types = require(ReplicatedStorage.Shared.Types)
-local Areas = require(script.Parent.Areas)
 
 --// Values
 local interactables = {} -- Hackable, interest, interactable
@@ -73,6 +73,7 @@ function getGameState(): Types.GameState
 		PlayTime = (os.clock() - workspace:GetAttribute("StartTime")) + workspace:GetAttribute("PlayTime"),
 		Area = Areas.currentArea and Areas.currentArea.Name or "Unknown",
 		CurrentLayerIndex = currentLayerIndex,
+		Difficulty = workspace:GetAttribute("Difficulty"),
 
 		PlayerStats = {
 			Position = serializeVector3(character:GetPivot().Position),

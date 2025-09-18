@@ -284,7 +284,7 @@ function module:DamagePlayer(damage: number, damageType: string)
 	if workspace:GetAttribute("Difficulty") == 0 then -- @Difficulty handle damage taken
 		damage *= 0.75
 	elseif workspace:GetAttribute("Difficulty") == 2 then
-		damage *= 1.5
+		damage *= 1.75
 	end
 
 	if player.Character:GetAttribute("Hunger") <= 0 then
