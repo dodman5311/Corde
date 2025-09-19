@@ -540,7 +540,7 @@ A Bio Module that connects the user to nearby devices.]],
 
 	Toolbox = {
 		Name = "Toolbox",
-		Desc = "A small toolbox",
+		Desc = "A locked toolbox",
 		Value = nil,
 		InUse = false,
 		Icon = "rbxassetid://135848984864658",
