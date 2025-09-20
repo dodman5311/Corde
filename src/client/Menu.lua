@@ -1,12 +1,12 @@
 local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
-local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
-local ProximityPromptService = game:GetService("ProximityPromptService")
+local userSettings = UserSettings():GetService("UserGameSettings")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
@@ -31,7 +31,7 @@ local gui = assets.Gui
 local sounds = assets.Sounds
 
 local titleTheme = assets.Music.ToHisConcern
-local menu = gui.Menu
+local menu = StarterGui.Menu
 menu.Parent = Players.LocalPlayer.PlayerGui
 
 local mainFrame = menu.Main
@@ -521,10 +521,8 @@ local function loadSettingGroups()
 	end
 end
 
-function module:ShowDisclaimer()
-	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
-
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 })
+local function waitForInput(timeout: number?)
+	timeout = timeout or 5
 
 	local inputSignal
 	inputSignal = UserInputService.InputBegan:Connect(function(input)
@@ -545,13 +543,35 @@ function module:ShowDisclaimer()
 	local start = os.clock()
 	repeat
 		task.wait()
-	until not inputSignal or os.clock() - start >= 4
+	until not inputSignal or os.clock() - start >= timeout
 
 	if inputSignal then
 		inputSignal:Disconnect()
 	end
+end
 
-	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 }, true)
+function module:ShowGraphicsPrompt()
+	util.tween(menu.Transition, TweenInfo.new(0), { BackgroundTransparency = 0 }, true)
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 0 })
+
+	local inputSignal
+	inputSignal = UserInputService.InputBegan:Connect(function(input)
+		util.tween(menu.Graphics, TweenInfo.new(0), { TextColor3 = Color3.new(1) }, true)
+		util.tween(menu.Graphics, TweenInfo.new(0.5), { TextColor3 = Color3.new(1, 1, 1) })
+	end)
+
+	repeat
+		task.wait()
+	until userSettings.SavedQualityLevel.Value >= 8
+
+	inputSignal:Disconnect()
+	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 })
+end
+
+function module:ShowDisclaimer()
+	module:ShowGraphicsPrompt()
+
+	--waitForInput(4)
 end
 
 module.hoverFunctions = { -- SAVE MENU
@@ -966,6 +986,8 @@ local function EscKey()
 end
 
 function module.Init()
+	menu.Enabled = true
+
 	task.spawn(function()
 		module:ShowDisclaimer()
 		switchToPage("Main")

@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
 local assets = ReplicatedStorage.Assets
@@ -16,17 +17,17 @@ local camera = workspace.CurrentCamera
 local currentActivePoint = Instance.new("ObjectValue")
 local lastActivePoint
 
-local UI = gui.NET
+local UI = StarterGui.NET
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
-local uiAnimationService = require(Client.UIAnimationService)
-local acts = require(Client.Acts)
 local actionPrompt = require(Client.ActionPrompt)
-local util = require(Client.Util)
-local hackingFunctions = require(Client.HackingFunctions)
+local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
+local hackingFunctions = require(Client.HackingFunctions)
 local inventory = require(Client.Inventory)
+local uiAnimationService = require(Client.UIAnimationService)
+local util = require(Client.Util)
 
 local ti = TweenInfo.new(0.25)
 
@@ -302,22 +303,22 @@ local function drawNetLines(validPoints: {}, closestPoint: BillboardGui)
 		netLineAttachment.WorldCFrame = object:GetPivot()
 
 		if netPoint == closestPoint then
-			netLine.Transparency = NumberSequence.new({
+			netLine.Transparency = NumberSequence.new {
 				NumberSequenceKeypoint.new(0, 0.5),
 				NumberSequenceKeypoint.new(0.8, 0.5),
 				NumberSequenceKeypoint.new(0.801, 1),
 				NumberSequenceKeypoint.new(1, 1),
-			})
+			}
 			netLine.Color = ColorSequence.new(Color3.fromRGB(135, 255, 255))
 			netLine.Width0 = 0.05
 			netLine.Width1 = 0.05
 		else
-			netLine.Transparency = NumberSequence.new({
+			netLine.Transparency = NumberSequence.new {
 				NumberSequenceKeypoint.new(0, 0.75),
 				NumberSequenceKeypoint.new(0.8, 0.75),
 				NumberSequenceKeypoint.new(0.801, 1),
 				NumberSequenceKeypoint.new(1, 1),
-			})
+			}
 			netLine.Color = ColorSequence.new(Color3.new(1, 1, 1))
 			netLine.Width0 = 0.025
 			netLine.Width1 = 0.025

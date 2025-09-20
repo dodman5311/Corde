@@ -1,7 +1,7 @@
 return {
 
 	{
-		{ "LeftShift", "ButtonR2", "Hold   ", 0.565, 2 },
+		{ "InputName", "Sprint", "Hold   ", 0.565, 2 },
 	},
 
 	[[Rationing means a fair share for all of us.]],

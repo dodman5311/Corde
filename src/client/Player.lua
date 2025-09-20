@@ -10,6 +10,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
@@ -40,12 +41,11 @@ local sequences = require(Client.Sequences)
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
-local gui = assets.Gui
 
-local HUD = gui.HUD
-HUD.Parent = player.PlayerGui
+local HUD = StarterGui.HUD
+HUD.Parent = player:WaitForChild("PlayerGui")
 
-local cursor = gui.Cursor
+local cursor = StarterGui.Cursor
 cursor.Parent = player.PlayerGui
 
 local currentStimEquipped
@@ -605,6 +605,7 @@ end
 function module.Init()
 	UserInputService.InputChanged:Connect(updateGamepadCursorData)
 
+	HUD.Enabled = true
 	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
 		HUD.Glitch.Visible = math.random(1, 2) ~= 1
 

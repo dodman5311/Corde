@@ -1,15 +1,36 @@
-give enemies pathfinding and better turning *
+Security robots ()
+Change dialogue box input type ()
+
+fix enemy turning / aiming
 
 Add dead bodies
 
-Security robots
-
 add pickup at start
-
-Change dialogue box input type
 
 Settings to add:
 Particles
 
 vibration
 screen shake
+
+--------------------------------------------------
+
+Add auto load after death
+Add ghost hunger bar
+Fix inventory after death
+
+When a hacked item is hacked, make it discovered with a visual.
+
+Add screen hints:
+
+-- Press E to open inventory.
+-- hack your first door "Hackable objects, once discovered, will be marked as long as they are still hackable."
+-- pickup food "Hold left shift to run. Running drains your hunger."
+
+Hold R to check chamber
+
+Implement achievements
+
+make settings save
+
+Rewrite the pistol manual *

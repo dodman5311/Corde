@@ -2,8 +2,8 @@ return {
 
 	{
 		{
-			"Tab",
-			"ButtonL1",
+			"InputName",
+			"N.E.T",
 			"Once installed. Press and hold   ",
 			0.424,
 			2,

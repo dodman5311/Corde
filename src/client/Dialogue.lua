@@ -1,6 +1,6 @@
-local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local Dialogue = {}
 
@@ -10,11 +10,12 @@ local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local gui = assets.Gui
 
-local UI = gui.Dialogue
+local UI = StarterGui.Dialogue
 UI.Parent = player.PlayerGui
 UI.Enabled = false
 
 local client = script.Parent
+local Hints = require(script.Parent.Hints)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
@@ -84,16 +85,16 @@ local actionsFunctions = {
 		inventory:AddItem(currentNpcModule.ObjectToGive)
 	end,
 
-	PlaySound = function(parameters)
-		util.PlaySound(sounds[parameters[1]])
+	PlaySound = function(soundName)
+		util.PlaySound(sounds[soundName])
 	end,
 
-	RemoveItem = function(parameters)
-		return inventory:RemoveItem(parameters[1])
+	RemoveItem = function(itemName)
+		return inventory:RemoveItem(itemName)
 	end,
 
-	AddItem = function(parameters)
-		inventory:AddItem(items[parameters[1]])
+	AddItem = function(itemName)
+		inventory:AddItem(items[itemName])
 	end,
 
 	DisableInteract = function()
@@ -104,16 +105,20 @@ local actionsFunctions = {
 		currentNpc:RemoveTag("Interactable")
 	end,
 
-	CheckForItem = function(parameters)
-		return inventory:SearchForItem(parameters[1])
+	Hint = function(index)
+		Hints:DisplayPresetHint(index)
+	end,
+
+	CheckForItem = function(itemName)
+		return inventory:SearchForItem(itemName)
 	end,
 
 	HasNet = function()
 		return player.Character and player.Character:GetAttribute("HasNet")
 	end,
 
-	SetStart = function(parameters)
-		local path = string.split(parameters[1], ".")
+	SetStart = function(startPath)
+		local path = string.split(startPath, ".")
 		local container, index = path[1], path[2]
 
 		if container == "Module" then
@@ -125,12 +130,12 @@ local actionsFunctions = {
 		currentNpcModule.Dialogue.Start = container[index]
 	end,
 
-	BeginSequence = function(parameters)
-		sequences:beginSequence(parameters[1], currentNpc)
+	BeginSequence = function(sequenceName)
+		sequences:beginSequence(sequenceName, currentNpc)
 	end,
 
-	FireEvent = function(parameters)
-		Dialogue.DialogueActionSignal:Fire(table.unpack(parameters))
+	FireEvent = function(eventName)
+		Dialogue.DialogueActionSignal:Fire(table.unpack(eventName))
 	end,
 }
 
@@ -143,7 +148,7 @@ local function doAction(action: string)
 		return
 	end
 
-	return actionsFunctions[actionIndex](parameters)
+	return actionsFunctions[actionIndex](table.unpack(parameters))
 end
 
 local function checkForCondition(option)

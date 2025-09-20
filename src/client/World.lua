@@ -10,10 +10,10 @@ local player = Players.LocalPlayer
 
 local Client = player.PlayerScripts.Client
 
+local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 local interact = require(Client.Interact)
-local Types = require(ReplicatedStorage.Shared.Types)
 
 function module:pause()
 	if acts:checkAct("Paused") then

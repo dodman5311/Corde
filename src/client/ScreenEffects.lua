@@ -1,7 +1,7 @@
 local screenEffects = {}
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local effectsGui = ReplicatedStorage.Assets.Gui.ScreenEffects
+local StarterGui = game:GetService("StarterGui")
+local effectsGui = StarterGui.ScreenEffects
 
 effectsGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 

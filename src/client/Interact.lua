@@ -22,19 +22,20 @@ local cursorUi
 local objectPlacedAt
 
 local Client = player.PlayerScripts.Client
-local uiAnimationService = require(Client.UIAnimationService)
-local inventory = require(Client.Inventory)
-local dialogue = require(Client.Dialogue)
-local acts = require(Client.Acts)
+local Hints = require(script.Parent.Hints)
 local actionPrompt = require(Client.ActionPrompt)
-local timer = require(Client.Timer)
-local util = require(Client.Util)
-local globalInputService = require(Client.GlobalInputService)
-local objectsView = require(Client.ObjectsView)
-local objectFunctions = require(Client.ObjectFunctions)
-local sequences = require(Client.Sequences)
+local acts = require(Client.Acts)
 local castTo = require(Client.CastTo)
+local dialogue = require(Client.Dialogue)
+local globalInputService = require(Client.GlobalInputService)
+local inventory = require(Client.Inventory)
+local objectFunctions = require(Client.ObjectFunctions)
+local objectsView = require(Client.ObjectsView)
 local scales = require(Client.Scales)
+local sequences = require(Client.Sequences)
+local timer = require(Client.Timer)
+local uiAnimationService = require(Client.UIAnimationService)
+local util = require(Client.Util)
 
 local interactTimer = timer:new("PlayerInteractionTimer", 0.5)
 local rng = Random.new()
@@ -285,6 +286,11 @@ end
 local function InteractiWithObject(object: Instance)
 	if objectsView:EnterView(object) or not object:HasTag("Interactable") then
 		return
+	end
+
+	local hint = object:GetAttribute("Hint")
+	if hint then
+		Hints:DisplayPresetHint(hint)
 	end
 
 	if object:HasTag("Container") then

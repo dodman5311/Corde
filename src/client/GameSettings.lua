@@ -48,7 +48,7 @@ local gameSettings = {
 		{
 			Name = "Hints",
 			Type = "List",
-			Value = false,
+			Value = true,
 			Values = { true, false },
 			OnChanged = function() end,
 		},

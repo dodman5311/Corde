@@ -7,6 +7,7 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local Inventory = {
 	InventoryOpen = false,
@@ -22,8 +23,7 @@ local models = assets.Models
 local gui = assets.Gui
 local sounds = assets.Sounds
 
-local UITemplate = gui.Inventory
-local UI
+local UI = StarterGui.Inventory
 local currentSelectedSlot
 local camera = workspace.CurrentCamera
 
@@ -585,8 +585,14 @@ local function showNoteKeyprompts(note: item)
 
 		local newPrompt: ImageLabel = gui.Keyprompt:Clone()
 		newPrompt.Image:AddTag("KeyPrompt")
-		newPrompt.Image:SetAttribute("Key", key)
-		newPrompt.Image:SetAttribute("Button", button)
+
+		if key == "InputName" then
+			newPrompt.Image:SetAttribute("InputName", button)
+		else
+			newPrompt.Image:SetAttribute("Key", key)
+			newPrompt.Image:SetAttribute("Button", button)
+		end
+
 		newPrompt.Parent = UI.Note.Message
 
 		newPrompt.Image.Position = UDim2.fromScale(1, yPos)
@@ -1050,7 +1056,6 @@ local function connectSlotButton(slotUi)
 end
 
 local function initGui()
-	UI = UITemplate
 	UI.Parent = player.PlayerGui
 	UI.Enabled = false
 

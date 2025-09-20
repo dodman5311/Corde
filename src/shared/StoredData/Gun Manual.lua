@@ -2,24 +2,24 @@ return {
 
 	{
 		{
-			"MouseButton2",
-			"ButtonL2",
+			"InputName",
+			"Ready Weapon",
 			"To equip a gun, use the weapon in your inventory. Once equipped, hold    ",
 			0.25,
 			2,
 		},
 
 		{
-			"MouseButton1",
-			"ButtonR2",
+			"InputName",
+			"Fire Weapon",
 			"While your weapon is ready, press   ",
 			0.368,
 			2,
 		},
 
 		{
-			"R",
-			"ButtonL1",
+			"InputName",
+			"Reload",
 			"To load or reload your weapon, press   ",
 			0.525,
 			2,

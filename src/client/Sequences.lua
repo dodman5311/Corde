@@ -1,30 +1,29 @@
 local module = {}
 
+local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local ContentProvider = game:GetService("ContentProvider")
+local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
 local assets = ReplicatedStorage.Assets
-local gui = assets.Gui
 local soundsFolder = assets.Sounds
 
 local sequenceSounds = soundsFolder.SequenceSounds
 local camera = workspace.CurrentCamera
 
-local UI = gui.Sequences
+local UI = StarterGui.Sequences
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
-local uiAnimationService = require(Client.UIAnimationService)
 local acts = require(Client.Acts)
-local util = require(Client.Util)
-local musicService = require(Client.MusicService)
 local globalInputService = require(Client.GlobalInputService)
-local CameraService = require(Client.Camera)
-local signal = require(ReplicatedStorage.Packages.Signal)
+local musicService = require(Client.MusicService)
 local scales = require(Client.Scales)
+local signal = require(ReplicatedStorage.Packages.Signal)
+local uiAnimationService = require(Client.UIAnimationService)
+local util = require(Client.Util)
 
 module.OnEnded = signal.new()
 
@@ -252,7 +251,10 @@ function module.InstallModule()
 		sequenceFrame.RedX.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
 	end)
 
-	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "They are waiting for you." })
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "They are waiting for you." }
+	)
 	sequenceFrame.ScreenText.Visible = true
 
 	task.wait(2.5)
@@ -552,7 +554,7 @@ local function deathScreenUi()
 	sequenceFrame.Visible = true
 
 	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.04, true)
-	ContentProvider:PreloadAsync({ sequenceFrame.Eye.Image })
+	ContentProvider:PreloadAsync { sequenceFrame.Eye.Image }
 
 	local start = os.clock()
 	local startFov = camera.FieldOfView
