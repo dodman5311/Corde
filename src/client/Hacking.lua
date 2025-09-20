@@ -26,6 +26,7 @@ local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 local hackingFunctions = require(Client.HackingFunctions)
 local inventory = require(Client.Inventory)
+local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
 local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 
@@ -117,6 +118,8 @@ local function showPointPromt(point)
 		return
 	end
 
+	point.Adornee:AddTag("Scanned")
+
 	util.PlaySound(sounds.Select, 0.025)
 
 	local hackUi = point.HackPrompt
@@ -172,6 +175,42 @@ local function hidePointPromt(point)
 	point.HackPrompt.Visible = false
 	point.Point.Visible = true
 	actionPrompt.hideEnergyUsage()
+end
+
+local function removeScan(object)
+	if not object:FindFirstChild("ScannedHighlight") then
+		return
+	end
+
+	local ti = TweenInfo.new(0.2)
+	util.tween(object.ScannedHighlight, ti, { FillTransparency = 1 }, false, function()
+		object.ScannedHighlight:Destroy()
+	end)
+end
+
+local function scanObject(object: Instance)
+	if object:FindFirstChild("ScannedHighlight") or not object:HasTag("Scanned") then
+		return
+	end
+
+	local newHighlight = Instance.new("Highlight")
+	newHighlight.Name = "ScannedHighlight"
+	newHighlight.FillColor = Color3.fromRGB(125, 235, 255)
+	newHighlight.FillTransparency = 1
+	newHighlight.OutlineTransparency = 1
+	newHighlight.DepthMode = Enum.HighlightDepthMode.Occluded
+	newHighlight.Enabled = util.getSetting("Gameplay", "Hints")
+
+	newHighlight:AddTag("ScannedHighlight")
+	newHighlight.Parent = object
+	newHighlight.Adornee = object
+
+	local ti = TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+	local ti_1 = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
+
+	util.tween(newHighlight, ti, { FillTransparency = 0.9 }, false, function()
+		util.tween(newHighlight, ti_1, { FillTransparency = 0.95, FillColor = Color3.fromRGB(45, 255, 140) })
+	end)
 end
 
 local function placeNetPoint(object: Instance)
@@ -523,5 +562,10 @@ currentActivePoint.Changed:Connect(function(point)
 
 	lastActivePoint = point
 end)
+
+CollectionService:GetInstanceRemovedSignal("Hackable"):Connect(removeScan)
+CollectionService:GetInstanceAddedSignal("Hackable"):Connect(scanObject)
+CollectionService:GetInstanceRemovedSignal("Scanned"):Connect(removeScan)
+CollectionService:GetInstanceAddedSignal("Scanned"):Connect(scanObject)
 
 return module

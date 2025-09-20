@@ -24,13 +24,22 @@ function getHintPresets()
 	return {
 		OpenInventory = {
 			KeyPrompts = {
-				{ "InputName", "Inventory", "Press   ", 0.425 },
+				{ "InputName", "Inventory", "Press   ", 0.445 },
 			},
 			Message = `Press      to open your inventory.`,
 			Color = Color3.fromRGB(35, 255, 235),
 		},
 		CombineItems = {
-			Message = "Sometimes two items can be <b>combined</b> together. Experiment with different items you can <b>combine</b>.",
+			Message = 'Sometimes two items can be <mark color="#009966" transparency="0">combined</mark> together. Experiment with different items you can <mark color="#009966" transparency="0">combine</mark>.',
+		},
+		Sprinting = {
+			KeyPrompts = {
+				{ "InputName", "Sprint", "Hold   ", 0.345 },
+			},
+			Message = "Hold      to sprint. Sprinting drains your hunger.",
+		},
+		HackDiscovery = {
+			Message = "Hackable objects, once scanned in N.E.T Mode, will remain marked as long as they are still hackable.",
 		},
 	}
 end
@@ -57,7 +66,7 @@ local function showNoteKeyprompts(keyPrompts, hintUi)
 		newPrompt.Parent = hintUi.Box.Message
 
 		newPrompt.Image.Position = UDim2.fromScale(1, yPos)
-		newPrompt.Image.Size = UDim2.fromScale(0.225, 0.225)
+		newPrompt.Image.Size = UDim2.fromScale(0.15, 0.15)
 		newPrompt.Text = preText
 
 		local setSize = RunService.RenderStepped:Connect(function()
@@ -125,7 +134,7 @@ function HintSystem:DisplayHint(message: string, displayTime: number?, color: Co
 	showNoteKeyprompts(keyPrompts, newHintUi)
 
 	local setSize = RunService.RenderStepped:Connect(function()
-		newHintUi.Box.Message.TextSize = math.floor(newHintUi.Box.Message.AbsoluteSize.X / 10.4)
+		newHintUi.Box.Message.TextSize = math.floor(newHintUi.Box.Message.AbsoluteSize.X / 15)
 	end)
 
 	newHintUi.Destroying:Once(function()

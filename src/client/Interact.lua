@@ -252,6 +252,11 @@ local function attemptInteract(object: Instance)
 		return
 	end
 
+	local hint = object:GetAttribute("Hint")
+	if hint then
+		Hints:DisplayPresetHint(hint)
+	end
+
 	if object:GetAttribute("Locked") then
 		if object:FindFirstChild("LockedSide") and checkSightline(object.LockedSide) then
 			dialogue:EnterDialogue(object.LockedSide)
@@ -278,19 +283,23 @@ end
 
 local function pickupContainer()
 	util.PlayFrom(player.Character, sounds.Collecting, 0.05, 0.5)
+	local object = mouseTarget.Value
 	runTimer("Collecting", 0.5, function()
-		inventory:pickupFromContainer(mouseTarget.Value)
+		if object ~= mouseTarget.Value then
+			return
+		end
+		local hint = object:GetAttribute("Hint")
+		if hint then
+			Hints:DisplayPresetHint(hint)
+		end
+
+		inventory:pickupFromContainer(object)
 	end)
 end
 
 local function InteractiWithObject(object: Instance)
 	if objectsView:EnterView(object) or not object:HasTag("Interactable") then
 		return
-	end
-
-	local hint = object:GetAttribute("Hint")
-	if hint then
-		Hints:DisplayPresetHint(hint)
 	end
 
 	if object:HasTag("Container") then

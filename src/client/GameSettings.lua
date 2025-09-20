@@ -1,3 +1,4 @@
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -50,7 +51,11 @@ local gameSettings = {
 			Type = "List",
 			Value = true,
 			Values = { true, false },
-			OnChanged = function() end,
+			OnChanged = function(self)
+				for _, highlight: Highlight in ipairs(CollectionService:GetTagged("ScannedHighlight")) do
+					highlight.Enabled = self.Value
+				end
+			end,
 		},
 	},
 
