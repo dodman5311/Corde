@@ -15,15 +15,15 @@ UI.Parent = player.PlayerGui
 UI.Enabled = false
 
 local client = script.Parent
-local inventory = require(client.Inventory)
-local util = require(client.Util)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
+local inventory = require(client.Inventory)
+local items = require(ReplicatedStorage.Shared.Items)
 local sequences = require(client.Sequences)
 local signal = require(ReplicatedStorage.Packages.Signal)
-local items = require(ReplicatedStorage.Shared.Items)
 local storedData = require(ReplicatedStorage.Shared.StoredData)
+local util = require(client.Util)
 
 local currentNpcModule
 local currentNpc
@@ -33,7 +33,7 @@ local rng = Random.new()
 Dialogue.DialogueActionSignal = signal.new()
 
 local portraits = {
-	Player = 136036431177966,
+	Player = 94100968201136,
 	Echo = 102753832810768,
 }
 
@@ -488,11 +488,11 @@ function Dialogue:EnterPlayerMonologue(dialogueModule: {})
 end
 
 function Dialogue:SayFromPlayer(message: string)
-	self:EnterPlayerMonologue({
+	self:EnterPlayerMonologue {
 		Start = {
 			{ Speaker = "Player", Message = message },
 		},
-	})
+	}
 end
 
 return Dialogue
