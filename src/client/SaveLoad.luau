@@ -39,6 +39,8 @@ local function packInventory()
 		inv["slot_" .. i] = Inventory["slot_" .. i]
 	end
 
+	inv["Weapon_Slot"] = Inventory["Weapon_Slot"]
+
 	return inv
 end
 

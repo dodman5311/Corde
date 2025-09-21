@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 local camera = workspace.CurrentCamera
 
+local Timer = require(script.Parent.Timer)
 local Types = require(ReplicatedStorage.Shared.Types)
 local actionPrompt = require(Client.ActionPrompt)
 local acts = require(Client.Acts)
@@ -35,10 +36,11 @@ local readyKeyDown = false
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
-local gui = assets.Gui
 local models = assets.Models
 
-local UI
+local UNHOLSTER_TIME = 0.2
+
+local HUD
 
 local fireSound = Instance.new("Sound")
 fireSound.Parent = script
@@ -57,6 +59,7 @@ accuracyReduction.Speed = 5
 accuracyReduction.Target = 0
 
 local rng = Random.new()
+local checkChamberTimer = Timer:new("checkChamberInput", 0.5)
 
 module.onWeaponToggled = signal.new()
 local rp = RaycastParams.new()
@@ -118,7 +121,7 @@ end
 
 function module.toggleHolstered(value)
 	local character = player.Character
-	if not character or not currentWeapon or acts:checkAct("Reloading") then
+	if not character or not currentWeapon or acts:checkAct("Reloading", "CheckingChamber") then
 		return
 	end
 
@@ -133,7 +136,7 @@ function module.toggleHolstered(value)
 		util.PlayFrom(character, sounds.Unholster, 0.075)
 
 		acts:createTempAct("Holstering", function()
-			task.wait(0.2)
+			task.wait(UNHOLSTER_TIME)
 		end)
 	elseif not readyKeyDown and not module.weaponUnequipped then
 		showWeapon(0)
@@ -218,7 +221,7 @@ local function processCrosshair()
 	local spread = (currentWeapon and not module.weaponUnequipped) and currentWeapon.Value.Spread or 0
 	size = (mouseDistance * (spread + accuracyReduction.Position))
 
-	local crosshair = UI.Crosshair
+	local crosshair = HUD.Crosshair
 	size *= 0.025
 
 	crosshair.Position = UDim2.fromOffset(mousePosition.X, mousePosition.Y)
@@ -355,6 +358,53 @@ local function reload(itemToUse)
 
 	weaponData.CurrentMag = foundMag
 	acts:removeAct("Reloading", "Interacting")
+end
+
+local function checkChamber() -- @TODO Make compatable with rifle and shotgun
+	if not currentWeapon or not player.Character or acts:checkAct("Firing", "Reloading", "Interacting") then
+		return
+	end
+	if module.weaponUnequipped then
+		task.spawn(module.toggleHolstered, true)
+	end
+
+	acts:createAct("CheckingChamber", "Interacting")
+
+	task.wait(UNHOLSTER_TIME)
+
+	local mag = currentWeapon.Value.CurrentMag
+
+	local images = {
+		full = "rbxassetid://108066626327817",
+		empty = "rbxassetid://100968223712377",
+	}
+
+	local ti = TweenInfo.new(0.25)
+
+	if mag and mag.Value > 0 then
+		HUD.ChamberCheck.Image.Image = images.full
+	else
+		HUD.ChamberCheck.Image.Image = images.empty
+	end
+
+	actionPrompt.showAction(2, "Checking Chamber")
+
+	util.PlayFrom(player.Character, sounds.ChamberCheck.Pistol.Back, 0.025)
+
+	util.tween(HUD.ChamberCheck.Image, ti, { ImageTransparency = 0 })
+	local animation = uiAnimationService.PlayAnimation(HUD.ChamberCheck, 0.05)
+	animation:OnFrameRached(4):Wait()
+	animation:Pause()
+	task.wait(1)
+
+	util.PlayFrom(player.Character, sounds.ChamberCheck.Pistol.Forward, 0.025)
+
+	animation:Resume()
+	animation.OnEnded:Wait()
+	util.tween(HUD.ChamberCheck.Image, ti, { ImageTransparency = 1 })
+
+	task.delay(0.1, module.toggleHolstered, false)
+	acts:removeAct("CheckingChamber", "Interacting")
 end
 
 local function inflictPower(model: Model)
@@ -580,7 +630,7 @@ function module.StartGame()
 end
 
 function module.Init()
-	UI = player.PlayerGui.HUD
+	HUD = player.PlayerGui.HUD
 
 	UserInputService.MouseIconEnabled = false
 
@@ -636,11 +686,14 @@ inventory.InvetoryToggled:Connect(function(value)
 end)
 
 local function reloadInput(state)
-	if state ~= Enum.UserInputState.Begin then
-		return
+	if state == Enum.UserInputState.Begin then
+		print("Bals")
+		checkChamberTimer.Function = checkChamber
+		checkChamberTimer:Run()
+	elseif state == Enum.UserInputState.End then
+		checkChamberTimer:Cancel()
+		reload()
 	end
-
-	reload()
 end
 
 globalInputService.AddToActionGroup(

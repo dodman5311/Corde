@@ -130,7 +130,7 @@ function module.PlayAnimation(
 	end
 
 	animations[frame] = newAnimation
-	return animations[frame]
+	return newAnimation
 end
 
 function module.CheckPlaying(frame) -- returns the animation if it's playing
