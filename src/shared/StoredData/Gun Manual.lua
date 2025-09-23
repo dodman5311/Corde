@@ -5,7 +5,7 @@ return {
 			"InputName",
 			"Ready Weapon",
 			"To equip a gun, use the weapon in your inventory. Once equipped, hold    ",
-			0.25,
+			0.27,
 			2,
 		},
 
@@ -13,7 +13,7 @@ return {
 			"InputName",
 			"Fire Weapon",
 			"While your weapon is ready, press   ",
-			0.368,
+			0.385,
 			2,
 		},
 
@@ -21,7 +21,15 @@ return {
 			"InputName",
 			"Reload",
 			"To load or reload your weapon, press   ",
-			0.525,
+			0.548,
+			2,
+		},
+
+		{
+			"InputName",
+			"Reload",
+			"Hold   ",
+			0.78,
 			2,
 		},
 	},
@@ -44,6 +52,6 @@ To load or reload your weapon, press      or <b>use</b> a magazine in your inven
 
 If the magazine is empty, it needs to be refilled. To refill a magazine, first unload it from your gun by <b>using</b> it in your inventory, then <b>combine</b> it with bullets.
 
-<font color="#FF7800">Power:</font>
-Each bullet fired will push the enemy back by the power stat of your weapon. The higher the power, the greater the push back.]],
+<font color="#FF7800">Be sure, be safe:</font>
+Hold      to check your chamber and confirm if your gun is <b>loaded</b>.]],
 }
