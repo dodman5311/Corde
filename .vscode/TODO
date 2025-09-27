@@ -13,22 +13,19 @@ Particles
 vibration
 screen shake
 
+make settings save
+
 --------------------------------------------------
 
 Add auto load after death
 Add ghost hunger bar
-Fix inventory after death
+Fix opening inventory after death (lock input)
+
+add mobile support!
 
 When a hacked item is hacked, make it discovered with a visual.*
 
 Add screen hints:
-
--- hack your first door "Hackable objects, once discovered, will be marked as long as they are still hackable."
-
-Hold R to check chamber
+- "Hold R to check chamber"
 
 Implement achievements
-
-make settings save
-
-Rewrite the pistol manual *

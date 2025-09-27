@@ -495,6 +495,15 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		InUse = false,
 	},
 
+	Photo = {
+		Name = "Old Photo",
+		Desc = "A photo of me and my dad.",
+		Value = { Message = { "A photo of me and my dad." }, Image = "rbxassetid://135824933780230" },
+		Icon = "rbxassetid://82487541380359",
+		Use = "Read",
+		InUse = false,
+	},
+
 	--// Misc
 	NetModule = {
 		Name = "N.E.T Module",

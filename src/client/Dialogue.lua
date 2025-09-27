@@ -134,8 +134,8 @@ local actionsFunctions = {
 		sequences:beginSequence(sequenceName, currentNpc)
 	end,
 
-	FireEvent = function(eventName)
-		Dialogue.DialogueActionSignal:Fire(table.unpack(eventName))
+	FireEvent = function(...)
+		Dialogue.DialogueActionSignal:Fire(...)
 	end,
 }
 
