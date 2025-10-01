@@ -17,6 +17,7 @@ local UI = StarterGui.Sequences
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
+local Achievements = require(script.Parent.Achievements)
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 local musicService = require(Client.MusicService)
@@ -26,6 +27,7 @@ local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 
 module.OnEnded = signal.new()
+local rng = Random.new()
 
 local function changePropertyForTable(list: {}, propertyTable: {})
 	for _, object: Instance in ipairs(list) do
@@ -85,8 +87,18 @@ local function hideBars()
 	)
 end
 
+local function showMirrorMan()
+	if rng:NextNumber(0, 100) > 15 then
+		return
+	end
+
+	-- @TODO Show mirror man
+
+	Achievements:AwardAchievement(Achievements.Ids.WomanInTheMirror)
+end
+
 function module.UseMirror()
-	player:SetAttribute("MovementEnabled", false)
+	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 	showBars()
 	local ti = TweenInfo.new(2.5, Enum.EasingStyle.Quad)
 	local ti_0 = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
@@ -141,6 +153,7 @@ function module.UseMirror()
 	sequenceFrame.Visible = true
 
 	util.PlaySound(sequenceSounds.Cloth)
+	showMirrorMan()
 
 	for i = 0, 2 do
 		imageFrame.Image.Position = UDim2.new(-i, 0)
@@ -174,7 +187,7 @@ function module.UseMirror()
 		hideBars()
 		util.tween(UI.Fade, ti, { BackgroundTransparency = 1 })
 
-		player:SetAttribute("MovementEnabled", true)
+		globalInputService.actionGroups["PlayerControl"]:Enable("Sequence")
 	end)
 
 	for i = 2, 0, -1 do
@@ -185,7 +198,7 @@ function module.UseMirror()
 end
 
 function module.InstallModule()
-	player:SetAttribute("MovementEnabled", false)
+	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 	showBars()
 	local ti = TweenInfo.new(2.5, Enum.EasingStyle.Quad)
 	local ti_0 = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In)
@@ -327,7 +340,7 @@ function module.InstallModule()
 		hideBars()
 		util.tween(UI.Fade, ti, { BackgroundTransparency = 1 })
 
-		player:SetAttribute("MovementEnabled", true)
+		globalInputService.actionGroups["PlayerControl"]:Enable("Sequence")
 	end)
 
 	for i = -2, 0, 1 do
@@ -355,8 +368,7 @@ function module.keyhole(object: Model)
 	sequenceFrame.Visible = true
 	uiAnimationService.PlayAnimation(frame.Static, 0.5, true)
 
-	globalInputService.inputActions["Inventory"]:Disable()
-	player:SetAttribute("MovementEnabled", false)
+	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 
 	task.wait(4)
 	uiAnimationService.PlayAnimation(frame.Entity, 1, false, true).OnEnded:Wait()
@@ -368,8 +380,7 @@ function module.keyhole(object: Model)
 	util.tween(fade, ti, { BackgroundTransparency = 1 })
 
 	scales.activeScales["InteractDisabled"]:Remove("InSequence")
-	globalInputService.inputActions["Inventory"]:Enable()
-	player:SetAttribute("MovementEnabled", true)
+	globalInputService.actionGroups["PlayerControl"]:Enable("Sequence")
 
 	musicService:PlayTrack("ItsPlaytime")
 	musicService:PlayTrack("SuddenDeath")
@@ -434,7 +445,7 @@ function module.noMercy()
 
 	sequenceFrame.Visible = true
 
-	player:SetAttribute("MovementEnabled", false)
+	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 
 	util.tween(sequenceSounds.Ambience_0, ti_1, { Volume = 1 })
 
@@ -489,7 +500,7 @@ function module.noMercy()
 
 	sequenceFrame:Destroy()
 
-	player:SetAttribute("MovementEnabled", true)
+	globalInputService.actionGroups["PlayerControl"]:Enable("Sequence")
 
 	task.delay(0.5, function()
 		util.tween(UI.Fade, ti_2, { BackgroundTransparency = 1 })

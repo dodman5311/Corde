@@ -3,10 +3,10 @@ local module = {
 	currentArea = nil :: Part?,
 }
 --// Services
+local SoundService = game:GetService("SoundService")
 local collectionService = game:GetService("CollectionService")
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 
 --// Instances
 local player = players.LocalPlayer
@@ -14,9 +14,10 @@ local camera = workspace.CurrentCamera
 
 --// Modues
 local client = script.Parent
+local Achievements = require(script.Parent.Achievements)
 local cameraService = require(client.Camera)
-local util = require(client.Util)
 local musicService = require(client.MusicService)
+local util = require(client.Util)
 
 --// Values
 local shiftTi = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
@@ -47,6 +48,12 @@ local attributeEffects = {
 	end,
 }
 
+local function CheckForEchoAchievement(part)
+	if part.Name == "EchoChamber" then
+		Achievements:AwardAchievement(Achievements.Ids.SomethingWrong)
+	end
+end
+
 local function onAreaEntered(part: Part)
 	if not part then
 		return
@@ -61,6 +68,8 @@ local function onAreaEntered(part: Part)
 
 		effect(value)
 	end
+
+	CheckForEchoAchievement(part)
 end
 
 local function setUpAreaParts()

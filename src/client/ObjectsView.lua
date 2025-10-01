@@ -4,8 +4,8 @@ local module = {
 	currentDisplayedModel = nil,
 }
 local client = script.Parent
-local cameraService = require(client.Camera)
 local acts = require(client.Acts)
+local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local inventory = require(client.Inventory)
 local util = require(client.Util)
@@ -89,7 +89,7 @@ end
 module.exitInput = globalInputService.CreateInputAction(
 	"Exit First Person View",
 	exitViewInput,
-	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Backspace, Enum.KeyCode.Space },
+	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Tab, Enum.KeyCode.Space },
 	util.getSetting("Gamepad", "Exit First Person View")
 )
 

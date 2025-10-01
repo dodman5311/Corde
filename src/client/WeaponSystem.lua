@@ -620,8 +620,6 @@ end)
 function module.StartGame()
 	module.equipWeapon(inventory:CheckSlot("Weapon_Slot"))
 
-	print(currentWeapon)
-
 	if currentWeapon then
 		local mag = getNextMag(true)
 		currentWeapon.Value.CurrentMag = getNextMag(true)

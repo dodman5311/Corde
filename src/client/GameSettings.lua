@@ -168,8 +168,8 @@ local gameSettings = {
 		{
 			Name = "N.E.T",
 			Type = "KeyInput",
-			Value = Enum.KeyCode.Tab,
-			Values = Enum.KeyCode.Tab,
+			Value = Enum.KeyCode.Space,
+			Values = Enum.KeyCode.Space,
 			OnChanged = onKeyboardChanged,
 		},
 

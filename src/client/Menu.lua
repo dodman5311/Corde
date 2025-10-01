@@ -92,7 +92,7 @@ local function closeGui(transitionTime: number?)
 
 	scales.activeScales["InteractDisabled"]:Remove("Menu")
 	if globalInputService.actionGroups["PlayerControl"] then
-		globalInputService.actionGroups.PlayerControl:Enable()
+		globalInputService.actionGroups.PlayerControl:Enable("Menu")
 	end
 
 	currentPage = nil
@@ -191,7 +191,7 @@ local function enterPage(page: string, ...)
 
 	scales.activeScales["InteractDisabled"]:Add("Menu")
 	if globalInputService.actionGroups["PlayerControl"] then
-		globalInputService.actionGroups.PlayerControl:Disable()
+		globalInputService.actionGroups.PlayerControl:Disable("Menu")
 	end
 
 	module.pageFunctions[page].Enter(...)
@@ -1015,7 +1015,7 @@ function module.Init()
 		end
 
 		EscKey()
-	end, Enum.KeyCode.Backspace, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect })
+	end, Enum.KeyCode.Tab, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect })
 
 	globalInputService
 		.CreateInputAction("ResetSettings", function(inputState, input)

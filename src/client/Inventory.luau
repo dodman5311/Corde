@@ -1,5 +1,6 @@
 --// Services
 
+local AchievementService = game:GetService("AchievementService")
 local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
@@ -28,6 +29,7 @@ local currentSelectedSlot
 local camera = workspace.CurrentCamera
 
 --// Modules
+local Achievements = require(script.Parent.Achievements)
 local Types = require(ReplicatedStorage.Shared.Types)
 local UIAnimationService = require(client.UIAnimationService)
 local acts = require(client.Acts)
@@ -1299,6 +1301,13 @@ function Inventory.PlayerDied()
 	Inventory.ToggleInventoryInput:Disable()
 end
 
+local function checkForPrepperAchievement(item)
+	local door = workspace:FindFirstChild("KeyholeDoor", true)
+	if door and item.Name == "M45A1" then
+		Achievements:AwardAchievement(Achievements.Ids.PreppersInstinct)
+	end
+end
+
 function Inventory.StartGame()
 	Inventory.ToggleInventoryInput:Enable()
 
@@ -1326,6 +1335,8 @@ function Inventory.StartGame()
 	for _, slotUi in ipairs(UI.Storage.Slots_Storage:GetChildren()) do
 		connectSlotButton(slotUi)
 	end
+
+	Inventory.ItemAdded:Connect(checkForPrepperAchievement)
 end
 
 function Inventory.Init()
@@ -1345,6 +1356,8 @@ function Inventory.Init()
 	initGui()
 end
 
+--// Main //--
+
 Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 	"Inventory",
 	toggleInventoryKey,
@@ -1353,8 +1366,6 @@ Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 )
 
 globalInputService.AddToActionGroup("PlayerControl", Inventory.ToggleInventoryInput)
-
---// Main //--
 Inventory.statusPumpTimer.Function = pumpHealthStatus
 RunService.Heartbeat:Connect(updatePlayerStatus)
 

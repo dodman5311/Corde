@@ -20,6 +20,7 @@ local logPlayerDirection = 0
 local camera = workspace.CurrentCamera
 local Client = player.PlayerScripts.Client
 
+local Achievements = require(script.Parent.Achievements)
 local acts = require(Client.Acts)
 local inventory = require(Client.Inventory)
 local uiAnimationService = require(Client.UIAnimationService)
@@ -199,6 +200,9 @@ local function playerDied(character)
 	if currentStimEquipped and currentStimEquipped.Value.ActivateValue == 0 then
 		return
 	end
+
+	globalInputService.actionGroups.PlayerControl:Disable()
+	Achievements:AwardAchievement(Achievements.Ids.SeriousExceptionError)
 
 	character:SetAttribute("Health", 0)
 	cameraService.followViewDistance.current = 0
@@ -632,6 +636,10 @@ RunService.Heartbeat:Connect(function()
 	updatePlayerDirection()
 
 	local moveVector = controller:GetMoveVector()
+
+	if not globalInputService.actionGroups["PlayerControl"].IsEnabled then
+		moveVector = Vector3.zero
+	end
 
 	if moveVector.Magnitude < MOVEMENT_THRESHOLD then
 		moveVector = Vector3.zero
