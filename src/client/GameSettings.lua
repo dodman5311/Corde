@@ -136,7 +136,10 @@ local gameSettings = {
 				}
 
 				for _, label in ipairs(game:GetDescendants()) do
-					if not (label:IsA("TextLabel") or label:IsA("TextButton") or label:IsA("TextBox")) then
+					if
+						not (label:IsA("TextLabel") or label:IsA("TextButton") or label:IsA("TextBox"))
+						or label:FindFirstAncestor("Achievements")
+					then
 						continue
 					end
 

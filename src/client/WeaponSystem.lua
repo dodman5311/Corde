@@ -685,7 +685,6 @@ end)
 
 local function reloadInput(state)
 	if state == Enum.UserInputState.Begin then
-		print("Bals")
 		checkChamberTimer.Function = checkChamber
 		checkChamberTimer:Run()
 	elseif state == Enum.UserInputState.End then
