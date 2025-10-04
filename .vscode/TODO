@@ -5,7 +5,7 @@ fix enemy turning / aiming
 
 Add dead bodies
 
-add pickup at start
+draw photo
 
 Settings to add:
 Particles
@@ -19,13 +19,8 @@ make settings save
 
 Add auto load after death
 Add ghost hunger bar
-Fix opening inventory after death (lock input)
 
 add mobile support!
 
-When a hacked item is hacked, make it discovered with a visual.*
-
 Add screen hints:
 - "Hold R to check chamber"
-
-Implement achievements

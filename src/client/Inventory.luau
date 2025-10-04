@@ -548,6 +548,33 @@ local function compareWeapon(baseWeapon: item)
 	end
 end
 
+local function showHungerResult(foodItem: item)
+	local hungerAfter = UI.Inventory.HungerAfter
+	local hungerAfterGrad = hungerAfter.UIGradient
+
+	local character = player.Character
+	if not character or not Inventory.InventoryOpen then
+		return
+	end
+
+	local hunger = character:GetAttribute("Hunger")
+	local newHungerValue = hunger + foodItem.Value.Hunger
+	local invertedHungerValue = math.clamp(math.abs((hunger / 100) - 1), 0.001, 0.989)
+	local invertedNewHungerValue = math.clamp(math.abs((newHungerValue / 100) - 1), 0.001, 0.989)
+
+	local sequence = NumberSequence.new {
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(invertedNewHungerValue, 1),
+		NumberSequenceKeypoint.new(invertedNewHungerValue + 0.01, 0),
+		NumberSequenceKeypoint.new(invertedHungerValue, 0),
+		NumberSequenceKeypoint.new(invertedHungerValue + 0.01, 1),
+		NumberSequenceKeypoint.new(1, 1),
+	}
+
+	hungerAfterGrad.Transparency = sequence
+	hungerAfter.Visible = true
+end
+
 local function closeNote()
 	local noteUi = UI.Note
 	if not noteUi.Visible then
@@ -688,6 +715,7 @@ local function hideDescription()
 	infoFrame.Visible = false
 	UIAnimationService.StopAnimation(infoFrame.BackgroundImage)
 	UI.Inventory.WeaponCompare.Visible = false
+	UI.Inventory.HungerAfter.Visible = false
 end
 
 local function refreshGui(isOpening)
@@ -711,33 +739,6 @@ end
 
 local function getSlotIndexFromUi(slotUi: Frame): number?
 	return tonumber(string.sub(slotUi.Name, 6))
-end
-
-function Inventory:UseItem(slotUi)
-	if getSlotIndexFromUi(slotUi) > InventorySize then
-		util.PlaySound(sounds.Deny)
-		return
-	end
-
-	if slotUi.Name == "Weapon" then
-		emptyWeaponSlot()
-		return
-	end
-	local item: item = Inventory[slotUi.Name]
-
-	if not item or acts:checkAct("Reloading") then
-		return
-	end
-
-	if item.Use == "EquipWeapon" then
-		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
-	elseif item.Use == "Read" then
-		openNote(item)
-	else
-		Inventory.ItemUsed:Fire(item.Use, item, slotUi.Name)
-	end
-
-	task.delay(0.05, refreshGui)
 end
 
 local function createGuiSlot(parent, index)
@@ -809,6 +810,8 @@ local function slotUiHovered(slotUi)
 	if item.Use == "EquipWeapon" then
 		UI.Inventory.WeaponCompare.Visible = true
 		compareWeapon(item)
+	elseif item.Use == "Eat" then
+		showHungerResult(item)
 	end
 
 	showItemDesciption(item, slotUi.Parent.Parent)
@@ -853,6 +856,34 @@ local function holdSlot(slotUi: Frame, action: "Move" | "Combine")
 		UIAnimationService.StopAnimation(UI.MoveObject)
 		UI.MoveObject.Visible = false
 	end)
+end
+
+function Inventory:UseItem(slotUi)
+	if getSlotIndexFromUi(slotUi) > InventorySize then
+		util.PlaySound(sounds.Deny)
+		return
+	end
+
+	if slotUi.Name == "Weapon" then
+		emptyWeaponSlot()
+		return
+	end
+	local item: item = Inventory[slotUi.Name]
+
+	if not item or acts:checkAct("Reloading") then
+		return
+	end
+
+	if item.Use == "EquipWeapon" then
+		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
+	elseif item.Use == "Read" then
+		openNote(item)
+	else
+		Inventory.ItemUsed:Fire(item.Use, item, slotUi.Name)
+	end
+
+	slotUiExited(slotUi)
+	task.delay(0.05, refreshGui)
 end
 
 local optionFunctions = {
@@ -1068,6 +1099,13 @@ local function initGui()
 	local prevButton: TextButton = UI.Note.Prev
 	local exitButton: TextButton = UI.Note.Exit
 	local weaponDisplay = UI.Inventory.Weapon.WeaponDisplay
+
+	local ti = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true)
+	util.tween(
+		UI.Inventory.HungerAfter,
+		ti,
+		{ ImageTransparency = 0.75, BackgroundColor3 = Color3.fromRGB(126, 255, 249) }
+	)
 
 	nextButton.MouseButton1Click:Connect(function()
 		nextNotePage(currentNoteItem, 1)
