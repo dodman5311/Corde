@@ -534,7 +534,8 @@ module.ToggleNetInput = globalInputService.CreateInputAction(
 	"N.E.T",
 	pressNetKey,
 	util.getSetting("Keybinds", "N.E.T"),
-	util.getSetting("Gamepad", "N.E.T")
+	util.getSetting("Gamepad", "N.E.T"),
+	"Button"
 )
 
 globalInputService.AddToActionGroup(

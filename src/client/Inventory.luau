@@ -1400,7 +1400,8 @@ Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 	"Inventory",
 	toggleInventoryKey,
 	util.getSetting("Keybinds", "Inventory"),
-	{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB }
+	{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB },
+	"Button"
 )
 
 globalInputService.AddToActionGroup("PlayerControl", Inventory.ToggleInventoryInput)

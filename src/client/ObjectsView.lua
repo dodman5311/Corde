@@ -90,7 +90,8 @@ module.exitInput = globalInputService.CreateInputAction(
 	"Exit First Person View",
 	exitViewInput,
 	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Tab, Enum.KeyCode.Space },
-	util.getSetting("Gamepad", "Exit First Person View")
+	util.getSetting("Gamepad", "Exit First Person View"),
+	"Button"
 )
 
 inventory.InvetoryToggled:Connect(function(value)

@@ -699,7 +699,8 @@ globalInputService.AddToActionGroup(
 		"Reload",
 		reloadInput,
 		util.getSetting("Keybinds", "Reload"),
-		util.getSetting("Gamepad", "Reload")
+		util.getSetting("Gamepad", "Reload"),
+		"Button"
 	),
 	globalInputService.CreateInputAction(
 		"Fire Weapon",

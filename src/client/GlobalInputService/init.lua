@@ -8,14 +8,17 @@ export type GuiJoystick = {
 	RimImage: string,
 	ImageType: Enum.ResamplerMode?,
 	Size: number,
-	Position: "AtTouch" | "AtCenter",
+	PositionType: "AtTouch" | "AtCenter",
 
 	Visibility: "Dynamic" | "Static",
 	ActivationButton: TextButton,
 
-	InputBegan: RBXScriptSignal,
-	InputChanged: RBXScriptSignal,
-	InputEnded: RBXScriptSignal,
+	KeyCode: Enum.KeyCode,
+	InputBegan: RBXScriptSignal<InputObject>,
+	InputChanged: RBXScriptSignal<InputObject>,
+	InputEnded: RBXScriptSignal<InputObject>,
+
+	Destroy: (self: GuiJoystick) -> any?,
 
 	Instance: Frame,
 }
@@ -28,14 +31,14 @@ export type InputAction = {
 		Keyboard: { InputCode },
 		Gamepad: { InputCode },
 	},
-	Callback: () -> any?,
+	Callback: (inputState: Enum.UserInputState, input: InputObject) -> any?,
 	Priority: number?,
 	IsEnabled: () -> boolean,
 
 	Enable: (self: InputAction) -> nil,
 	Disable: (self: InputAction) -> nil,
 	Refresh: (self: InputAction) -> nil,
-	GetMobileInput: (self: InputAction) -> ImageButton | GuiJoystick?,
+	GetMobileInput: (self: InputAction) -> (ImageButton | GuiJoystick)?,
 	SetPriority: (self: InputAction, priority: number | Enum.ContextActionPriority) -> nil,
 	SetKeybinds: (self: InputAction, bindGroup: "Gamepad" | "Keyboard", ...InputCode) -> nil,
 	AddKeybinds: (self: InputAction, bindGroup: "Gamepad" | "Keyboard", ...InputCode) -> nil,
@@ -68,6 +71,8 @@ local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ThirdPartyUserService = game:GetService("ThirdPartyUserService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 --// Instances
@@ -84,6 +89,8 @@ local hideSelection
 local lastInputType: string?
 local lastGamepadType: string?
 local lastGamepadInput: InputObject?
+
+local JOYSTICK_TWEEN_TIME = 0.25
 
 local globalInputService = {
 	InputTypeChanged = inputTypeChanged.Event :: RBXScriptSignal,
@@ -161,17 +168,18 @@ function globalInputService:CheckKeyPrompts()
 		local button = image:GetAttribute("Button")
 		local inputName = image:GetAttribute("InputName")
 
-		if inputName and globalInputService.inputActions[inputName] then
-			iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
-		end
-
 		if
 			(globalInputService._inputType == "Gamepad" and button)
 			or (globalInputService._inputType == "Keyboard" and key)
 		then
 			iconKey = globalInputService._inputType == "Gamepad" and button or key
 		elseif inputName and globalInputService.inputActions[inputName] then
-			iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
+			if globalInputService._inputType == "Keyboard" or globalInputService._inputType == "Gamepad" then
+				iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
+			else
+				local mobileBtn = globalInputService.inputActions[inputName]:GetMobileInput()
+				iconKey = typeof(mobileBtn) == "ImageButton" and mobileBtn.Image
+			end
 		end
 
 		if not iconKey then
@@ -205,11 +213,12 @@ local function setInputType(lastInput)
 		return
 	end
 
-	if lastInput.KeyCode == Enum.UserInputType.Touch then
+	if lastInput.UserInputType == Enum.UserInputType.Touch then
 		globalInputService._inputType = "Touch"
 		return
 	end
 
+	print(lastInput.UserInputType)
 	if lastInput.UserInputType.Name:find("Gamepad") then
 		globalInputService._inputType = "Gamepad"
 		setGamepadType(lastInput)
@@ -286,8 +295,9 @@ function globalInputService.CreateJoystick(
 	rimImage: string?,
 	activationButton: TextButton?,
 	size: number?,
-	position: "AtTouch" | "AtCenter"?,
-	visibility: "Dynamic" | "Static"?
+	positionType: "AtTouch" | "AtCenter"?,
+	visibility: "Dynamic" | "Static"?,
+	keyCode: Enum.KeyCode?
 ): GuiJoystick
 	local inputBegan = Instance.new("BindableEvent")
 	local inputChanged = Instance.new("BindableEvent")
@@ -299,16 +309,38 @@ function globalInputService.CreateJoystick(
 		ImageType = nil,
 
 		Size = size or 0.1,
-		Position = position or "AtTouch",
+		PositionType = positionType or "AtTouch",
 		Visibility = visibility or "Dynamic",
 		ActivationButton = activationButton or Instance.new("TextButton"),
-
+		KeyCode = keyCode or Enum.KeyCode.Thumbstick1,
 		InputBegan = inputBegan.Event,
 		InputChanged = inputChanged.Event,
 		InputEnded = inputEnded.Event,
 
+		Destroy = function(self)
+			self.Instance:Destroy()
+			self = nil
+		end,
+
 		Instance = Instance.new("Frame"),
 	}
+
+	local joystickInputObject = {
+		Delta = Vector3.zero,
+		KeyCode = joystick.KeyCode,
+		Position = Vector3.zero,
+		UserInputState = Enum.UserInputState.None,
+		UserInputType = Enum.UserInputType.Touch,
+	}
+	local lastPosition = joystickInputObject.Position
+
+	local function updateInputObject(position, state)
+		joystickInputObject.Position = position
+		joystickInputObject.UserInputState = state
+
+		joystickInputObject.Delta = joystickInputObject.Position - lastPosition
+		lastPosition = joystickInputObject.Position
+	end
 
 	local stick = Instance.new("ImageLabel")
 	local rim = Instance.new("ImageLabel")
@@ -370,28 +402,60 @@ function globalInputService.CreateJoystick(
 		rim.Visible = true
 	end
 
-	joystick.ActivationButton.MouseButton1Down:Connect(function(initX, initY)
-		if joystick.Visibility == "Dynamic" then
-			rim.Visible = true
+	local ti = TweenInfo.new(JOYSTICK_TWEEN_TIME, Enum.EasingStyle.Quart)
+	local returnTween = TweenService:Create(stick, ti, { Position = UDim2.fromScale(0.5, 0.5) })
+	local showTweenA = TweenService:Create(stick, ti, { ImageTransparency = 0 })
+	local showTweenB = TweenService:Create(rim, ti, { ImageTransparency = 0 })
+
+	local hideTweenA = TweenService:Create(stick, ti, { ImageTransparency = 1 })
+	local hideTweenB = TweenService:Create(rim, ti, { ImageTransparency = 1 })
+
+	hideTweenA.Completed:Connect(function(state)
+		if state ~= Enum.PlaybackState.Completed then
+			return
 		end
 
-		if joystick.Position == "AtTouch" then
-			rim.Position = UDim2.fromOffset(initX, initY - 58)
-		elseif joystick.Position == "AtCenter" then
+		rim.Visible = false
+	end)
+
+	rim.Position = UDim2.fromOffset(
+		joystick.ActivationButton.AbsolutePosition.X + (joystick.ActivationButton.AbsoluteSize.X / 2),
+		joystick.ActivationButton.AbsolutePosition.Y + (joystick.ActivationButton.AbsoluteSize.Y / 2)
+	)
+
+	joystick.ActivationButton.MouseButton1Down:Connect(function(initX, initY)
+		local initMouseLocation = UserInputService:GetMouseLocation()
+		--print(initX)
+		if joystick.Visibility == "Dynamic" then
+			rim.Visible = true
+			showTweenA:Play()
+			showTweenB:Play()
+		end
+
+		if joystick.PositionType == "AtTouch" then
+			TweenService:Create(rim, ti, { Position = UDim2.fromOffset(initMouseLocation.X, initMouseLocation.Y - 58) })
+				:Play()
+		elseif joystick.PositionType == "AtCenter" then
 			rim.Position = UDim2.fromOffset(
-				joystick.ActivationButton.AbsolutePosition.X,
-				joystick.ActivationButton.AbsolutePosition.Y
+				joystick.ActivationButton.AbsolutePosition.X + (joystick.ActivationButton.AbsoluteSize.X / 2),
+				joystick.ActivationButton.AbsolutePosition.Y + (joystick.ActivationButton.AbsoluteSize.Y / 2)
 			)
 		end
 
-		inputChanged:Fire(Vector2.zero)
+		updateInputObject(Vector3.zero, Enum.UserInputState.Begin)
+		inputBegan:Fire(joystickInputObject)
 
 		stick.Position = UDim2.fromScale(0.5, 0.5)
 
 		onMouseMoved = joystick.ActivationButton.MouseMoved:Connect(function(x, y)
-			local relativePosition = Vector2.new(x - initX, y - initY)
+			--print(x, x - initX)
+
+			local mouseLocation = UserInputService:GetMouseLocation()
+			local relativePosition = mouseLocation - initMouseLocation --Vector2.new(x - initX, y - initY)
 			local length = relativePosition.Magnitude
 			local maxLength = rim.AbsoluteSize.X / 2
+
+			returnTween:Cancel()
 
 			length = math.min(length, maxLength)
 			relativePosition = relativePosition.Unit * length
@@ -406,7 +470,8 @@ function globalInputService.CreateJoystick(
 			local inputPosition = (relativePosition / rim.AbsoluteSize.Y) * 2
 			inputPosition = Vector2.new(inputPosition.X, -inputPosition.Y)
 
-			inputChanged:Fire(inputPosition)
+			updateInputObject(Vector3.new(inputPosition.X, inputPosition.Y, 0), Enum.UserInputState.Change)
+			inputChanged:Fire(joystickInputObject)
 		end)
 	end)
 
@@ -416,11 +481,15 @@ function globalInputService.CreateJoystick(
 		end
 
 		if joystick.Visibility == "Dynamic" then
-			rim.Visible = false
+			hideTweenA:Play()
+			hideTweenB:Play()
 		end
 
-		inputChanged:Fire(Vector2.zero)
-		inputEnded:Fire()
+		updateInputObject(Vector3.zero, Enum.UserInputState.End)
+		inputChanged:Fire(joystickInputObject)
+		inputEnded:Fire(joystickInputObject)
+
+		returnTween:Play()
 	end
 
 	joystick.ActivationButton.MouseButton1Up:Connect(onTouchEnd)
@@ -431,7 +500,7 @@ end
 
 function globalInputService.CreateInputAction(
 	inputName: string,
-	func: () -> any?,
+	func: (inputState: Enum.UserInputState, input: InputObject) -> any?,
 	keyboardInputs: { InputCode } | InputCode,
 	gamepadInputs: ({ InputCode } | InputCode)?,
 	mobileInputType: "Button" | "Joystick"?
@@ -494,10 +563,9 @@ function globalInputService.CreateInputAction(
 			end
 
 			if mobileInputType == "Joystick" then
-				mobileJoystick = globalInputService.CreateJoystick().InputChanged:Connect(function(position)
-					callback(Enum.UserInputState.Change, {
-						Position = position,
-					})
+				mobileJoystick = globalInputService.CreateJoystick()
+				mobileJoystick.InputChanged:Connect(function(inputObject)
+					callback(Enum.UserInputState.Change, inputObject)
 				end)
 			end
 		end,
@@ -613,7 +681,7 @@ function globalInputService.CreateActionGroup(name: string): ActionGroup
 	return actionGroup
 end
 
-function globalInputService.AddToActionGroup(actionGroup: ActionGroup | string, ...)
+function globalInputService.AddToActionGroup(actionGroup: ActionGroup | string, ...: InputAction)
 	if typeof(actionGroup) == "string" then
 		local actionGroupName = actionGroup
 		actionGroup = globalInputService.actionGroups[actionGroupName]

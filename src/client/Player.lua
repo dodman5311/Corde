@@ -60,6 +60,42 @@ local thumbstick2Pos = Vector3.zero
 local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
 
+-- Mobile joysticks --
+
+local mobileJoystickPosition = Vector3.zero
+local movementJoystick: globalInputService.GuiJoystick = globalInputService.CreateJoystick(
+	"rbxassetid://502107146",
+	"rbxassetid://12201347372",
+	nil,
+	0.25,
+	"AtCenter",
+	"Static",
+	Enum.KeyCode.Thumbstick1
+)
+movementJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
+movementJoystick.ActivationButton.AnchorPoint = Vector2.new(0, 1)
+movementJoystick.ActivationButton.Position = UDim2.fromScale(0, 1)
+
+movementJoystick.InputChanged:Connect(function(input)
+	mobileJoystickPosition = Vector3.new(input.Position.X, 0, -input.Position.Y)
+end)
+
+--local mobileLookstickPosition = Vector3.zero
+local lookJoystick: globalInputService.GuiJoystick = globalInputService.CreateJoystick(
+	"rbxassetid://502107146",
+	"rbxassetid://12201347372",
+	nil,
+	0.25,
+	"AtCenter",
+	"Static",
+	Enum.KeyCode.Thumbstick2
+)
+lookJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
+lookJoystick.ActivationButton.AnchorPoint = Vector2.new(1, 1)
+lookJoystick.ActivationButton.Position = UDim2.fromScale(1, 1)
+
+----------------------
+
 local MOVEMENT_THRESHOLD = 0.5
 local THUMBSTICK_THRESHOLD = 0.25
 local CURSOR_INTERPOLATION = 0.05
@@ -390,7 +426,9 @@ local function processGamepadCursorSnap()
 end
 
 local function updateCursorLocation()
-	if globalInputService:GetInputSource().Type == "Gamepad" then
+	if globalInputService:GetInputSource().Type == "Keyboard" then
+		cursorLocation = UserInputService:GetMouseLocation()
+	else
 		if acts:checkAct("InObjectView") then
 			cursorLocation += thumbstickLookPos * OBJECTVIEW_GAMEPAD_SENSITIVITY
 		else
@@ -399,8 +437,6 @@ local function updateCursorLocation()
 		end
 
 		processGamepadCursorSnap()
-	else
-		cursorLocation = UserInputService:GetMouseLocation()
 	end
 
 	player:SetAttribute("CursorLocation", cursorLocation)
@@ -597,60 +633,33 @@ local function updatePlayerMovement()
 	end
 end
 
-function module.StartGame(saveData: Types.GameState?, character: Model)
-	cameraService.followViewDistance.current = cameraService.followViewDistance.default
-
-	if saveData then
-		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
-		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
-	end
-end
-
-function module.Init()
-	UserInputService.InputChanged:Connect(updateGamepadCursorData)
-
-	HUD.Enabled = true
-	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
-		HUD.Glitch.Visible = math.random(1, 2) ~= 1
-
-		if math.random(1, 3) == 1 then
-			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
-		else
-			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
-		end
-	end)
-end
-
-globalInputService.AddToActionGroup(
-	"PlayerControl",
-	globalInputService.CreateInputAction(
-		"Sprint",
-		updateSprinting,
-		util.getSetting("Keybinds", "Sprint"),
-		util.getSetting("Gamepad", "Sprint")
-	)
-)
-
-RunService.Heartbeat:Connect(function()
+local function updateMovementInput()
 	updatePlayerMovement()
 	updatePlayerDirection()
 
-	local moveVector = controller:GetMoveVector()
+	local moveVector = Vector3.zero
 
-	if not globalInputService.actionGroups["PlayerControl"].IsEnabled then
-		moveVector = Vector3.zero
-	end
-
-	if moveVector.Magnitude < MOVEMENT_THRESHOLD then
-		moveVector = Vector3.zero
-	end
-
-	if acts:checkAct("InDialogue") or not player:GetAttribute("MovementEnabled") then
-		updateDirection(Vector2.zero)
+	if globalInputService:GetInputSource().Type == "Touch" then
+		--local mobileMovementAction = globalInputService.inputActions["MobileMovement"]
+		--moveVector = mobileMovementAction:GetMobileInput().Position
+		moveVector = mobileJoystickPosition
 	else
-		updateDirection(Vector2.new(moveVector.X, moveVector.Z))
+		moveVector = controller:GetMoveVector() -- movement
 	end
 
+	if
+		moveVector.Magnitude < MOVEMENT_THRESHOLD
+		or not globalInputService.actionGroups["PlayerControl"].IsEnabled
+		or acts:checkAct("InDialogue")
+		or (not player:GetAttribute("MovementEnabled"))
+	then
+		moveVector = Vector3.zero
+	end
+
+	updateDirection(Vector2.new(moveVector.X, moveVector.Z))
+end
+
+local function updateStats()
 	if player.Character and not acts:checkAct("Paused") then
 		if player.Character:GetAttribute("Hunger") < 0 then
 			player.Character:SetAttribute("Hunger", 0)
@@ -690,6 +699,48 @@ RunService.Heartbeat:Connect(function()
 	end
 
 	lastHeartbeat = os.clock()
+end
+
+function module.StartGame(saveData: Types.GameState?, character: Model)
+	cameraService.followViewDistance.current = cameraService.followViewDistance.default
+
+	if saveData then
+		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
+		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
+	end
+end
+
+function module.Init()
+	UserInputService.InputChanged:Connect(updateGamepadCursorData)
+	lookJoystick.InputChanged:Connect(updateGamepadCursorData)
+	movementJoystick.InputChanged:Connect(updateGamepadCursorData)
+
+	HUD.Enabled = true
+	uiAnimationService.PlayAnimation(HUD.Glitch, 0.04, true).OnStepped:Connect(function()
+		HUD.Glitch.Visible = math.random(1, 2) ~= 1
+
+		if math.random(1, 3) == 1 then
+			HUD.Glitch.Image.ImageColor3 = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+		else
+			HUD.Glitch.Image.ImageColor3 = Color3.new(1, 1, 1)
+		end
+	end)
+end
+
+globalInputService.AddToActionGroup(
+	"PlayerControl",
+	globalInputService.CreateInputAction(
+		"Sprint",
+		updateSprinting,
+		util.getSetting("Keybinds", "Sprint"),
+		util.getSetting("Gamepad", "Sprint"),
+		"Button"
+	)
+)
+
+RunService.Heartbeat:Connect(function()
+	updateMovementInput()
+	updateStats()
 end)
 
 local itemFunctions = {
@@ -739,7 +790,7 @@ inventory.ItemUsed:Connect(function(use, item)
 end)
 
 interact.Disabled.Changed:Connect(function(value)
-	cursor.Enabled = not (globalInputService:GetInputSource().Type == "Gamepad" and value)
+	cursor.Enabled = not (globalInputService:GetInputSource().Type ~= "Keyboard" and value)
 end)
 
 player:SetAttribute("CursorLocation", Vector2.zero)

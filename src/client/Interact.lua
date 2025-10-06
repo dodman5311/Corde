@@ -362,7 +362,7 @@ globalInputService.AddToActionGroup(
 		end
 
 		InteractiWithObject(object)
-	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"))
+	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"), "Button")
 )
 
 globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.High)
