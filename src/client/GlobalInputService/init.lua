@@ -168,6 +168,8 @@ function globalInputService:CheckKeyPrompts()
 		local button = image:GetAttribute("Button")
 		local inputName = image:GetAttribute("InputName")
 
+		print("MA")
+
 		if
 			(globalInputService._inputType == "Gamepad" and button)
 			or (globalInputService._inputType == "Keyboard" and key)
@@ -177,8 +179,9 @@ function globalInputService:CheckKeyPrompts()
 			if globalInputService._inputType == "Keyboard" or globalInputService._inputType == "Gamepad" then
 				iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
 			else
+				print("ATTEMPT MOBIE")
 				local mobileBtn = globalInputService.inputActions[inputName]:GetMobileInput()
-				iconKey = typeof(mobileBtn) == "ImageButton" and mobileBtn.Image
+				iconKey = typeof(mobileBtn) == "ImageButton" and mobileBtn.Image or nil
 			end
 		end
 
@@ -567,6 +570,8 @@ function globalInputService.CreateInputAction(
 				mobileJoystick.InputChanged:Connect(function(inputObject)
 					callback(Enum.UserInputState.Change, inputObject)
 				end)
+			elseif mobileInputType == "Button" then
+				self:GetMobileInput().ActionTitle.Text = self.Name
 			end
 		end,
 
@@ -732,7 +737,7 @@ GuiService.Changed:Connect(function()
 	end
 end)
 
-inputServiceGui.DisplayOrder = 100
+inputServiceGui.DisplayOrder = -1
 inputServiceGui.Name = "InputServiceGui"
 Player:WaitForChild("PlayerGui").SelectionImageObject = hideSelection
 

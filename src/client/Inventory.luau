@@ -749,6 +749,8 @@ local function createGuiSlot(parent, index)
 end
 
 local function createGuiSlots()
+	print(InventorySize)
+
 	for slotIndex = 1, InventorySize do
 		createGuiSlot(UI.Inventory.Slots, slotIndex)
 	end
@@ -1347,7 +1349,9 @@ local function checkForPrepperAchievement(item)
 end
 
 function Inventory.StartGame()
+	print("A")
 	Inventory.ToggleInventoryInput:Enable()
+	print("B")
 
 	local difficulty = workspace:GetAttribute("Difficulty")
 	InventorySize += math.abs(difficulty - 2) * 2 -- @Difficulty set slots
