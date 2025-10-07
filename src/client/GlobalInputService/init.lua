@@ -359,6 +359,10 @@ function globalInputService.CreateInputAction(
 		end,
 
 		Enable = function(self: InputAction)
+			if inputIsEnabled then
+				return
+			end
+
 			local callback = self.Callback
 			inputIsEnabled = true
 
@@ -413,6 +417,10 @@ function globalInputService.CreateInputAction(
 		end,
 
 		Disable = function(self: InputAction)
+			if not inputIsEnabled then
+				return
+			end
+
 			inputIsEnabled = false
 			if mobileJoystick then
 				mobileJoystick:Destroy()

@@ -84,14 +84,16 @@ function module.Init()
 	module.exitInput:Disable()
 
 	HUD = Players.LocalPlayer.PlayerGui.HUD
+	HUD.Leave3DViewPrompt.Leave.Activated:Connect(function()
+		module:ExitView()
+	end)
 end
 
 module.exitInput = globalInputService.CreateInputAction(
 	"Exit First Person View",
 	exitViewInput,
-	{ util.getSetting("Keybinds", "Exit First Person View"), Enum.KeyCode.Tab, Enum.KeyCode.Space },
-	util.getSetting("Gamepad", "Exit First Person View"),
-	"Button"
+	{ Enum.UserInputType.MouseButton2, Enum.KeyCode.Tab, Enum.KeyCode.Space },
+	Enum.KeyCode.ButtonB
 )
 
 inventory.InvetoryToggled:Connect(function(value)

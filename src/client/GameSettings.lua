@@ -275,14 +275,6 @@ local gameSettings = {
 			Values = Enum.KeyCode.ButtonR1,
 			OnChanged = onGamepadChanged,
 		},
-
-		{
-			Name = "Exit First Person View",
-			Type = "KeyInput",
-			Value = Enum.KeyCode.ButtonB,
-			Values = Enum.KeyCode.ButtonB,
-			OnChanged = onKeyboardChanged,
-		},
 	},
 }
 
