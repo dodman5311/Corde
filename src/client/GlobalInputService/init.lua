@@ -4,7 +4,6 @@ local MobileJoysticks = require(script.MobileJoysticks)
 local Scales = require(script.Parent.Scales)
 
 --// Types
-
 type InputCode = Enum.KeyCode | Enum.UserInputType
 
 export type InputAction = {
@@ -21,6 +20,7 @@ export type InputAction = {
 	Disable: (self: InputAction) -> nil,
 	Refresh: (self: InputAction) -> nil,
 	GetMobileInput: (self: InputAction) -> (ImageButton | GuiJoystick)?,
+	GetMobileIcon: (self: InputAction) -> string,
 	SetPriority: (self: InputAction, priority: number | Enum.ContextActionPriority) -> nil,
 	SetKeybinds: (self: InputAction, bindGroup: "Gamepad" | "Keyboard", ...InputCode) -> nil,
 	AddKeybinds: (self: InputAction, bindGroup: "Gamepad" | "Keyboard", ...InputCode) -> nil,
@@ -50,8 +50,13 @@ export type InputSource = {
 }
 
 local CUSTOM_GAMEPAD_GUI = true
+local CUSTOM_MOBILE_BUTTON_IMAGES = {
+	Default = "rbxassetid://117210355214100",
+	Pressed = "rbxassetid://117210355214100",
+}
 
 --// Services
+local AppRatingPromptService = game:GetService("AppRatingPromptService")
 local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
@@ -98,7 +103,6 @@ local ps4Keys = Lists.ps4Keys
 local xboxKeys = Lists.xboxKeys
 
 --// Functions
-
 local function createCustomGamepadGui()
 	-- Essentials
 	selectionImage = Instance.new("ImageLabel")
@@ -146,23 +150,27 @@ function globalInputService:CheckKeyPrompts()
 	for _, image: ImageLabel in ipairs(CollectionService:GetTagged("KeyPrompt")) do
 		local iconKey
 
-		local key = image:GetAttribute("Key")
-		local button = image:GetAttribute("Button")
 		local inputName = image:GetAttribute("InputName")
 
-		if
-			(globalInputService._inputType == "Gamepad" and button)
-			or (globalInputService._inputType == "Keyboard" and key)
-		then
-			iconKey = globalInputService._inputType == "Gamepad" and button or key
+		local reference = {
+			Keyboard = "Key",
+			Gamepad = "Button",
+			Touch = "Touch",
+		}
+
+		print(globalInputService._inputType)
+		if image:GetAttribute(reference[globalInputService._inputType]) then
+			iconKey = image:GetAttribute(reference[globalInputService._inputType])
 		elseif inputName and globalInputService.inputActions[inputName] then
-			if globalInputService._inputType == "Keyboard" or globalInputService._inputType == "Gamepad" then
-				iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
+			if globalInputService._inputType == "Touch" then
+				local mobileIcon = globalInputService.inputActions[inputName]:GetMobileIcon()
+
+				image.Visible = true
+				image.Image = mobileIcon
+
+				continue
 			else
-				--print("ATTEMPT MOBIE")
-				--local mobileBtn = globalInputService.inputActions[inputName]:GetMobileInput()
-				--print(mobileBtn)
-				--iconKey = typeof(mobileBtn) == "ImageButton" and mobileBtn.Image or nil
+				iconKey = globalInputService.inputActions[inputName].KeyInputs[globalInputService._inputType][1].Name
 			end
 		end
 
@@ -205,7 +213,6 @@ local function setInputType(lastInput)
 
 	MobileJoysticks.setJoystickVisibility(false)
 
-	print(lastInput.UserInputType)
 	if lastInput.UserInputType.Name:find("Gamepad") then
 		globalInputService._inputType = "Gamepad"
 		setGamepadType(lastInput)
@@ -300,6 +307,24 @@ function globalInputService.CreateNewMobileJoystick(
 	return newStick
 end
 
+local function setCustomImage(actionButton)
+	if not actionButton then
+		return
+	end
+
+	-- PIXEL GAME HARDCODING
+	actionButton.ResampleMode = Enum.ResamplerMode.Pixelated
+	if actionButton:FindFirstChild("ActionIcon") then
+		actionButton.ActionIcon.ResampleMode = Enum.ResamplerMode.Pixelated
+	end
+
+	actionButton.Image = CUSTOM_MOBILE_BUTTON_IMAGES["Default"]
+	actionButton:GetPropertyChangedSignal("Image"):Connect(function()
+		actionButton.Image = CUSTOM_MOBILE_BUTTON_IMAGES["Default"]
+		actionButton.PressedImage = CUSTOM_MOBILE_BUTTON_IMAGES["Pressed"]
+	end)
+end
+
 function globalInputService.CreateInputAction(
 	inputName: string,
 	func: (inputState: Enum.UserInputState, input: InputObject) -> any?,
@@ -318,7 +343,7 @@ function globalInputService.CreateInputAction(
 	local mobileJoystick: GuiJoystick
 	local inputIsEnabled = false
 	local buttonPosition = UDim2.new(0, 0, 0, 0)
-	local buttonImage = "rbxassetid://6256840888"
+	local buttonImage = ""
 
 	local newInput: InputAction = {
 		Name = inputName,
@@ -367,9 +392,11 @@ function globalInputService.CreateInputAction(
 				)
 			end
 
-			ContextActionService:SetTitle(self.Name, self.Name)
 			ContextActionService:SetPosition(self.Name, buttonPosition)
 			ContextActionService:SetImage(self.Name, buttonImage)
+
+			local actionButton = ContextActionService:GetButton(self.Name) -- custom Image
+			setCustomImage(actionButton)
 
 			if mobileInputType == "Joystick" then
 				mobileJoystick = globalInputService.CreateNewMobileJoystick()
@@ -404,6 +431,10 @@ function globalInputService.CreateInputAction(
 		end,
 
 		GetMobileInput = function(self: InputAction)
+			if not self.IsEnabled() then
+				return
+			end
+
 			if mobileInputType == "Button" then
 				return ContextActionService:GetButton(self.Name)
 			elseif mobileInputType == "Joystick" then
@@ -411,6 +442,10 @@ function globalInputService.CreateInputAction(
 			end
 
 			return
+		end,
+
+		GetMobileIcon = function(self: InputAction)
+			return buttonImage
 		end,
 
 		SetPriority = function(self: InputAction, priority: number | Enum.ContextActionPriority)

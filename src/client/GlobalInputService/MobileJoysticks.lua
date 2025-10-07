@@ -3,9 +3,11 @@ export type GuiJoystick = {
 	RimImage: string,
 	ImageType: Enum.ResamplerMode?,
 	Size: number,
-	PositionType: "AtTouch" | "AtCenter",
 
+	PositionType: "AtTouch" | "AtCenter",
 	Visibility: "Dynamic" | "Static",
+	ReturnToZero: boolean,
+
 	ActivationButton: TextButton,
 
 	KeyCode: Enum.KeyCode,
@@ -20,8 +22,11 @@ export type GuiJoystick = {
 
 local mobileJoysticks = {}
 
+local AppRatingPromptService = game:GetService("AppRatingPromptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
 
 local JOYSTICK_TWEEN_TIME = 0.25
 
@@ -40,10 +45,12 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 		StickImage = "rbxassetid://502107146",
 		RimImage = "rbxassetid://12201347372",
 		ImageType = nil,
-
 		Size = 0.1,
+
 		PositionType = "AtTouch",
 		Visibility = "Dynamic",
+		ReturnToZero = true,
+
 		ActivationButton = activationButton or Instance.new("TextButton"),
 		KeyCode = Enum.KeyCode.Thumbstick1,
 		InputBegan = inputBegan.Event,
@@ -68,6 +75,19 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 	}
 	local lastPosition = joystickInputObject.Position
 
+	local stick = Instance.new("ImageLabel")
+	local rim = Instance.new("ImageLabel")
+	local onTouchChanged
+
+	local ti = TweenInfo.new(JOYSTICK_TWEEN_TIME, Enum.EasingStyle.Quart)
+	local returnTween = TweenService:Create(stick, ti, { Position = UDim2.fromScale(0.5, 0.5) })
+	local showTweenA = TweenService:Create(stick, ti, { ImageTransparency = 0 })
+	local showTweenB = TweenService:Create(rim, ti, { ImageTransparency = 0 })
+
+	local hideTweenA = TweenService:Create(stick, ti, { ImageTransparency = 1 })
+	local hideTweenB = TweenService:Create(rim, ti, { ImageTransparency = 1 })
+	local initTouchLocation = Vector2.zero
+
 	local function updateInputObject(position, state)
 		joystickInputObject.KeyCode = joystick.KeyCode
 		joystickInputObject.Position = position
@@ -77,15 +97,83 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 		lastPosition = joystickInputObject.Position
 	end
 
-	local stick = Instance.new("ImageLabel")
-	local rim = Instance.new("ImageLabel")
-	local onTouchChanged
-
 	local function updateJoystick()
+		if joystick.Visibility == "Static" then
+			rim.Visible = true
+		else
+			rim.Visible = false
+		end
+
 		rim.Size = UDim2.fromScale(joystick.Size, joystick.Size)
 		rim.Image = joystick.RimImage
 		stick.Image = joystick.StickImage
 		stick.ResampleMode = joystick.ImageType or Enum.ResamplerMode.Default
+	end
+
+	local function updateReturnZero()
+		local newInputPosition = Vector3.zero
+
+		if joystick.ReturnToZero then
+			returnTween:Play()
+		else
+			newInputPosition = joystickInputObject.Position
+		end
+
+		updateInputObject(newInputPosition, Enum.UserInputState.Change)
+		inputChanged:Fire(joystickInputObject)
+	end
+
+	local function onTouchEnd()
+		if onTouchChanged then
+			onTouchChanged:Disconnect()
+		end
+
+		if joystick.Visibility == "Dynamic" then
+			hideTweenA:Play()
+			hideTweenB:Play()
+		end
+
+		updateReturnZero()
+
+		updateInputObject(joystickInputObject.Position, Enum.UserInputState.End)
+		inputChanged:Fire(joystickInputObject)
+		inputEnded:Fire(joystickInputObject)
+	end
+
+	local function processStick(touchInput, initTouchLocation)
+		local state = touchInput.UserInputState
+
+		if state == Enum.UserInputState.Change or state == Enum.UserInputState.Begin then
+			local touchLocation = Vector2.new(touchInput.Position.X, touchInput.Position.Y + 58) --UserInputService:GetMouseLocation()
+			local relativePosition = touchLocation - initTouchLocation --Vector2.new(x - initX, y - initY)
+			local length = relativePosition.Magnitude
+			local maxLength = rim.AbsoluteSize.X / 2
+
+			returnTween:Cancel()
+
+			length = math.min(length, maxLength)
+			relativePosition = relativePosition.Unit * length
+
+			stick.Position = UDim2.new(
+				0,
+				relativePosition.X + rim.AbsoluteSize.X / 2,
+				0,
+				relativePosition.Y + rim.AbsoluteSize.Y / 2
+			)
+
+			local inputPosition = (relativePosition / rim.AbsoluteSize.Y) * 2
+			inputPosition = Vector2.new(inputPosition.X, -inputPosition.Y)
+
+			updateInputObject(Vector3.new(inputPosition.X, inputPosition.Y, 0), state)
+
+			if state == Enum.UserInputState.Begin then
+				inputBegan:Fire(joystickInputObject)
+			elseif state == Enum.UserInputState.Change then
+				inputChanged:Fire(joystickInputObject)
+			end
+		elseif state == Enum.UserInputState.End then
+			onTouchEnd()
+		end
 	end
 
 	local proxy = setmetatable({}, {
@@ -97,7 +185,18 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 			end -- No change detected
 			joystick[key] = value
 
-			if key ~= "StickImage" and key ~= "RimImage" and key ~= "Size" and key ~= "ImageType" then
+			if key == "ReturnToZero" then
+				updateReturnZero()
+				return
+			end
+
+			if
+				key ~= "StickImage"
+				and key ~= "RimImage"
+				and key ~= "Size"
+				and key ~= "ImageType"
+				and key ~= "Visibility"
+			then
 				return
 			end
 
@@ -105,6 +204,14 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 		end,
 		__metatable = "Locked", -- Prevent external access to the metatable
 	})
+
+	hideTweenA.Completed:Connect(function(state)
+		if state ~= Enum.PlaybackState.Completed then
+			return
+		end
+
+		rim.Visible = false
+	end)
 
 	joystick.ActivationButton.Parent = joystick.Instance
 	joystick.ActivationButton.ZIndex = 2
@@ -132,50 +239,17 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 
 	updateJoystick()
 
-	if joystick.Visibility == "Static" then
-		rim.Visible = true
-	end
-
-	local ti = TweenInfo.new(JOYSTICK_TWEEN_TIME, Enum.EasingStyle.Quart)
-	local returnTween = TweenService:Create(stick, ti, { Position = UDim2.fromScale(0.5, 0.5) })
-	local showTweenA = TweenService:Create(stick, ti, { ImageTransparency = 0 })
-	local showTweenB = TweenService:Create(rim, ti, { ImageTransparency = 0 })
-
-	local hideTweenA = TweenService:Create(stick, ti, { ImageTransparency = 1 })
-	local hideTweenB = TweenService:Create(rim, ti, { ImageTransparency = 1 })
-
-	hideTweenA.Completed:Connect(function(state)
-		if state ~= Enum.PlaybackState.Completed then
-			return
-		end
-
-		rim.Visible = false
-	end)
-
 	rim.Position = UDim2.fromOffset(
 		joystick.ActivationButton.AbsolutePosition.X + (joystick.ActivationButton.AbsoluteSize.X / 2),
 		joystick.ActivationButton.AbsolutePosition.Y + (joystick.ActivationButton.AbsoluteSize.Y / 2)
 	)
 
-	local function onTouchEnd()
-		if onTouchChanged then
-			onTouchChanged:Disconnect()
+	joystick.ActivationButton.InputBegan:Connect(function(touchInput)
+		if touchInput.UserInputState ~= Enum.UserInputState.Begin then
+			return
 		end
 
-		if joystick.Visibility == "Dynamic" then
-			hideTweenA:Play()
-			hideTweenB:Play()
-		end
-
-		updateInputObject(Vector3.zero, Enum.UserInputState.End)
-		inputChanged:Fire(joystickInputObject)
-		inputEnded:Fire(joystickInputObject)
-
-		returnTween:Play()
-	end
-
-	joystick.ActivationButton.MouseButton1Down:Connect(function(initX, initY)
-		local initMouseLocation = UserInputService:GetMouseLocation()
+		initTouchLocation = UserInputService:GetMouseLocation()
 		--print(initX)
 		if joystick.Visibility == "Dynamic" then
 			rim.Visible = true
@@ -184,51 +258,23 @@ function mobileJoysticks.new(activationButton: TextButton?): GuiJoystick
 		end
 
 		if joystick.PositionType == "AtTouch" then
-			TweenService:Create(rim, ti, { Position = UDim2.fromOffset(initMouseLocation.X, initMouseLocation.Y - 58) })
+			TweenService:Create(rim, ti, { Position = UDim2.fromOffset(initTouchLocation.X, initTouchLocation.Y - 58) })
 				:Play()
 		elseif joystick.PositionType == "AtCenter" then
-			rim.Position = UDim2.fromOffset(
+			local position = Vector2.new(
 				joystick.ActivationButton.AbsolutePosition.X + (joystick.ActivationButton.AbsoluteSize.X / 2),
 				joystick.ActivationButton.AbsolutePosition.Y + (joystick.ActivationButton.AbsoluteSize.Y / 2)
 			)
+
+			rim.Position = UDim2.fromOffset(position.X, position.Y)
+			initTouchLocation = Vector2.new(position.X, position.Y + 58)
 		end
 
 		stick.Position = UDim2.fromScale(0.5, 0.5)
 
-		updateInputObject(Vector3.zero, Enum.UserInputState.Begin)
-		inputBegan:Fire(joystickInputObject)
-
-		UserInputService.TouchStarted:Once(function(touchInput)
-			onTouchChanged = touchInput.Changed:Connect(function()
-				local state = touchInput.UserInputState
-
-				if state == Enum.UserInputState.Change then
-					local mouseLocation = Vector2.new(touchInput.Position.X, touchInput.Position.Y + 58) --UserInputService:GetMouseLocation()
-					local relativePosition = mouseLocation - initMouseLocation --Vector2.new(x - initX, y - initY)
-					local length = relativePosition.Magnitude
-					local maxLength = rim.AbsoluteSize.X / 2
-
-					returnTween:Cancel()
-
-					length = math.min(length, maxLength)
-					relativePosition = relativePosition.Unit * length
-
-					stick.Position = UDim2.new(
-						0,
-						relativePosition.X + rim.AbsoluteSize.X / 2,
-						0,
-						relativePosition.Y + rim.AbsoluteSize.Y / 2
-					)
-
-					local inputPosition = (relativePosition / rim.AbsoluteSize.Y) * 2
-					inputPosition = Vector2.new(inputPosition.X, -inputPosition.Y)
-
-					updateInputObject(Vector3.new(inputPosition.X, inputPosition.Y, 0), Enum.UserInputState.Change)
-					inputChanged:Fire(joystickInputObject)
-				elseif state == Enum.UserInputState.End then
-					onTouchEnd()
-				end
-			end)
+		processStick(touchInput, initTouchLocation)
+		onTouchChanged = touchInput.Changed:Connect(function()
+			processStick(touchInput, initTouchLocation)
 		end)
 	end)
 

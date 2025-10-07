@@ -1009,13 +1009,16 @@ function module.Init()
 		globalInputService:SelectGui(mainFrame)
 	end)
 
-	globalInputService.CreateInputAction("MenuBack", function(inputState, input)
+	local backButton = globalInputService.CreateInputAction("MenuBack", function(inputState, input)
 		if inputState ~= Enum.UserInputState.Begin or (input.KeyCode == Enum.KeyCode.ButtonB and not currentPage) then
 			return
 		end
 
 		EscKey()
-	end, Enum.KeyCode.Tab, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect })
+	end, Enum.KeyCode.Tab, { Enum.KeyCode.ButtonB, Enum.KeyCode.ButtonSelect }, "Button")
+
+	backButton:SetImage("rbxassetid://80402175915153")
+	backButton:SetPosition(UDim2.fromScale(0.75, -1.25))
 
 	globalInputService
 		.CreateInputAction("ResetSettings", function(inputState, input)

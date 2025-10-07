@@ -5,7 +5,6 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 
@@ -26,7 +25,6 @@ local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 local hackingFunctions = require(Client.HackingFunctions)
 local inventory = require(Client.Inventory)
-local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
 local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 
@@ -101,16 +99,22 @@ local function createKeyLabel(point)
 	keyLabel.ImageTransparency = 1
 
 	keyLabel:SetAttribute("Key", keyboard[number].Name)
+	keyLabel:SetAttribute("Touch", keyboard[number].Name)
 	keyLabel:SetAttribute("Button", gamepad[number].Name)
 
 	if point:GetAttribute("SequenceHidden") then
 		keyLabel:SetAttribute("Key", "Unknown")
 		keyLabel:SetAttribute("Button", "Unknown")
+		keyLabel:SetAttribute("Touch", "Unknown")
 	end
 
 	keyLabel:AddTag("KeyPrompt")
 	globalInputService:CheckKeyPrompts()
 	return keyLabel
+end
+
+local function toggleMobileInput(value)
+	UI.MobileInput.Visible = value and globalInputService:GetInputSource().Type == "Touch"
 end
 
 local function showPointPromt(point)
@@ -377,6 +381,12 @@ local function processNet()
 	local validPoints, closestPoint = getValidNetPoints()
 	drawNetLines(validPoints, closestPoint)
 
+	if #validPoints > 0 then
+		toggleMobileInput(true)
+	else
+		toggleMobileInput(false)
+	end
+
 	if not player.Character then
 		return
 	end
@@ -443,6 +453,7 @@ local function enterKeyStroke(point: BillboardGui, input: InputObject)
 
 	keystrokeLabel.Name = "InputUsed"
 	keystrokeLabel:SetAttribute("Key", keyboard[inputNumber].Name)
+	keystrokeLabel:SetAttribute("Touch", keyboard[inputNumber].Name)
 	keystrokeLabel:SetAttribute("Button", gamepad[inputNumber].Name)
 
 	globalInputService:CheckKeyPrompts()
@@ -503,6 +514,7 @@ function module:ExitNetMode()
 	actionPrompt.hideActionPrompt()
 	actionPrompt.hideEnergyUsage()
 	clearNetPoints()
+	toggleMobileInput(false)
 
 	util.PlaySound(sounds.NetClose, 0, 0.25)
 
@@ -515,12 +527,38 @@ function module:ExitNetMode()
 end
 
 function module.Init()
+	for _, inputButton: ImageButton in ipairs(UI.MobileInput:GetChildren()) do
+		if not inputButton:IsA("ImageButton") then
+			continue
+		end
+
+		inputButton.Activated:Connect(function()
+			if not globalInputService.actionGroups["PlayerControl"].IsEnabled then
+				return
+			end
+
+			checkKeystrokeInput(Enum.UserInputState.Begin, { KeyCode = Enum.KeyCode[inputButton.Name] })
+		end)
+	end
+
 	RunService.RenderStepped:Connect(processNet)
 end
 
 local function pressNetKey(state)
 	if acts:checkAct("Paused") then
 		return
+	end
+
+	if globalInputService:GetInputSource().Type == "Touch" then -- convert to toggle when on mobile
+		if state ~= Enum.UserInputState.Begin then
+			return
+		end
+
+		if acts:checkAct("InNet") then
+			state = Enum.UserInputState.End
+		else
+			state = Enum.UserInputState.Begin
+		end
 	end
 
 	if acts:checkAct("InNet") and state == Enum.UserInputState.End then
@@ -538,6 +576,7 @@ module.ToggleNetInput = globalInputService.CreateInputAction(
 	"Button"
 )
 module.ToggleNetInput:SetPosition(UDim2.fromScale(0.75, -0.35))
+module.ToggleNetInput:SetImage("rbxassetid://139426337899108")
 
 globalInputService.AddToActionGroup(
 	"PlayerControl",

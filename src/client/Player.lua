@@ -6,6 +6,7 @@ local module = {
 	Stats = {},
 }
 
+local AppRatingPromptService = game:GetService("AppRatingPromptService")
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -63,6 +64,7 @@ local thumbCursorGoal = Vector2.zero
 -- Mobile joysticks --
 
 local lastTouchUp = os.clock()
+local lastTouchDown = os.clock()
 
 local mobileJoystickPosition = Vector3.zero
 local movementJoystickAction = globalInputService.CreateInputAction("MovementMobileJoystick", function(state, input)
@@ -71,43 +73,75 @@ end, Enum.KeyCode.Unknown, nil, "Joystick")
 
 local movementJoystick: globalInputService.GuiJoystick = movementJoystickAction:GetMobileInput()
 
-movementJoystick.StickImage = "rbxassetid://502107146"
-movementJoystick.RimImage = "rbxassetid://12201347372"
+movementJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
+movementJoystick.ActivationButton.AnchorPoint = Vector2.new(0, 1)
+movementJoystick.ActivationButton.Position = UDim2.fromScale(0, 0.9)
+
+movementJoystick.StickImage = "rbxassetid://132521821681421"
+movementJoystick.RimImage = "rbxassetid://128397619482738"
+movementJoystick.ImageType = Enum.ResamplerMode.Pixelated
 movementJoystick.Size = 0.25
 movementJoystick.PositionType = "AtTouch"
 movementJoystick.Visibility = "Dynamic"
 movementJoystick.KeyCode = Enum.KeyCode.Thumbstick1
 
-movementJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
-movementJoystick.ActivationButton.AnchorPoint = Vector2.new(0, 1)
-movementJoystick.ActivationButton.Position = UDim2.fromScale(0, 0.9)
-
 ----
 
 local lookJoystickAction = globalInputService.CreateInputAction("LookMobileJoystick", function(state, input)
-	if state == Enum.UserInputState.Begin then
-		if os.clock() - lastTouchUp <= 0.15 then
-			print("READY")
-			weapons.readyKeyToggle(state, input)
+	-- if state == Enum.UserInputState.Begin then
+	-- 	if os.clock() - lastTouchUp <= 0.15 then --and os.clock() - lastTouchDown <= 0.25 then
+	-- 		--weapons.readyKeyToggle(state, input)
+	-- 	end
+	-- 	lastTouchDown = os.clock()
+	-- elseif state == Enum.UserInputState.End then
+	-- 	--weapons.readyKeyToggle(state, input)
+	-- 	lastTouchUp = os.clock()
+	-- end
+
+	if globalInputService.inputActions["Fire Weapon"].IsEnabled() then
+		--weapons.fireKeyToggle(state, input)
+
+		if state == Enum.UserInputState.Begin then
+			--print(lastTouchUp - lastTouchDown)
+			if os.clock() - lastTouchUp <= 0.15 then
+				weapons.fireKeyToggle(state, input)
+			end
+
+			lastTouchDown = os.clock()
+		elseif state == Enum.UserInputState.End then
+			if os.clock() - lastTouchDown <= 0.15 then
+				weapons.fireKeyToggle(Enum.UserInputState.Begin, input)
+			end
+
+			weapons.fireKeyToggle(state, input)
+			lastTouchUp = os.clock()
 		end
-	elseif state == Enum.UserInputState.End then
-		weapons.readyKeyToggle(state, input)
-		lastTouchUp = os.clock()
 	end
 end, Enum.KeyCode.Unknown, nil, "Joystick")
 
 local lookJoystick: globalInputService.GuiJoystick = lookJoystickAction:GetMobileInput()
 
-lookJoystick.StickImage = "rbxassetid://502107146"
-lookJoystick.RimImage = "rbxassetid://12201347372"
-lookJoystick.Size = 0.25
-lookJoystick.PositionType = "AtCenter"
-lookJoystick.Visibility = "Dynamic"
-lookJoystick.KeyCode = Enum.KeyCode.Thumbstick2
-
 lookJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
 lookJoystick.ActivationButton.AnchorPoint = Vector2.new(1, 1)
 lookJoystick.ActivationButton.Position = UDim2.fromScale(1, 0.9)
+
+lookJoystick.StickImage = "rbxassetid://132521821681421"
+lookJoystick.RimImage = "rbxassetid://128397619482738"
+lookJoystick.ImageType = Enum.ResamplerMode.Pixelated
+lookJoystick.Size = 0.4
+lookJoystick.PositionType = "AtCenter"
+lookJoystick.Visibility = "Static"
+lookJoystick.KeyCode = Enum.KeyCode.Thumbstick2
+
+weapons.onWeaponToggled:Connect(function(value)
+	lookJoystick.ReturnToZero = value == 0
+
+	if value == 0 then
+		lookJoystick.StickImage = "rbxassetid://132521821681421"
+	else
+		lookJoystick.StickImage = "rbxassetid://109944710788886"
+	end
+end)
 
 ----------------------
 
@@ -497,13 +531,13 @@ local function updatePlayerDirection()
 	logPlayerDirection = yOrientation
 	logLv = character:GetPivot().LookVector
 
-	local lookPoint = characterPosition + module.moveUnit
+	local legPoint = characterPosition + module.moveUnit
 
 	if module.moveUnit.Magnitude == 0 then
-		lookPoint = (character:GetPivot() * CFrame.new(0, 0, -1)).Position
+		legPoint = (character:GetPivot() * CFrame.new(0, 0, -1)).Position
 	end
 
-	legs.Gyro.CFrame = CFrame.lookAt(characterPosition, lookPoint) * CFrame.Angles(0, math.rad(90), 0)
+	legs.Gyro.CFrame = CFrame.lookAt(characterPosition, legPoint) * CFrame.Angles(0, math.rad(90), 0)
 end
 
 local function updateDirection(vector)
@@ -563,7 +597,6 @@ local function updateGamepadCursorData(key)
 
 	if thumbstick2Pos.Magnitude >= THUMBSTICK_THRESHOLD then
 		thumbstickLookPos = Vector2.new(thumbstick2Pos.X, -thumbstick2Pos.Y)
-		print(thumbstickLookPos)
 	elseif thumbstick1Pos.Magnitude >= THUMBSTICK_THRESHOLD then
 		local thumbPos = (thumbstick1Pos / 10) * 3
 		thumbstickLookPos = Vector2.new(thumbPos.X, -thumbPos.Y)
@@ -753,7 +786,8 @@ local sprintInputAction = globalInputService.CreateInputAction(
 
 globalInputService.AddToActionGroup("PlayerControl", sprintInputAction)
 
-sprintInputAction:SetPosition(UDim2.fromScale(-0.2, 0.25))
+sprintInputAction:SetImage("rbxassetid://137872272618939")
+sprintInputAction:SetPosition(UDim2.fromScale(-0.25, 0.385))
 
 RunService.Heartbeat:Connect(function()
 	updateMovementInput()

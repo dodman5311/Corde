@@ -40,7 +40,7 @@ local portraits = {
 
 local function clearOptions()
 	for _, option in ipairs(UI.Box.Choices:GetChildren()) do
-		if not option:IsA("Frame") then
+		if not option:IsA("TextButton") then
 			continue
 		end
 
@@ -167,14 +167,13 @@ local function showDialogueOptions(options)
 		end
 
 		local dialogueOption = UI.Option:Clone()
-		local button: TextButton = dialogueOption.ButtonFrame.Button
 
 		dialogueOption.Visible = true
 
-		button.Text = option
+		dialogueOption.ButtonFrame.Text.Text = option
 		dialogueOption.Parent = UI.Box.Choices
 
-		button.MouseButton1Click:Once(function()
+		dialogueOption.MouseButton1Click:Once(function()
 			clearOptions()
 			startDialogue(currentNpcModule.Dialogue[option])
 		end)
@@ -370,7 +369,8 @@ function typeOutMessage(messageData)
 	inputEvent = UserInputService.InputBegan:Connect(function(input)
 		if
 			(
-				input.UserInputType ~= Enum.UserInputType.MouseButton1
+				input.UserInputType ~= Enum.UserInputType.Touch
+				and input.UserInputType ~= Enum.UserInputType.MouseButton1
 				and input.KeyCode ~= Enum.KeyCode.F
 				and input.KeyCode ~= Enum.KeyCode.ButtonA
 				and input.KeyCode ~= Enum.KeyCode.ButtonX

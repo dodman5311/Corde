@@ -619,6 +619,7 @@ local function showNoteKeyprompts(note: item)
 			newPrompt.Image:SetAttribute("InputName", button)
 		else
 			newPrompt.Image:SetAttribute("Key", key)
+			newPrompt.Image:SetAttribute("Touch", key)
 			newPrompt.Image:SetAttribute("Button", button)
 		end
 
@@ -749,8 +750,6 @@ local function createGuiSlot(parent, index)
 end
 
 local function createGuiSlots()
-	print(InventorySize)
-
 	for slotIndex = 1, InventorySize do
 		createGuiSlot(UI.Inventory.Slots, slotIndex)
 	end
@@ -1407,6 +1406,7 @@ Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 )
 
 Inventory.ToggleInventoryInput:SetPosition(UDim2.fromScale(0.75, -0.65))
+Inventory.ToggleInventoryInput:SetImage("rbxassetid://79758815081096")
 
 globalInputService.AddToActionGroup("PlayerControl", Inventory.ToggleInventoryInput)
 Inventory.statusPumpTimer.Function = pumpHealthStatus

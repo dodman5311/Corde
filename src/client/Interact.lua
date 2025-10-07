@@ -361,7 +361,9 @@ local interactInputAction = globalInputService.CreateInputAction("Interact", fun
 
 	InteractiWithObject(object)
 end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"), "Button")
-interactInputAction:SetPosition(UDim2.fromScale(-0.15, -0.05))
+interactInputAction:SetPosition(UDim2.fromScale(-0.2, -0.15))
+interactInputAction:SetImage("rbxassetid://109036245531351")
+
 globalInputService.AddToActionGroup("PlayerControl", interactInputAction)
 
 globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.High)

@@ -61,7 +61,7 @@ accuracyReduction.Target = 0
 local rng = Random.new()
 local checkChamberTimer = Timer:new("checkChamberInput", 0.5)
 
-module.onWeaponToggled = signal.new()
+module.onWeaponToggled = signal.new() :: signal.Signal<number>
 local rp = RaycastParams.new()
 
 local function showWeapon(weaponType)
@@ -621,9 +621,7 @@ function module.StartGame()
 	module.equipWeapon(inventory:CheckSlot("Weapon_Slot"))
 
 	if currentWeapon then
-		local mag = getNextMag(true)
 		currentWeapon.Value.CurrentMag = getNextMag(true)
-		print(mag, currentWeapon.Value.CurrentMag)
 	end
 end
 
@@ -648,9 +646,7 @@ function module.fireKeyToggle(state, input)
 		end
 		local weaponData = currentWeapon.Value
 
-		if weaponData.FireMode == 1 then
-			fireWeapon(input)
-		end
+		fireWeapon(input)
 
 		if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
 			util.PlayFrom(player.Character, sounds.GunClick)
@@ -661,6 +657,18 @@ function module.fireKeyToggle(state, input)
 end
 
 function module.readyKeyToggle(state, input)
+	if globalInputService:GetInputSource().Type == "Touch" then -- convert to toggle when on mobile
+		if state ~= Enum.UserInputState.Begin then
+			return
+		end
+
+		if readyKeyDown then
+			state = Enum.UserInputState.End
+		else
+			state = Enum.UserInputState.Begin
+		end
+	end
+
 	if state == Enum.UserInputState.Begin then
 		if acts:checkAct("Paused") then
 			return
@@ -712,11 +720,18 @@ globalInputService.AddToActionGroup(
 		"Ready Weapon",
 		module.readyKeyToggle,
 		util.getSetting("Keybinds", "Ready Weapon"),
-		util.getSetting("Gamepad", "Ready Weapon")
+		util.getSetting("Gamepad", "Ready Weapon"),
+		"Button"
 	)
 )
 
-globalInputService.inputActions["Reload"]:SetPosition(UDim2.fromScale(0, -0.25))
+globalInputService.inputActions["Reload"]:SetPosition(UDim2.fromScale(0.1, -0.4))
+globalInputService.inputActions["Reload"]:SetImage("rbxassetid://103714846883020")
+
+globalInputService.inputActions["Ready Weapon"]:SetPosition(UDim2.fromScale(0.75, -0.05))
+globalInputService.inputActions["Ready Weapon"]:SetImage("rbxassetid://108711379521168")
+
+globalInputService.inputActions["Fire Weapon"]:SetImage("rbxassetid://78642308389657")
 globalInputService.inputActions["Fire Weapon"]:Disable()
 
 RunService.Heartbeat:Connect(function()
