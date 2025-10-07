@@ -352,18 +352,17 @@ function module.Init()
 	RunService.RenderStepped:Connect(processCrosshair)
 end
 
-globalInputService.AddToActionGroup(
-	"PlayerControl",
-	globalInputService.CreateInputAction("Interact", function(state)
-		local object = mouseTarget.Value
+local interactInputAction = globalInputService.CreateInputAction("Interact", function(state)
+	local object = mouseTarget.Value
 
-		if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
-			return
-		end
+	if state ~= Enum.UserInputState.Begin or not object or acts:checkAct("Interacting") then
+		return
+	end
 
-		InteractiWithObject(object)
-	end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"), "Button")
-)
+	InteractiWithObject(object)
+end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"), "Button")
+interactInputAction:SetPosition(UDim2.fromScale(-0.15, -0.05))
+globalInputService.AddToActionGroup("PlayerControl", interactInputAction)
 
 globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.High)
 

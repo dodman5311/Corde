@@ -1349,9 +1349,7 @@ local function checkForPrepperAchievement(item)
 end
 
 function Inventory.StartGame()
-	print("A")
 	Inventory.ToggleInventoryInput:Enable()
-	print("B")
 
 	local difficulty = workspace:GetAttribute("Difficulty")
 	InventorySize += math.abs(difficulty - 2) * 2 -- @Difficulty set slots
@@ -1407,6 +1405,8 @@ Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 	{ util.getSetting("Gamepad", "Inventory"), Enum.KeyCode.ButtonB },
 	"Button"
 )
+
+Inventory.ToggleInventoryInput:SetPosition(UDim2.fromScale(0.75, -0.65))
 
 globalInputService.AddToActionGroup("PlayerControl", Inventory.ToggleInventoryInput)
 Inventory.statusPumpTimer.Function = pumpHealthStatus

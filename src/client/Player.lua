@@ -62,37 +62,52 @@ local thumbCursorGoal = Vector2.zero
 
 -- Mobile joysticks --
 
+local lastTouchUp = os.clock()
+
 local mobileJoystickPosition = Vector3.zero
-local movementJoystick: globalInputService.GuiJoystick = globalInputService.CreateJoystick(
-	"rbxassetid://502107146",
-	"rbxassetid://12201347372",
-	nil,
-	0.25,
-	"AtCenter",
-	"Static",
-	Enum.KeyCode.Thumbstick1
-)
+local movementJoystickAction = globalInputService.CreateInputAction("MovementMobileJoystick", function(state, input)
+	mobileJoystickPosition = Vector3.new(input.Position.X, 0, -input.Position.Y)
+end, Enum.KeyCode.Unknown, nil, "Joystick")
+
+local movementJoystick: globalInputService.GuiJoystick = movementJoystickAction:GetMobileInput()
+
+movementJoystick.StickImage = "rbxassetid://502107146"
+movementJoystick.RimImage = "rbxassetid://12201347372"
+movementJoystick.Size = 0.25
+movementJoystick.PositionType = "AtTouch"
+movementJoystick.Visibility = "Dynamic"
+movementJoystick.KeyCode = Enum.KeyCode.Thumbstick1
+
 movementJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
 movementJoystick.ActivationButton.AnchorPoint = Vector2.new(0, 1)
-movementJoystick.ActivationButton.Position = UDim2.fromScale(0, 1)
+movementJoystick.ActivationButton.Position = UDim2.fromScale(0, 0.9)
 
-movementJoystick.InputChanged:Connect(function(input)
-	mobileJoystickPosition = Vector3.new(input.Position.X, 0, -input.Position.Y)
-end)
+----
 
---local mobileLookstickPosition = Vector3.zero
-local lookJoystick: globalInputService.GuiJoystick = globalInputService.CreateJoystick(
-	"rbxassetid://502107146",
-	"rbxassetid://12201347372",
-	nil,
-	0.25,
-	"AtCenter",
-	"Static",
-	Enum.KeyCode.Thumbstick2
-)
+local lookJoystickAction = globalInputService.CreateInputAction("LookMobileJoystick", function(state, input)
+	if state == Enum.UserInputState.Begin then
+		if os.clock() - lastTouchUp <= 0.15 then
+			print("READY")
+			weapons.readyKeyToggle(state, input)
+		end
+	elseif state == Enum.UserInputState.End then
+		weapons.readyKeyToggle(state, input)
+		lastTouchUp = os.clock()
+	end
+end, Enum.KeyCode.Unknown, nil, "Joystick")
+
+local lookJoystick: globalInputService.GuiJoystick = lookJoystickAction:GetMobileInput()
+
+lookJoystick.StickImage = "rbxassetid://502107146"
+lookJoystick.RimImage = "rbxassetid://12201347372"
+lookJoystick.Size = 0.25
+lookJoystick.PositionType = "AtCenter"
+lookJoystick.Visibility = "Dynamic"
+lookJoystick.KeyCode = Enum.KeyCode.Thumbstick2
+
 lookJoystick.ActivationButton.Size = UDim2.fromScale(0.4, 0.5)
 lookJoystick.ActivationButton.AnchorPoint = Vector2.new(1, 1)
-lookJoystick.ActivationButton.Position = UDim2.fromScale(1, 1)
+lookJoystick.ActivationButton.Position = UDim2.fromScale(1, 0.9)
 
 ----------------------
 
@@ -548,6 +563,7 @@ local function updateGamepadCursorData(key)
 
 	if thumbstick2Pos.Magnitude >= THUMBSTICK_THRESHOLD then
 		thumbstickLookPos = Vector2.new(thumbstick2Pos.X, -thumbstick2Pos.Y)
+		print(thumbstickLookPos)
 	elseif thumbstick1Pos.Magnitude >= THUMBSTICK_THRESHOLD then
 		local thumbPos = (thumbstick1Pos / 10) * 3
 		thumbstickLookPos = Vector2.new(thumbPos.X, -thumbPos.Y)
@@ -727,16 +743,17 @@ function module.Init()
 	end)
 end
 
-globalInputService.AddToActionGroup(
-	"PlayerControl",
-	globalInputService.CreateInputAction(
-		"Sprint",
-		updateSprinting,
-		util.getSetting("Keybinds", "Sprint"),
-		util.getSetting("Gamepad", "Sprint"),
-		"Button"
-	)
+local sprintInputAction = globalInputService.CreateInputAction(
+	"Sprint",
+	updateSprinting,
+	util.getSetting("Keybinds", "Sprint"),
+	util.getSetting("Gamepad", "Sprint"),
+	"Button"
 )
+
+globalInputService.AddToActionGroup("PlayerControl", sprintInputAction)
+
+sprintInputAction:SetPosition(UDim2.fromScale(-0.2, 0.25))
 
 RunService.Heartbeat:Connect(function()
 	updateMovementInput()

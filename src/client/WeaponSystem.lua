@@ -716,6 +716,7 @@ globalInputService.AddToActionGroup(
 	)
 )
 
+globalInputService.inputActions["Reload"]:SetPosition(UDim2.fromScale(0, -0.25))
 globalInputService.inputActions["Fire Weapon"]:Disable()
 
 RunService.Heartbeat:Connect(function()

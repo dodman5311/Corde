@@ -537,6 +537,7 @@ module.ToggleNetInput = globalInputService.CreateInputAction(
 	util.getSetting("Gamepad", "N.E.T"),
 	"Button"
 )
+module.ToggleNetInput:SetPosition(UDim2.fromScale(0.75, -0.35))
 
 globalInputService.AddToActionGroup(
 	"PlayerControl",
