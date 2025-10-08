@@ -982,6 +982,8 @@ local function EscKey()
 	elseif not inMainMenu then
 		world:pause()
 		switchToPage("Settings")
+		menu.Background.BackgroundTransparency = 1
+		menu.GamePaused.Visible = true
 	end
 end
 

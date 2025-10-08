@@ -1,4 +1,5 @@
 local CollectionService = game:GetService("CollectionService")
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
@@ -106,6 +107,18 @@ local gameSettings = {
 				for _, frame in ipairs(playerGui.ScreenEffects:GetChildren()) do
 					frame.Visible = frame.Name == self.Value
 				end
+			end,
+		},
+
+		{
+			Name = "Brightness",
+			Type = "Slider",
+			Value = 0,
+			Values = NumberRange.new(0, 100),
+			OnChanged = function(self: Types.Setting)
+				local color: ColorCorrectionEffect = Lighting.ColorCorrection
+				color.Brightness = self.Value / 250
+				color.Contrast = 0.1 + self.Value / 150
 			end,
 		},
 	},
