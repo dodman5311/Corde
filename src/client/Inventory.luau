@@ -1,6 +1,5 @@
 --// Services
 
-local AchievementService = game:GetService("AchievementService")
 local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
 local GuiService = game:GetService("GuiService")
@@ -26,7 +25,6 @@ local sounds = assets.Sounds
 
 local UI = StarterGui.Inventory
 local currentSelectedSlot
-local camera = workspace.CurrentCamera
 
 --// Modules
 local Achievements = require(script.Parent.Achievements)
@@ -36,7 +34,6 @@ local acts = require(client.Acts)
 local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
 local itemsList = require(ReplicatedStorage.Shared.Items)
-local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
 local mouseOver = require(client.MouseOver)
 local scales = require(client.Scales)
 local signal = require(ReplicatedStorage.Packages.Signal)
@@ -103,6 +100,7 @@ function Inventory:SearchForItem(itemName: string)
 
 		return item, slot
 	end
+	return
 end
 
 -- function Inventory:SearchForMatch(valueTable: {})
@@ -1342,7 +1340,7 @@ end
 
 local function checkForPrepperAchievement(item)
 	local door = workspace:FindFirstChild("KeyholeDoor", true)
-	if door and item.Name == "M45A1" then
+	if not door:GetAttribute("Used") and item.Name == "M45A1" then
 		Achievements:AwardAchievement(Achievements.Ids.PreppersInstinct)
 	end
 end
