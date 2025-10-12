@@ -143,7 +143,7 @@ local function showPointPromt(point)
 
 	local animation = uiAnimationService.PlayAnimation(hackUi, 0.045, false, true)
 
-	animation:OnFrameRached(4):Once(function()
+	animation:OnFrameReached(4):Once(function()
 		if not hackUi.Parent then
 			return
 		end

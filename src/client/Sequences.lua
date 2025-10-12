@@ -197,6 +197,17 @@ function module.UseMirror()
 	end
 end
 
+local function showTextForPeriod(message: string, frame: GuiObject, showTime: number, color: Color3?)
+	local changeTable = { Text = message }
+	if color then
+		changeTable.TextColor3 = color
+	end
+	changePropertyForTable(frame:GetChildren(), changeTable)
+	frame.Visible = true
+	task.wait(showTime)
+	frame.Visible = false
+end
+
 function module.InstallModule()
 	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 	showBars()
@@ -221,33 +232,33 @@ function module.InstallModule()
 
 	for _ = 0, 5 do
 		local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
-		animation:OnFrameRached(3):Wait()
+		animation:OnFrameReached(3):Wait()
 		uiAnimationService.StopAnimation(imageFrame)
 		task.wait(0.15)
 	end
 
 	local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
 
-	animation:OnFrameRached(7):Wait()
+	animation:OnFrameReached(7):Wait()
 	animation:Pause()
 	task.wait(0.2)
 	animation:Resume()
 
-	animation:OnFrameRached(17):Wait()
+	animation:OnFrameReached(17):Wait()
 	animation:Pause()
 	task.wait(0.3)
 	animation:Resume()
 
-	animation:OnFrameRached(21):Wait()
+	animation:OnFrameReached(21):Wait()
 
 	sequenceFrame.Glitch.Visible = true
-	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.0125):OnFrameRached(25):Wait()
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.0125):OnFrameReached(25):Wait()
 	sequenceFrame.Glitch.Visible = false
 	background.Visible = false
 	smudge.Visible = false
 	imageFrame.Visible = false
 
-	task.wait(2)
+	task.wait(3)
 
 	------------------------------------------------------------------------
 
@@ -264,57 +275,72 @@ function module.InstallModule()
 		sequenceFrame.RedX.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
 	end)
 
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "They are waiting for you." }
-	)
-	sequenceFrame.ScreenText.Visible = true
+	showTextForPeriod("You’re my favorite.", sequenceFrame.ScreenText, 3, Color3.new(1))
 
-	task.wait(2.5)
-	sequenceFrame.ScreenText.Visible = false
 	sequenceFrame.RedX.Visible = true
+	task.wait(2)
+	sequenceFrame.Glitch2.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch2, 0.05)
 
-	task.wait(1)
+	task.wait(0.25)
+	sequenceFrame.Glitch2.Visible = false
 	sequenceFrame.RedX.Visible = false
 
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "Do you hear them?" }
-	)
+	showTextForPeriod("Did you know that?", sequenceFrame.ScreenText, 2.5)
+
+	sequenceFrame.Heart.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Heart, 0.05, true)
+	task.wait(0.65)
+	sequenceFrame.Heart.Visible = false
+
+	sequenceFrame.Cells.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Cells, 0.05, true)
+	task.wait(0.65)
+	sequenceFrame.Cells.Visible = false
+
+	showTextForPeriod("It's okay.", sequenceFrame.ScreenText, 0.25)
+	-- VOID VISIONS
+	sequenceFrame.Void.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Void, 0.075, true)
+	task.wait(1)
+	sequenceFrame.Void.Visible = false
+
+	for timeFrame = 0.3, 0.1, -0.1 do
+		sequenceFrame.Cells.Visible = true
+		task.wait(timeFrame)
+		sequenceFrame.Cells.Visible = false
+		sequenceFrame.Heart.Visible = true
+		task.wait(timeFrame)
+		sequenceFrame.Heart.Visible = false
+		sequenceFrame.Cells.Visible = true
+		task.wait(timeFrame)
+		sequenceFrame.Cells.Visible = false
+		sequenceFrame.Void.Visible = true
+		task.wait(timeFrame)
+		sequenceFrame.Void.Visible = false
+		sequenceFrame.Heart.Visible = true
+		task.wait(timeFrame)
+		sequenceFrame.Heart.Visible = false
+	end
+
+	uiAnimationService.StopAnimation(sequenceFrame.Heart)
+	uiAnimationService.StopAnimation(sequenceFrame.Cells)
+	uiAnimationService.StopAnimation(sequenceFrame.Void)
+
 	sequenceFrame.ScreenText.Visible = true
-
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I won't let you go." })
 	task.wait(3)
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Child." })
+	task.wait(0.05)
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I won't let you go." })
+
+	task.wait(2)
+	sequenceFrame.Glitch2.Visible = true
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch2, 0.05)
+	task.wait(0.25)
+	sequenceFrame.Glitch2.Visible = false
 	sequenceFrame.ScreenText.Visible = false
-	task.wait(3) -- VOID VISIONS
 
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "A metal man sings a black bird's song," }
-	)
-	sequenceFrame.ScreenText.Visible = true
-
-	task.wait(3)
-	sequenceFrame.ScreenText.Visible = false
-	task.wait(3) -- MONSTER VISIONS
-
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "and the sun dies for a plastic reason." }
-	)
-	sequenceFrame.ScreenText.Visible = true
-
-	task.wait(3)
-	sequenceFrame.ScreenText.Visible = false
-	task.wait(3) -- BLOOD VISIONS
-
-	changePropertyForTable(
-		sequenceFrame.ScreenText:GetChildren(),
-		{ TextColor3 = Color3.new(1), Text = "Yet they live." }
-	)
-	sequenceFrame.ScreenText.Visible = true
-
-	task.wait(3)
-	sequenceFrame.ScreenText.Visible = false
 	sequenceFrame.SecondFrame.Visible = true
 	eyeFrame.Visible = true
 
@@ -624,7 +650,7 @@ local function deathScreenUi()
 	sequenceFrame.Eye.Visible = true
 	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.1)
 
-	animation:OnFrameRached(8):Once(function()
+	animation:OnFrameReached(8):Once(function()
 		animation:Pause()
 		sequenceFrame.ScreenText.Visible = true
 		sequenceFrame.Eye.Visible = false

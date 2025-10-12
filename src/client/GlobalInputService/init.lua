@@ -158,7 +158,6 @@ function globalInputService:CheckKeyPrompts()
 			Touch = "Touch",
 		}
 
-		print(globalInputService._inputType)
 		if image:GetAttribute(reference[globalInputService._inputType]) then
 			iconKey = image:GetAttribute(reference[globalInputService._inputType])
 		elseif inputName and globalInputService.inputActions[inputName] then

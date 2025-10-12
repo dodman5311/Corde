@@ -393,7 +393,7 @@ local function checkChamber() -- @TODO Make compatable with rifle and shotgun
 
 	util.tween(HUD.ChamberCheck.Image, ti, { ImageTransparency = 0 })
 	local animation = uiAnimationService.PlayAnimation(HUD.ChamberCheck, 0.05)
-	animation:OnFrameRached(4):Wait()
+	animation:OnFrameReached(4):Wait()
 	animation:Pause()
 	task.wait(1)
 

@@ -164,7 +164,7 @@ local function showInterest(cursor, broken)
 	local a2 = uiAnimationService.PlayAnimation(cursor.CursorBlue, INTEREST_ICON_SPEED)
 	local a3 = uiAnimationService.PlayAnimation(cursor.CursorRed, INTEREST_ICON_SPEED)
 
-	a1:OnFrameRached(3):Connect(function()
+	a1:OnFrameReached(3):Connect(function()
 		a1:Pause()
 		a2:Pause()
 		a3:Pause()

@@ -7,13 +7,24 @@ local acts = require(script.Parent.Acts)
 
 local animations = {}
 
+export type Animation2D = {
+	NextFrame: (self: Animation2D) -> nil,
+	SetToFrame: (self: Animation2D, frameNumber: number) -> nil,
+	RunAnimation: (self: Animation2D) -> nil,
+	Pause: (self: Animation2D) -> nil,
+	Resume: (self: Animation2D) -> nil,
+	OnEnded: signal.Signal<>,
+	OnStepped: signal.Signal<number>,
+	OnFrameReached: (self: Animation2D, Frame: number) -> signal.Signal<number, UDim2>,
+}
+
 function module.PlayAnimation(
 	frame: GuiObject,
 	frameDelay: number,
 	loop: boolean?,
 	stayOnLastFrame: boolean?,
 	startOnFrame: number?
-)
+): Animation2D
 	if animations[frame] then
 		animations[frame] = nil
 	end
@@ -33,9 +44,11 @@ function module.PlayAnimation(
 	local frames = image:GetAttribute("Frames") or image.Size.X.Scale * image.Size.Y.Scale
 	local currentFrames = image:GetAttribute("Frames") or image.Size.X.Scale * image.Size.Y.Scale
 	local currentFrame = 0
+	local paused = false
+	local framesToHit = {}
 
-	local newAnimation = {
-		NextFrame = function()
+	local newAnimation: Animation2D = {
+		NextFrame = function(self: Animation2D)
 			x += 1
 			currentFrames -= 1
 			currentFrame += 1
@@ -46,7 +59,7 @@ function module.PlayAnimation(
 			end
 		end,
 
-		SetToFrame = function(self, frameNumber: number)
+		SetToFrame = function(self: Animation2D, frameNumber: number)
 			x = 0
 			y = 0
 			for _ = 1, frameNumber do
@@ -56,7 +69,7 @@ function module.PlayAnimation(
 		end,
 
 		RunAnimation = function(self)
-			if self.Paused or acts:checkAct("Paused") then
+			if paused or acts:checkAct("Paused") then
 				lastFrameStep = os.clock()
 				return
 			end
@@ -93,7 +106,7 @@ function module.PlayAnimation(
 
 			image.Position = UDim2.fromScale(-x, -y)
 
-			for _, v in ipairs(self.framesToHit) do
+			for _, v in ipairs(framesToHit) do
 				if currentFrame ~= v[1] then
 					continue
 				end
@@ -103,25 +116,23 @@ function module.PlayAnimation(
 			lastFrameStep = os.clock()
 		end,
 
-		framesToHit = {},
-
 		OnEnded = signal.new(),
 
-		OnFrameRached = function(self, Frame: number)
+		OnStepped = signal.new(),
+
+		OnFrameReached = function(self: Animation2D, Frame: number): signal.Signal<number, UDim2>
 			local reachedSignal = signal.new()
-			table.insert(self.framesToHit, { Frame, reachedSignal })
+			table.insert(framesToHit, { Frame, reachedSignal })
 
 			return reachedSignal
 		end,
 
-		OnStepped = signal.new(),
-
-		Pause = function(self)
-			self.Paused = true
+		Pause = function(self: Animation2D)
+			paused = true
 		end,
 
-		Resume = function(self)
-			self.Paused = false
+		Resume = function(self: Animation2D)
+			paused = false
 		end,
 	}
 
@@ -137,6 +148,7 @@ function module.CheckPlaying(frame) -- returns the animation if it's playing
 	if animations[frame] then
 		return animations[frame]
 	end
+	return
 end
 
 function module.StopAnimation(frame)

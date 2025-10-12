@@ -8,10 +8,10 @@ local PathfindingService = game:GetService("PathfindingService")
 local client = script.Parent
 local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
-local util = require(client.Util)
-local playerService = require(client.Player)
 local bloodEffects = require(client.BloodEffects)
+local playerService = require(client.Player)
 local types = require(ReplicatedStorage.Shared.Types)
+local util = require(client.Util)
 
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
@@ -171,7 +171,7 @@ function module.doActions(npc, actions, ...)
 		end
 
 		if not action["IgnoreEventParams"] then
-			for _, parameter in ipairs({ ... }) do
+			for _, parameter in ipairs { ... } do
 				table.insert(parameters, parameter)
 			end
 		end
@@ -466,7 +466,7 @@ module.actions = {
 		local attackAnimation = module.actions.PlayAnimation(npc, "Animation_Attack", 0.05, false, true)
 
 		if damageFrame then
-			attackAnimation:OnFrameRached(damageFrame):Connect(function()
+			attackAnimation:OnFrameReached(damageFrame):Connect(function()
 				createDamageHitbox(npc, Vector2.new(1, 2), damage, "Melee")
 			end)
 		else
