@@ -87,6 +87,13 @@ local function hideBars()
 	)
 end
 
+local function playPingSound()
+	util.PlaySound(soundsFolder.StaticHit)
+	local sound = util.PlaySound(soundsFolder.PingSound)
+	local ti = TweenInfo.new(0.35, Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
+	util.tween(sound, ti, { Volume = 0, PlaybackSpeed = 1.95 })
+end
+
 local function showMirrorMan()
 	if rng:NextNumber(0, 100) > 15 then
 		return
@@ -252,7 +259,12 @@ function module.InstallModule()
 	animation:OnFrameReached(21):Wait()
 
 	sequenceFrame.Glitch.Visible = true
-	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.0125):OnFrameReached(25):Wait()
+	uiAnimationService.PlayAnimation(sequenceFrame.Glitch, 0.025) -- 0.0125
+
+	local glitchSound = util.PlaySound(soundsFolder.GlitchSound_Heavy)
+	glitchSound.PlaybackSpeed = 2.5
+	glitchSound.Ended:Wait()
+
 	sequenceFrame.Glitch.Visible = false
 	background.Visible = false
 	smudge.Visible = false
@@ -275,48 +287,62 @@ function module.InstallModule()
 		sequenceFrame.RedX.Position = UDim2.new(0.5, math.random(-2, 2), 0.5, math.random(-2, 2))
 	end)
 
+	playPingSound()
 	showTextForPeriod("You’re my favorite.", sequenceFrame.ScreenText, 3, Color3.new(1))
 
+	util.PlaySound(soundsFolder.StaticHit)
 	sequenceFrame.RedX.Visible = true
 	task.wait(2)
 	sequenceFrame.Glitch2.Visible = true
+
+	util.PlaySound(soundsFolder.GlitchSound, 0.2).TimePosition = 1
 	uiAnimationService.PlayAnimation(sequenceFrame.Glitch2, 0.05)
 
 	task.wait(0.25)
 	sequenceFrame.Glitch2.Visible = false
 	sequenceFrame.RedX.Visible = false
 
+	playPingSound()
 	showTextForPeriod("Did you know that?", sequenceFrame.ScreenText, 2.5)
+	util.PlaySound(soundsFolder.StaticHit)
 
 	sequenceFrame.Heart.Visible = true
 	uiAnimationService.PlayAnimation(sequenceFrame.Heart, 0.05, true)
-	task.wait(0.65)
+	task.wait(0.75)
 	sequenceFrame.Heart.Visible = false
 
+	util.PlaySound(soundsFolder.StaticHit)
 	sequenceFrame.Cells.Visible = true
 	uiAnimationService.PlayAnimation(sequenceFrame.Cells, 0.05, true)
-	task.wait(0.65)
+	task.wait(0.75)
 	sequenceFrame.Cells.Visible = false
 
+	playPingSound()
 	showTextForPeriod("It's okay.", sequenceFrame.ScreenText, 0.25)
+	util.PlaySound(soundsFolder.StaticHit)
 	-- VOID VISIONS
 	sequenceFrame.Void.Visible = true
 	uiAnimationService.PlayAnimation(sequenceFrame.Void, 0.075, true)
-	task.wait(1)
+	task.wait(0.75)
 	sequenceFrame.Void.Visible = false
 
-	for timeFrame = 0.3, 0.1, -0.1 do
+	for timeFrame = 0.25, 0.05, -0.1 do
+		util.PlaySound(soundsFolder.StaticHit)
 		sequenceFrame.Cells.Visible = true
 		task.wait(timeFrame)
+		util.PlaySound(soundsFolder.StaticHit)
 		sequenceFrame.Cells.Visible = false
 		sequenceFrame.Heart.Visible = true
 		task.wait(timeFrame)
+		util.PlaySound(soundsFolder.StaticHit)
 		sequenceFrame.Heart.Visible = false
 		sequenceFrame.Cells.Visible = true
 		task.wait(timeFrame)
+		util.PlaySound(soundsFolder.StaticHit)
 		sequenceFrame.Cells.Visible = false
 		sequenceFrame.Void.Visible = true
 		task.wait(timeFrame)
+		util.PlaySound(soundsFolder.StaticHit)
 		sequenceFrame.Void.Visible = false
 		sequenceFrame.Heart.Visible = true
 		task.wait(timeFrame)
@@ -328,13 +354,18 @@ function module.InstallModule()
 	uiAnimationService.StopAnimation(sequenceFrame.Void)
 
 	sequenceFrame.ScreenText.Visible = true
+
+	playPingSound()
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I won't let you go." })
 	task.wait(3)
+	util.PlaySound(soundsFolder.StaticHit)
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Child." })
 	task.wait(0.05)
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I won't let you go." })
 
-	task.wait(2)
+	task.wait(1.5)
+	util.PlaySound(soundsFolder.GlitchSound_Light, 0.2)
+	task.wait(0.5)
 	sequenceFrame.Glitch2.Visible = true
 	uiAnimationService.PlayAnimation(sequenceFrame.Glitch2, 0.05)
 	task.wait(0.25)
