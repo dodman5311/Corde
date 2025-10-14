@@ -246,6 +246,8 @@ function module.InstallModule()
 
 	local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
 
+	musicService:PlayTrack("NETdata_UELAH", 2)
+
 	animation:OnFrameReached(7):Wait()
 	animation:Pause()
 	task.wait(0.2)
@@ -405,6 +407,8 @@ function module.InstallModule()
 		eyeFrame.Image.Position = UDim2.new(i, 0)
 		task.wait(0.25)
 	end
+
+	musicService:ReturnToLastTrack()
 end
 
 function module.keyhole(object: Model)
