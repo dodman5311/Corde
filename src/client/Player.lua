@@ -1,12 +1,9 @@
 local module = {
-	HUNGER_RATE = 0.5,
-	RAM_RECOVERY_RATE = 0.035,
 	IsSprinting = false,
 
 	Stats = {},
 }
 
-local AppRatingPromptService = game:GetService("AppRatingPromptService")
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -153,7 +150,10 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
 local WALK_SPEED = 2.75
-local SPRINT_SPEED = 3.85
+local SPRINT_SPEED = 4 --3.85
+
+local HUNGER_RATE = 0.65 -- 0.5
+local RAM_RECOVERY_RATE = 0.035
 
 local function checkEquippedStem(healthPercent: number)
 	if not healthPercent then
@@ -717,14 +717,14 @@ local function updateStats()
 			player.Character:SetAttribute("Hunger", 100)
 		end
 
-		local modifiedHungerRate = module.HUNGER_RATE
+		local modifiedHungerRate = HUNGER_RATE
 		if workspace:GetAttribute("Difficulty") == 0 then -- @Difficulty reduce hunger loss
-			modifiedHungerRate = module.HUNGER_RATE / 2
+			modifiedHungerRate = HUNGER_RATE / 2
 		end
 
 		if not checkIsSprinting() then
 			if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty hunger goes down over time
-				modifiedHungerRate = module.HUNGER_RATE / 3
+				modifiedHungerRate = HUNGER_RATE / 3.5
 			else
 				modifiedHungerRate = 0
 			end
@@ -742,7 +742,7 @@ local function updateStats()
 		elseif player.Character:GetAttribute("RAM") < 1 then
 			player.Character:SetAttribute(
 				"RAM",
-				player.Character:GetAttribute("RAM") + ((os.clock() - lastHeartbeat) * module.RAM_RECOVERY_RATE)
+				player.Character:GetAttribute("RAM") + ((os.clock() - lastHeartbeat) * RAM_RECOVERY_RATE)
 			)
 		end
 	end

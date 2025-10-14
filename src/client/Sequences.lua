@@ -246,7 +246,7 @@ function module.InstallModule()
 
 	local animation = uiAnimationService.PlayAnimation(imageFrame, 0.15, false, true)
 
-	musicService:PlayTrack("NETdata_UELAH", 2)
+	local netMusic = musicService:PlayTrack("NETdata_UELAH")
 
 	animation:OnFrameReached(7):Wait()
 	animation:Pause()
@@ -408,7 +408,9 @@ function module.InstallModule()
 		task.wait(0.25)
 	end
 
-	musicService:ReturnToLastTrack()
+	netMusic.Ended:Once(function()
+		musicService:ReturnToLastTrack(0.1)
+	end)
 end
 
 function module.keyhole(object: Model)

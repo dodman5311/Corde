@@ -63,12 +63,12 @@ function musicService:PlayTrack(trackName: string, fadeTime: number?): Sound?
 	return track
 end
 
-function musicService:ReturnToLastTrack(): Sound?
+function musicService:ReturnToLastTrack(fadeTime: number?): Sound?
 	if not lastTrack then
 		return
 	end
 
-	return self:PlayTrack(lastTrack.Name)
+	return self:PlayTrack(lastTrack.Name, fadeTime)
 end
 
 --// Main
