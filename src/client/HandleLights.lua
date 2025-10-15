@@ -1,13 +1,13 @@
 local module = {}
 
+local cs = game:GetService("CollectionService")
 local players = game:GetService("Players")
 local rs = game:GetService("RunService")
-local cs = game:GetService("CollectionService")
 local player = players.LocalPlayer
 
 local camera = workspace.CurrentCamera
 
-local range = 20
+local range = 200
 
 local CastTo = require(script.Parent.CastTo)
 local lights = cs:GetTagged("Light")

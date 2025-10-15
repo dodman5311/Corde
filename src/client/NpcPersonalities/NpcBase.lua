@@ -1,6 +1,6 @@
 local module = {
 	OnStep = {
-		{ Function = "SearchForTarget", Parameters = { 8, 90 } },
+		{ Function = "SearchForTarget", Parameters = { 20, 90 } },
 		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Looking" },
 		{ Function = "LookRandom", Parameters = { true, 0.05, NumberRange.new(3, 6) }, State = "Idle" },
 	},

@@ -149,8 +149,8 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
-local WALK_SPEED = 2.75
-local SPRINT_SPEED = 4 --3.85
+local WALK_SPEED = 6.875
+local SPRINT_SPEED = 9 --3.85
 
 local HUNGER_RATE = 0.65 -- 0.5
 local RAM_RECOVERY_RATE = 0.035
@@ -558,10 +558,10 @@ local function updateDirection(vector)
 			return
 		end
 
-		uiAnimationService.PlayAnimation(frame, 0.5 / character:GetAttribute("Walkspeed"), true)
+		uiAnimationService.PlayAnimation(frame, 1 / character:GetAttribute("Walkspeed"), true)
 
 		if weapons.weaponUnequipped then
-			uiAnimationService.PlayAnimation(arms, 0.5 / character:GetAttribute("Walkspeed"), true)
+			uiAnimationService.PlayAnimation(arms, 1 / character:GetAttribute("Walkspeed"), true)
 		end
 
 		util.PlayingSounds[sounds.Steps] = character
@@ -752,6 +752,7 @@ end
 
 function module.StartGame(saveData: Types.GameState?, character: Model)
 	cameraService.followViewDistance.current = cameraService.followViewDistance.default
+	character:SetAttribute("Walkspeed", WALK_SPEED)
 
 	if saveData then
 		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)

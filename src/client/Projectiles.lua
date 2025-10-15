@@ -1,10 +1,10 @@
 local module = {}
 
 --// Services
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local collectionService = game:GetService("CollectionService")
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local collectionService = game:GetService("CollectionService")
 
 --// Instances
 local assets = ReplicatedStorage.Assets
@@ -12,9 +12,9 @@ local sounds = assets.Sounds
 local models = assets.Models
 
 --// Modules
-local util = require(script.Parent.Util)
-local signal = require(ReplicatedStorage.Packages.Signal)
 local acts = require(script.Parent.Acts)
+local signal = require(ReplicatedStorage.Packages.Signal)
+local util = require(script.Parent.Util)
 
 --// Values
 local Projectiles = {}
@@ -31,7 +31,7 @@ export type Projectile = {
 
 module.Presets = {
 	Bullet = {
-		Speed = 200,
+		Speed = 500,
 		LifeTime = 5,
 		Info = {},
 		Damage = 1,

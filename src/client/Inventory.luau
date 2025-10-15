@@ -319,7 +319,7 @@ function Inventory:DropItem(index) -- index can be an item table, item name, or 
 	droppedItem.Name = item.Name
 	droppedItem.CFrame = character:GetPivot()
 	droppedItem.AssemblyLinearVelocity = (character:GetPivot() * CFrame.Angles(0, math.rad(rng:NextNumber(-30, 30)), 0)).LookVector
-		* rng:NextNumber(30, 60)
+		* rng:NextNumber(75, 150)
 	droppedItem:SetAttribute("DroppedAt", os.clock())
 
 	Debris:AddItem(droppedItem, Inventory.DROPPED_ITEM_LIFETIME)

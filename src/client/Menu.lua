@@ -562,7 +562,7 @@ function module:ShowGraphicsPrompt()
 
 	repeat
 		task.wait()
-	until userSettings.SavedQualityLevel.Value >= 8
+	until userSettings.SavedQualityLevel.Value >= 2
 
 	inputSignal:Disconnect()
 	util.tween(menu.Graphics, TweenInfo.new(1), { TextTransparency = 1 })

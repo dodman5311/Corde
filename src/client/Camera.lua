@@ -11,7 +11,7 @@ local module = {
 		current = 0,
 		default = 15,
 	},
-	fieldOfView = 3.5,
+	fieldOfView = 10,
 
 	firstPersonData = {
 		RootCFrame = CFrame.new(),
@@ -78,7 +78,7 @@ RunService:BindToRenderStep("RunCamera", Enum.RenderPriority.Camera.Value, funct
 		local viewLocation = (locationScale - Vector2.new(0.5, 0.5)) * module.followViewDistance.current
 		mouseView = mouseView:Lerp(viewLocation, 0.1)
 
-		local goal = CFrame.new(characterPosition + Vector3.new(mouseView.X, 230, mouseView.Y))
+		local goal = CFrame.new(characterPosition + Vector3.new(mouseView.X, 200, mouseView.Y))
 			* CFrame.Angles(math.rad(-90), 0, 0)
 		camera.CFrame = goal * shakeOffset
 	elseif module.mode == "FirstPerson" then

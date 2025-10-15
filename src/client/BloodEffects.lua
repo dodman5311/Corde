@@ -24,7 +24,7 @@ function module.createSplatter(cframe)
 	util.addToCache(getSplatter, splatterTime)
 
 	getSplatter.Parent = map
-	getSplatter.Size = Vector3.new(rng:NextNumber(5, 6.4), 0.001, rng:NextNumber(6, 7))
+	getSplatter.Size = Vector3.new(rng:NextNumber(5, 6.4), 0.001, rng:NextNumber(6, 7)) * 2.5
 	getSplatter.CFrame = cframe * CFrame.new(0, 0, getSplatter.Size.Z / 2) * CFrame.Angles(0, math.rad(180), 0)
 end
 

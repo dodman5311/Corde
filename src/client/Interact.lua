@@ -1,5 +1,5 @@
 local module = {
-	INTERACT_DISTANCE = 4,
+	INTERACT_DISTANCE = 10,
 	MouseHit = nil,
 	MouseHitLocation = Vector3.new(),
 }

@@ -496,7 +496,7 @@ local function createShell()
 
 	shell.CFrame = torso.Chamber.WorldCFrame
 	shell.AssemblyLinearVelocity = (torso.Chamber.WorldCFrame * CFrame.Angles(0, math.rad(rng:NextNumber(-20, 20)), 0)).LookVector
-		* rng:NextNumber(10, 20)
+		* rng:NextNumber(50, 75)
 	shell.AssemblyAngularVelocity = Vector3.new(0, rng:NextNumber(-25, -5), 0)
 
 	local ti = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 3)

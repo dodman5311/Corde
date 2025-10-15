@@ -1,6 +1,6 @@
 local module = {
 	OnStep = {
-		{ Function = "SearchForTarget", Parameters = { 10, 135 } },
+		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
 		{ Function = "LookAtPath", Parameters = { true, 0.05 } },
 		{ Function = "MoveForwards", State = "Chasing", Parameters = { 0.05 } },
 
@@ -10,10 +10,10 @@ local module = {
 	InCloseRange = {
 		{
 			Function = "MeleeAttack",
-			Parameters = { 20, 1.5, 3, true },
+			Parameters = { 20, 1.5, Vector2.new(2.5, 5), 3, true },
 		},
 
-		Parameters = { 3.475 },
+		Parameters = { 10 },
 	},
 
 	Start = {

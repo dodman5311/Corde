@@ -458,7 +458,14 @@ module.actions = {
 		end
 	end,
 
-	MeleeAttack = function(npc: Npc, damage: number, cooldown: number, damageFrame: number?, stopMotion: boolean?)
+	MeleeAttack = function(
+		npc: Npc,
+		damage: number,
+		cooldown: number,
+		hitBoxSize: Vector2,
+		damageFrame: number?,
+		stopMotion: boolean?
+	)
 		if npc:IsState("Attacking") then
 			return
 		end
@@ -467,10 +474,10 @@ module.actions = {
 
 		if damageFrame then
 			attackAnimation:OnFrameReached(damageFrame):Connect(function()
-				createDamageHitbox(npc, Vector2.new(1, 2), damage, "Melee")
+				createDamageHitbox(npc, hitBoxSize, damage, "Melee")
 			end)
 		else
-			createDamageHitbox(npc, Vector2.new(1, 2), damage, "Melee")
+			createDamageHitbox(npc, hitBoxSize, damage, "Melee")
 		end
 
 		if stopMotion then
