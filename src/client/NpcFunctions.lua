@@ -77,7 +77,7 @@ local function getObject(class, parent)
 	return foundInstance, false
 end
 
-local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, lerpAlpha: number)
+local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, lerpAlpha: number?)
 	-- if npc.MindData["CantMove"] then
 	-- 	return
 	-- end
@@ -307,6 +307,16 @@ module.events = {
 }
 
 module.actions = {
+	SetStats = function(npc: Npc, stats: { [string]: any })
+		for attribute, value in pairs(stats) do
+			if attribute == "Health" then
+				npc.Instance:SetAttribute("MaxHealth", value)
+			end
+
+			npc.Instance:SetAttribute(attribute, value)
+		end
+	end,
+
 	SwitchToState = function(npc: Npc, state: string)
 		npc.MindState.Last = npc.MindState.Current.Value
 		npc.MindState.Current.Value = state
@@ -315,7 +325,7 @@ module.actions = {
 	SwitchToLastState = function(npc: Npc)
 		npc.MindState.Last = npc.MindState.Current.Value
 		npc.MindState.Current.Value = npc.MindState.Last
-	end
+	end,
 
 	PlayAnimation = function(npc: Npc, animaitonName: string, frameDelay, loop, stayOnLastFrame, startOnFrame)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
@@ -481,8 +491,13 @@ module.actions = {
 			npc.Janitor:Add(npc.MindData.OnWaypointReached)
 		end
 
-		npc.Path:Run(target:GetPivot().Position)
+		return npc.Path:Run(target:GetPivot().Position)
 	end,
+
+	runPathWithDirection = function(npc : Npc, lerpAlpha)
+		module.actions.LookAtPath(npc, lerpAlpha)
+		module.actions.MoveForwards(npc, lerpAlpha)
+	end
 
 	PathfindToLastTarget = function(npc: Npc, lerpAlpha: number?)
 		local target = npc.LastTarget

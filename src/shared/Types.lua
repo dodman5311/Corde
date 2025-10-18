@@ -1,3 +1,8 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
+local Timer = require(StarterPlayer.StarterPlayerScripts.Client.Timer)
+local simplepath = require(ReplicatedStorage.Packages[".pesde"]["untakeranonplay_simplepath@0.1.1"].simplepath)
+
 export type LayerData = {
 	Npcs: {
 		{
@@ -47,6 +52,8 @@ export type Setting = {
 	OnChanged: (self: Setting) -> any?,
 }
 
+type Path = typeof(simplepath.new())
+
 export type Npc = {
 	Name: string,
 	Instance: Model,
@@ -60,8 +67,9 @@ export type Npc = {
 
 	Heartbeat: { [string]: any? },
 
-	Timer: { new: (self: any) -> nil }?,
-	Timers: {},
+	Path: Path,
+	Timer: Timer.TimerQueue,
+	Timers: { [string]: Timer.Timer },
 	Acts: {},
 	Janitor: any,
 	OnDied: any?,
@@ -71,14 +79,13 @@ export type Npc = {
 	IsState: (Npc: Npc, State: string) -> boolean,
 	GetState: (Npc: Npc) -> string,
 	GetTarget: (Npc: Npc) -> any?,
-	GetTimer: (Npc: Npc, TimerName: string) -> {},
+	GetTimer: (Npc: Npc, TimerName: string) -> Timer.Timer,
 
 	Exists: (Npc: Npc) -> boolean,
 
 	Destroy: (Npc: Npc) -> nil,
 	Place: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
 	Run: (Npc: Npc) -> nil,
-	LoadPersonality: (Npc: Npc) -> nil,
 }
 
 export type item = {

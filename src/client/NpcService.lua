@@ -16,7 +16,7 @@ local NpcService = {}
 
 --// Values
 
-function NpcService.new(npcName: string): Npc
+function NpcService.new(npcName: string): Npc?
 	local npcModel = ReplicatedStorage.Assets.Npcs:FindFirstChild(npcName, true)
 	if not npcModel then
 		warn(`No NPC model by the name of {npcName} was found.`)
@@ -44,7 +44,9 @@ function NpcService.new(npcName: string): Npc
 
 		Heartbeat = {},
 
-		Path = simplePath.new(newNpcModel),
+		Path = simplePath.new(newNpcModel, {
+			WaypointSpacing = 1,
+		}),
 		Timer = timer:newQueue(),
 		Timers = {},
 		Acts = acts:new(),
@@ -53,11 +55,11 @@ function NpcService.new(npcName: string): Npc
 		OnDied = signal.new(),
 
 		IsState = function(self: Npc, state: string)
-			return self.MindState.Value == state
+			return self.MindState.Current.Value == state
 		end,
 
 		GetState = function(self: Npc)
-			return self.MindState.Value
+			return self.MindState.Current.Value, self.MindData.Last
 		end,
 
 		GetTarget = function(self: Npc)
@@ -78,31 +80,6 @@ function NpcService.new(npcName: string): Npc
 		Exists = function(self: Npc)
 			local subject = self.Instance
 			return subject and subject.Parent and subject.PrimaryPart and subject.PrimaryPart.Parent
-		end,
-
-		LoadPersonality = function(self: Npc)
-			local personality = personalities:FindFirstChild(self.Type)
-			if not personality then
-				return
-			end
-
-			self.Personality = require(personality)
-
-			for _, foundModule in ipairs(self.Instance:GetDescendants()) do -- run misc modules
-				if not foundModule:IsA("ModuleScript") then
-					continue
-				end
-
-				local required = require(foundModule)
-				required.npc = self
-
-				if not required["OnSpawned"] then
-					continue
-				end
-				required.OnSpawned()
-			end
-
-			return self.Personality
 		end,
 
 		Place = function(self: Npc, position: Vector3 | CFrame)
@@ -135,6 +112,8 @@ function NpcService.new(npcName: string): Npc
 			table.remove(npcFunctions.npcs, table.find(npcFunctions.npcs, self))
 		end,
 	}
+
+	Npc.Path.Visualize = true
 
 	table.insert(npcFunctions.npcs, Npc)
 

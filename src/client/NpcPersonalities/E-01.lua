@@ -6,6 +6,7 @@ local NpcStats = {
 
 local module = {
 	Start = {
+		{ Function = "SetStats", Parameters = { NpcStats } },
 		{ Function = "SwitchToState", Parameters = { "Idle" } },
 		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
 	},
@@ -13,10 +14,11 @@ local module = {
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
 
-		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Attacking" },
+		--{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Attacking" },
 		{ Function = "LookAtPath", Parameters = { true, 0.05 }, State = "Chasing" },
 
 		{ Function = "MoveForwards", Parameters = { 0.05 }, State = "Chasing" },
+		--{ Function = "MoveForwards", Parameters = { 0.05 }, State = "Attacking" },
 
 		{ Function = "StopMoving", State = "Idle" },
 	},
@@ -27,16 +29,16 @@ local module = {
 			Parameters = { 20, 1.5, Vector2.new(2.5, 5), 3, true },
 		},
 
-		Parameters = { 10 },
+		Parameters = { 8.75 },
 	},
 
-	OnCloseRangeEntered = {
-		{ Function = "SwitchToState", Parameters = { "Attacking" } },
-	},
+	-- OnCloseRangeEntered = {
+	-- 	{ Function = "SwitchToState", Parameters = { "Attacking" } },
+	-- },
 
-	OnCloseRangeLeft = {
-		{ Function = "SwitchToLastState" },
-	},
+	-- OnCloseRangeLeft = {
+	-- 	{ Function = "SwitchToLastState" },
+	-- },
 
 	OnDeath = {
 		{ Function = "SwitchToState", Parameters = { "Dead" } },

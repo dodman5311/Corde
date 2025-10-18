@@ -2,21 +2,43 @@ local module = {
 	timerQueue = {},
 }
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RUN_SERVICE = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local signal = require(ReplicatedStorage.Packages.Signal)
 local runningTimers = {}
 local acts = require(script.Parent.Acts)
 
-module.wait = function(sec, index)
-	local waitTimer = module:new(index or "waitAt_" .. os.clock())
-	waitTimer.WaitTime = sec or 0.01
-	waitTimer:Run()
-	waitTimer.OnEnded:Wait()
-	waitTimer:Destroy()
-end
+export type Timer = {
+	IsRunning: boolean,
+	CallTime: number,
+	WaitTime: number,
+	["Function"]: () -> any?,
+	Parameters: { any? },
 
-module.new = function(self, timerName, waitTime, Function, ...)
+	OnTimerStepped: signal.Signal<number>,
+	OnEnded: signal.Signal<Enum.PlaybackState>,
+
+	Run: (self: Timer) -> nil,
+	Reset: (self: Timer) -> nil,
+	Delay: (self: Timer, amount: number) -> nil,
+	Update: (self: Timer, index: string, value: any) -> nil,
+	UpdateFunction: (self: Timer, func: () -> any, ...any) -> nil,
+	Cancel: (self: Timer) -> nil,
+	Destroy: (self: Timer) -> nil,
+	Complete: (self: Timer) -> nil,
+	GetCurrentTime: (self: Timer) -> number,
+}
+export type TimerQueue = {
+	new: (self: TimerQueue, timerName: string, waitTime: number?, Function: (() -> any?)?, ...any?) -> Timer,
+
+	DestroyAll: (self: TimerQueue) -> nil,
+
+	CancelAll: (self: TimerQueue) -> nil,
+
+	DoAll: (self: TimerQueue, functionName: string, ...any) -> nil,
+}
+
+module.new = function(self, timerName, waitTime, Function, ...): Timer
 	local queue = self
 
 	local pausedAt = 0
@@ -112,6 +134,14 @@ module.new = function(self, timerName, waitTime, Function, ...)
 
 	queue.timerQueue[timerName] = timer
 	return queue.timerQueue[timerName]
+end
+
+module.wait = function(sec, index)
+	local waitTimer = module:new(index or "waitAt_" .. os.clock())
+	waitTimer.WaitTime = sec or 0.01
+	waitTimer:Run()
+	waitTimer.OnEnded:Wait()
+	waitTimer:Destroy()
 end
 
 function module:newQueue()
