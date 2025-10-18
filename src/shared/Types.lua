@@ -49,13 +49,16 @@ export type Setting = {
 
 export type Npc = {
 	Name: string,
-	Instance: Instance,
+	Instance: Model,
 	Personality: {},
-	MindData: {}, -- extra data the npc might need
-	MindState: StringValue,
+	MindData: { [string]: any? }, -- extra data the npc might need
+	MindState: {
+		Current: StringValue,
+		Last: string,
+	},
 	MindTarget: ObjectValue,
 
-	Heartbeat: {},
+	Heartbeat: { [string]: any? },
 
 	Timer: { new: (self: any) -> nil }?,
 	Timers: {},
@@ -63,7 +66,7 @@ export type Npc = {
 	Janitor: any,
 	OnDied: any?,
 
-	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
+	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Npc,
 
 	IsState: (Npc: Npc, State: string) -> boolean,
 	GetState: (Npc: Npc) -> string,

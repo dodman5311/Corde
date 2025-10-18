@@ -2,13 +2,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = script.Parent
 local personalities = client.NpcPersonalities
-local timer = require(client.Timer)
-local janitor = require(ReplicatedStorage.Packages.Janitor)
+local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(client.Acts)
+local janitor = require(ReplicatedStorage.Packages.Janitor)
 local npcFunctions = require(client.NpcFunctions)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local simplePath = require(ReplicatedStorage.Packages.SimplePath)
-local Types = require(ReplicatedStorage.Shared.Types)
+local timer = require(client.Timer)
 
 type Npc = Types.Npc
 
@@ -36,7 +36,10 @@ function NpcService.new(npcName: string): Npc
 		Instance = newNpcModel,
 		Personality = require(personalities:FindFirstChild(npcName)),
 		MindData = {},
-		MindState = stateValue,
+		MindState = {
+			Current = stateValue,
+			Last = "",
+		},
 		MindTarget = targetValue,
 
 		Heartbeat = {},
@@ -122,7 +125,7 @@ function NpcService.new(npcName: string): Npc
 			self:Place(position)
 			self:Run()
 
-			return self.Instance
+			return self
 		end,
 
 		Destroy = function(self: Npc)

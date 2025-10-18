@@ -249,9 +249,13 @@ module.events = {
 	end,
 
 	InCloseRange = function(npc: Npc, actions, targetDistance)
+		local inCloseRange = npc.Instance:GetAttribute("InCloseRange") or false
+		npc.Instance:SetAttribute("InCloseRange", inCloseRange)
+
 		npc.Heartbeat["CheckCloseRange"] = function()
 			local target = npc:GetTarget()
 			if not target then
+				npc.Instance:SetAttribute("InCloseRange", false)
 				return
 			end
 
@@ -259,15 +263,44 @@ module.events = {
 			local distance = (npc.Instance:GetPivot().Position - target:GetPivot().Position).Magnitude
 
 			if distance > targetDistance then
+				npc.Instance:SetAttribute("InCloseRange", false)
 				return
 			end
+
+			npc.Instance:SetAttribute("InCloseRange", true)
 
 			module.doActions(npc, actions)
 		end
 	end,
 
+	OnCloseRangeEntered = function(npc: Npc, actions)
+		local inCloseRange = npc.Instance:GetAttribute("InCloseRange") or false
+		npc.Instance:SetAttribute("InCloseRange", inCloseRange)
+
+		return npc.Instance:GetAttributeChangedSignal("InCloseRange"):Connect(function()
+			if inCloseRange then
+				return
+			end
+
+			module.doActions(npc, actions)
+		end)
+	end,
+
+	OnCloseRangeLeft = function(npc: Npc, actions)
+		local inCloseRange = npc.Instance:GetAttribute("InCloseRange") or false
+		npc.Instance:SetAttribute("InCloseRange", inCloseRange)
+
+		return npc.Instance:GetAttributeChangedSignal("InCloseRange"):Connect(function()
+			if not inCloseRange then
+				return
+			end
+
+			module.doActions(npc, actions)
+		end)
+	end,
+
 	OnStateChanged = function(npc: Npc, actions)
-		return npc.MindState.Changed:Connect(function()
+		return npc.MindState.Current.Changed:Connect(function()
 			module.doActions(npc, actions)
 		end)
 	end,
@@ -275,8 +308,14 @@ module.events = {
 
 module.actions = {
 	SwitchToState = function(npc: Npc, state: string)
-		npc.MindState.Value = state
+		npc.MindState.Last = npc.MindState.Current.Value
+		npc.MindState.Current.Value = state
 	end,
+
+	SwitchToLastState = function(npc: Npc)
+		npc.MindState.Last = npc.MindState.Current.Value
+		npc.MindState.Current.Value = npc.MindState.Last
+	end
 
 	PlayAnimation = function(npc: Npc, animaitonName: string, frameDelay, loop, stayOnLastFrame, startOnFrame)
 		local animationFrame = npc.Instance:FindFirstChild(animaitonName, true)
@@ -469,7 +508,7 @@ module.actions = {
 		if npc:IsState("Attacking") then
 			return
 		end
-		npc.MindState.Value = "Attacking"
+		npc.MindState.Current.Value = "Attacking"
 		local attackAnimation = module.actions.PlayAnimation(npc, "Animation_Attack", 0.05, false, true)
 
 		if damageFrame then

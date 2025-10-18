@@ -1,8 +1,22 @@
+local NpcStats = {
+	BloodType = "Black",
+	Health = 100,
+	Walkspeed = 60,
+}
+
 local module = {
+	Start = {
+		{ Function = "SwitchToState", Parameters = { "Idle" } },
+		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
+	},
+
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
-		{ Function = "LookAtPath", Parameters = { true, 0.05 } },
-		{ Function = "MoveForwards", State = "Chasing", Parameters = { 0.05 } },
+
+		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Attacking" },
+		{ Function = "LookAtPath", Parameters = { true, 0.05 }, State = "Chasing" },
+
+		{ Function = "MoveForwards", Parameters = { 0.05 }, State = "Chasing" },
 
 		{ Function = "StopMoving", State = "Idle" },
 	},
@@ -16,9 +30,12 @@ local module = {
 		Parameters = { 10 },
 	},
 
-	Start = {
-		{ Function = "SwitchToState", Parameters = { "Idle" } },
-		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
+	OnCloseRangeEntered = {
+		{ Function = "SwitchToState", Parameters = { "Attacking" } },
+	},
+
+	OnCloseRangeLeft = {
+		{ Function = "SwitchToLastState" },
 	},
 
 	OnDeath = {
