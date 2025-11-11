@@ -1,26 +1,42 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Types = require(ReplicatedStorage.Shared.Types)
 local NpcStats = {
 	BloodType = "Black",
 	Health = 100,
 	Walkspeed = 60,
+	Debug = true,
 }
 
-local module = {
+local ATTACK_DISTANCE = 8.75
+
+local module: Types.npcPersonality = {
 	Start = {
 		{ Function = "SetStats", Parameters = { NpcStats } },
 		{ Function = "SwitchToState", Parameters = { "Idle" } },
 		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
+
+		{ Function = "ConnectPath" },
 	},
 
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
 
-		--{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Attacking" },
-		{ Function = "LookAtPath", Parameters = { true, 0.05 }, State = "Chasing" },
+		--{ Function = "LookAtTarget", Parameters = { true, 0.05 } },
 
-		{ Function = "MoveForwards", Parameters = { 0.05 }, State = "Chasing" },
-		--{ Function = "MoveForwards", Parameters = { 0.05 }, State = "Attacking" },
+		{ Function = "RunPath" },
+		{
+			Function = "LookAtPath",
+			Parameters = { 0.05 },
+			Conditions = { NextWaypoint = nil, InCloseRange = true, Invert = true },
+		},
+		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, Conditions = { InCloseRange = true } },
 
-		{ Function = "StopMoving", State = "Idle" },
+		{
+			Function = "MoveForwards",
+			Parameters = { 0.05 },
+			Conditions = { NextWaypoint = nil, Invert = true },
+		},
+		{ Function = "StopMoving", Conditions = { Conditions = { NextWaypoint = nil } } },
 	},
 
 	InCloseRange = {
@@ -29,7 +45,7 @@ local module = {
 			Parameters = { 20, 1.5, Vector2.new(2.5, 5), 3, true },
 		},
 
-		Parameters = { 8.75 },
+		Parameters = { ATTACK_DISTANCE },
 	},
 
 	-- OnCloseRangeEntered = {
@@ -77,7 +93,11 @@ local module = {
 	},
 
 	OnStateChanged = {
-		{ Function = "PlayAnimation", Parameters = { "Animation_Walk", 0.05, true }, State = "Chasing" },
+		{
+			Function = "PlayAnimation",
+			Parameters = { "Animation_Walk", 0.05, true },
+			Conditions = { GetState = "Chasing" },
+		},
 	},
 }
 

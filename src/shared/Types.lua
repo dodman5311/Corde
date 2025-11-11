@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
 local Timer = require(StarterPlayer.StarterPlayerScripts.Client.Timer)
-local simplepath = require(ReplicatedStorage.Packages[".pesde"]["untakeranonplay_simplepath@0.1.1"].simplepath)
+local simplepath = require(ReplicatedStorage.Shared.SimplePath)
 
 export type LayerData = {
 	Npcs: {
@@ -41,6 +41,10 @@ export type GameState = {
 	},
 
 	Layers: { LayerData },
+}
+
+export type npcPersonality = {
+	[string]: { { Function: string, Parameters: { any }?, Conditions: { Invert: boolean?, [string]: any }? } },
 }
 
 export type Setting = {

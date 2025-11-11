@@ -2,12 +2,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = script.Parent
 local personalities = client.NpcPersonalities
+local SimplePath = require(ReplicatedStorage.Shared.SimplePath)
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(client.Acts)
 local janitor = require(ReplicatedStorage.Packages.Janitor)
 local npcFunctions = require(client.NpcFunctions)
 local signal = require(ReplicatedStorage.Packages.Signal)
-local simplePath = require(ReplicatedStorage.Packages.SimplePath)
 local timer = require(client.Timer)
 
 type Npc = Types.Npc
@@ -44,8 +44,11 @@ function NpcService.new(npcName: string): Npc?
 
 		Heartbeat = {},
 
-		Path = simplePath.new(newNpcModel, {
-			WaypointSpacing = 1,
+		Path = SimplePath.new(newNpcModel, {
+			WaypointSpacing = 3,
+			AgentHeight = 1.25,
+			AgentRadius = 3,
+			AgentCanJump = false,
 		}),
 		Timer = timer:newQueue(),
 		Timers = {},
@@ -96,6 +99,10 @@ function NpcService.new(npcName: string): Npc?
 
 		Run = function(self: Npc)
 			npcFunctions.RunNpc(self)
+
+			if self.Instance:GetAttribute("Debug") then
+				self.Path.Visualize = true
+			end
 		end,
 
 		Spawn = function(self: Npc, position: Vector3 | CFrame): Npc
@@ -112,8 +119,6 @@ function NpcService.new(npcName: string): Npc?
 			table.remove(npcFunctions.npcs, table.find(npcFunctions.npcs, self))
 		end,
 	}
-
-	Npc.Path.Visualize = true
 
 	table.insert(npcFunctions.npcs, Npc)
 

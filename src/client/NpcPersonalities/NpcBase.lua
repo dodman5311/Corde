@@ -1,8 +1,15 @@
-local module = {
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Types = require(ReplicatedStorage.Shared.Types)
+
+local module: Types.npcPersonality = {
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 20, 90 } },
-		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, State = "Looking" },
-		{ Function = "LookRandom", Parameters = { true, 0.05, NumberRange.new(3, 6) }, State = "Idle" },
+		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, Conditions = { IsState = "Looking" } },
+		{
+			Function = "LookRandom",
+			Parameters = { true, 0.05, NumberRange.new(3, 6) },
+			Conditions = { IsState = "Idle" },
+		},
 	},
 
 	OnTargetFound = {

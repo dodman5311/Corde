@@ -1,3 +1,5 @@
+local Debris = game:GetService("Debris")
+local FlagStandService = game:GetService("FlagStandService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -106,15 +108,33 @@ local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, ler
 	end
 end
 
+local function visualizeHitbox(cframe: CFrame, size: Vector3)
+	local newPart = Instance.new("Part")
+	newPart.Anchored = true
+	newPart.CanCollide = false
+	newPart.CanQuery = false
+	newPart.Transparency = 0.75
+	newPart.Color = Color3.new(1)
+	newPart.CFrame = cframe
+	newPart.Size = size
+	Debris:AddItem(newPart, 1)
+end
+
 local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType)
 	local npcCFrame = npc.Instance:GetPivot()
-	local newHitbox = workspace:GetPartBoundsInBox(
-		npcCFrame * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2)),
-		Vector3.new(size.X, 1, size.Y)
-	)
+
+	local hitboxCFrame = npcCFrame * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2))
+	local hitboxSize = Vector3.new(size.X, 10, size.Y)
+
+	local newHitbox = workspace:GetPartBoundsInBox(hitboxCFrame, hitboxSize)
+
+	if npc.Instance:GetAttribute("Debug") then
+		visualizeHitbox(hitboxCFrame, hitboxSize)
+	end
 
 	for _, part in ipairs(newHitbox) do
 		local model = part:FindFirstAncestorOfClass("Model")
+		print(part, model)
 		if not model then
 			continue
 		end
@@ -145,12 +165,33 @@ function module.doActions(npc, actions, ...)
 	end
 
 	for _, action in ipairs(actions) do
-		if action.State and not npc:IsState(action.State) then
-			continue
-		end
+		if action.Conditions then
+			local meetsCondition = true
+			for condition, desiredValue in pairs(action.Conditions) do
+				local returnedValue
 
-		if action.NotState and npc:IsState(action.NotState) then
-			continue
+				if npc[condition] and typeof(npc[condition]) == "function" then
+					returnedValue = npc[condition](npc)
+				elseif npc.MindData[condition] then
+					returnedValue = npc.MindData[condition]
+				elseif npc.Instance:GetAttribute(condition) ~= nil then
+					returnedValue = npc.Instance:GetAttribute(condition)
+				end
+
+				if action.Conditions.Invert then
+					if returnedValue == desiredValue then
+						meetsCondition = false
+					end
+				else
+					if returnedValue ~= desiredValue then
+						meetsCondition = false
+					end
+				end
+			end
+
+			if not meetsCondition then
+				continue
+			end
 		end
 
 		if not module.actions[action.Function] then
@@ -473,31 +514,65 @@ module.actions = {
 	end,
 
 	LookAtPath = function(npc: Npc, lerpAlpha: number?)
-		local target = npc:GetTarget()
-		if not target then
+		local doLerp = lerpAlpha and true or false
+
+		local waypoints = npc.Path._waypoints
+
+		if not waypoints or #waypoints < 3 then
 			return
 		end
 
-		local doLerp = lerpAlpha and true or false
+		local nextWaypoint = waypoints[2]
 
-		if not npc.MindData.OnPathReached then
-			npc.MindData.OnPathReached = npc.Path.Reached:Connect(function(_, finalWaypoint)
-				lookAtPostition(npc, finalWaypoint.Position, doLerp, lerpAlpha)
-			end)
-			npc.Janitor:Add(npc.MindData.OnPathReached)
-			npc.MindData.OnWaypointReached = npc.Path.WaypointReached:Connect(function(_, _, nextWaypoint)
-				lookAtPostition(npc, nextWaypoint.Position, doLerp, lerpAlpha)
-			end)
-			npc.Janitor:Add(npc.MindData.OnWaypointReached)
-		end
-
-		return npc.Path:Run(target:GetPivot().Position)
+		lookAtPostition(npc, nextWaypoint.Position, doLerp, lerpAlpha)
 	end,
 
-	runPathWithDirection = function(npc : Npc, lerpAlpha)
+	RunPath = function(npc: Npc)
+		local target = npc:GetTarget()
+		if target then
+			local targetPos = target:GetPivot().Position
+			local Position2D = Vector3.new(targetPos.X, npc.Instance.PrimaryPart.Position.Y, targetPos.Z)
+			npc.MindData.PathGoal = Position2D
+		end
+
+		if npc.MindData.PathGoal then
+			npc.Path:Run(npc.MindData.PathGoal)
+		end
+	end,
+
+	ConnectPath = function(npc: Npc)
+		local path = npc.Path
+
+		path.Blocked:Connect(function()
+			npc.MindData.HasReachedGoal = true
+			npc.MindData.NextWaypoint = nil
+		end)
+
+		--In case of an error
+		path.Error:Connect(function()
+			npc.MindData.HasReachedGoal = true
+			npc.MindData.NextWaypoint = nil
+			npc.MindData.PathGoal = nil
+		end)
+
+		path.Reached:Connect(function(model, finalWaypoint)
+			npc.MindData.HasReachedGoal = true
+			npc.MindData.NextWaypoint = nil --finalWaypoint
+			npc.MindData.PathGoal = nil
+		end)
+
+		path.WaypointReached:Connect(function(_, _, nextWaypoint)
+			npc.MindData.NextWaypoint = nextWaypoint
+			npc.MindData.HasReachedGoal = true
+		end)
+
+		npc.MindData.NextWaypoint = nil
+	end,
+
+	runPathWithDirection = function(npc: Npc, lerpAlpha)
 		module.actions.LookAtPath(npc, lerpAlpha)
 		module.actions.MoveForwards(npc, lerpAlpha)
-	end
+	end,
 
 	PathfindToLastTarget = function(npc: Npc, lerpAlpha: number?)
 		local target = npc.LastTarget

@@ -242,10 +242,3 @@ direct = ["ProfileService", { wally = "wally#surnautica/profileservice", version
 [graph."wally#surnautica/profileservice@1.0.0 roblox".pkg_ref]
 ref_ty = "wally"
 index_url = "https://github.com/UpliftGames/wally-index"
-
-[graph."wally#untakeranonplay/simplepath@0.1.1 roblox"]
-direct = ["SimplePath", { wally = "wally#untakeranonplay/simplepath", version = "^0.1.1", index = "default" }, "standard"]
-
-[graph."wally#untakeranonplay/simplepath@0.1.1 roblox".pkg_ref]
-ref_ty = "wally"
-index_url = "https://github.com/UpliftGames/wally-index"

@@ -24,7 +24,7 @@ function module.PlayAnimation(
 	loop: boolean?,
 	stayOnLastFrame: boolean?,
 	startOnFrame: number?
-): Animation2D
+): Animation2D?
 	if animations[frame] then
 		animations[frame] = nil
 	end

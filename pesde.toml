@@ -35,5 +35,4 @@ Signal = { wally = "sleitnick/signal", version = "^2.0.3" }
 Promise = { wally = "evaera/promise", version = "^4.0.0" }
 Net = { wally = "sleitnick/net", version = "^0.1.0" }
 Janitor = { wally = "howmanysmall/janitor", version = "^1.15.6" }
-SimplePath = { wally = "untakeranonplay/simplepath", version = "^0.1.1" }
 Loader = { wally = "sleitnick/loader", version = "^2.0.0" }
