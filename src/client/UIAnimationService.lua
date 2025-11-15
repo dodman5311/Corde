@@ -1,7 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local module = {}
 
-local signal = require(ReplicatedStorage.Packages.Signal)
 local RunService = game:GetService("RunService")
 local acts = require(script.Parent.Acts)
 
@@ -13,9 +11,10 @@ export type Animation2D = {
 	RunAnimation: (self: Animation2D) -> nil,
 	Pause: (self: Animation2D) -> nil,
 	Resume: (self: Animation2D) -> nil,
-	OnEnded: signal.Signal<>,
-	OnStepped: signal.Signal<number>,
-	OnFrameReached: (self: Animation2D, Frame: number) -> signal.Signal<number, UDim2>,
+	Stop: (self: Animation2D) -> nil,
+	OnEnded: RBXScriptConnection,
+	OnStepped: RBXScriptConnection,
+	OnFrameReached: (self: Animation2D, Frame: number) -> RBXScriptConnection,
 }
 
 function module.PlayAnimation(
@@ -26,7 +25,7 @@ function module.PlayAnimation(
 	startOnFrame: number?
 ): Animation2D?
 	if animations[frame] then
-		animations[frame] = nil
+		animations[frame]:Stop()
 	end
 
 	local image = frame:FindFirstChild("Image")
@@ -46,6 +45,10 @@ function module.PlayAnimation(
 	local currentFrame = 0
 	local paused = false
 	local framesToHit = {}
+
+	local onEndedInstance = Instance.new("BindableEvent")
+	local onSteppedInstance = Instance.new("BindableEvent")
+	local frameReachedSignals = {}
 
 	local newAnimation: Animation2D = {
 		NextFrame = function(self: Animation2D)
@@ -75,7 +78,7 @@ function module.PlayAnimation(
 			end
 
 			if not frame or not frame.Parent then
-				module.StopAnimation(frame)
+				self:Stop()
 				return
 			end
 
@@ -84,7 +87,7 @@ function module.PlayAnimation(
 			end
 
 			self:NextFrame()
-			self.OnStepped:Fire(currentFrame)
+			onSteppedInstance:Fire(currentFrame)
 
 			if currentFrames <= 0 then
 				currentFrames = frames
@@ -93,13 +96,13 @@ function module.PlayAnimation(
 				y = 0
 
 				if not loop then
-					self.OnEnded:Fire()
+					onEndedInstance:Fire()
 
 					if not stayOnLastFrame then
 						image.Position = UDim2.fromScale(x, y)
 					end
 
-					animations[frame] = nil
+					self:Stop()
 					return
 				end
 			end
@@ -116,12 +119,16 @@ function module.PlayAnimation(
 			lastFrameStep = os.clock()
 		end,
 
-		OnEnded = signal.new(),
+		OnEnded = onEndedInstance.Event,
 
-		OnStepped = signal.new(),
+		OnStepped = onSteppedInstance.Event,
 
-		OnFrameReached = function(self: Animation2D, Frame: number): signal.Signal<number, UDim2>
-			local reachedSignal = signal.new()
+		OnFrameReached = function(self: Animation2D, Frame: number): RBXScriptConnection
+			local onFrameReachedInstance = Instance.new("BindableEvent")
+
+			table.insert(frameReachedSignals, onFrameReachedInstance)
+
+			local reachedSignal = onFrameReachedInstance.Event
 			table.insert(framesToHit, { Frame, reachedSignal })
 
 			return reachedSignal
@@ -134,6 +141,28 @@ function module.PlayAnimation(
 		Resume = function(self: Animation2D)
 			paused = false
 		end,
+
+		Stop = function(self: Animation2D)
+			if not module.CheckPlaying(frame) then
+				return
+			end
+
+			------ Destroy
+			onEndedInstance:Destroy()
+			onSteppedInstance:Destroy()
+			for _, signal in ipairs(frameReachedSignals) do
+				signal:Destroy()
+			end
+
+			animations[frame] = nil
+			------
+
+			if not image or not image.Parent then
+				return
+			end
+
+			image.Position = UDim2.fromScale(0, 0)
+		end,
 	}
 
 	if startOnFrame then
@@ -144,25 +173,18 @@ function module.PlayAnimation(
 	return newAnimation
 end
 
+function module.StopAnimation(frame)
+	local animation: Animation2D = animations[frame]
+	if animation then
+		animation:Stop()
+	end
+end
+
 function module.CheckPlaying(frame) -- returns the animation if it's playing
 	if animations[frame] then
 		return animations[frame]
 	end
 	return
-end
-
-function module.StopAnimation(frame)
-	if not module.CheckPlaying(frame) then
-		return
-	end
-
-	animations[frame] = nil
-
-	if not frame or not frame.Parent then
-		return
-	end
-
-	frame.Image.Position = UDim2.fromScale(0, 0)
 end
 
 RunService.Heartbeat:Connect(function()
