@@ -1,8 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local storedData = require(ReplicatedStorage.Shared.StoredData)
 
-Items = {
-
+local Items = {
 	--// Weapons
 	SG550 = {
 		Name = "SG550",

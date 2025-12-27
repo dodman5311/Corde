@@ -94,4 +94,12 @@ rs.Heartbeat:Connect(function()
 	checkLights()
 end)
 
+workspace.DescendantAdded:Connect(function()
+	lights = cs:GetTagged("Light")
+end)
+
+workspace.DescendantRemoving:Connect(function()
+	lights = cs:GetTagged("Light")
+end)
+
 return module

@@ -21,12 +21,8 @@ export type GuiJoystick = {
 }
 
 local mobileJoysticks = {}
-
-local AppRatingPromptService = game:GetService("AppRatingPromptService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
 
 local JOYSTICK_TWEEN_TIME = 0.25
 

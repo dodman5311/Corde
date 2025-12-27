@@ -185,7 +185,7 @@ function module.projectileHit(raycast, projectile)
 end
 
 RunService.Heartbeat:Connect(function()
-	if acts:checkAct("Paused") then
+	if workspace:GetAttribute("Paused") then
 		lastRenderStep = os.clock()
 		return
 	end

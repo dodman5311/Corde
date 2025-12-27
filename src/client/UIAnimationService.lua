@@ -1,7 +1,6 @@
 local module = {}
 
 local RunService = game:GetService("RunService")
-local acts = require(script.Parent.Acts)
 
 local animations = {}
 
@@ -12,9 +11,9 @@ export type Animation2D = {
 	Pause: (self: Animation2D) -> nil,
 	Resume: (self: Animation2D) -> nil,
 	Stop: (self: Animation2D) -> nil,
-	OnEnded: RBXScriptConnection,
-	OnStepped: RBXScriptConnection,
-	OnFrameReached: (self: Animation2D, Frame: number) -> RBXScriptConnection,
+	OnEnded: RBXScriptSignal,
+	OnStepped: RBXScriptSignal,
+	OnFrameReached: (self: Animation2D, Frame: number) -> RBXScriptSignal,
 }
 
 function module.PlayAnimation(
@@ -33,7 +32,7 @@ function module.PlayAnimation(
 		return
 	end
 
-	image.Position = UDim2.fromScale(0, 0)
+	image.Position = UDim2.fromScale(-0, -0)
 
 	local lastFrameStep = os.clock()
 
@@ -51,7 +50,7 @@ function module.PlayAnimation(
 	local frameReachedSignals = {}
 
 	local newAnimation: Animation2D = {
-		NextFrame = function(self: Animation2D)
+		NextFrame = function()
 			x += 1
 			currentFrames -= 1
 			currentFrame += 1
@@ -72,7 +71,7 @@ function module.PlayAnimation(
 		end,
 
 		RunAnimation = function(self)
-			if paused or acts:checkAct("Paused") then
+			if paused or workspace:GetAttribute("Paused") then
 				lastFrameStep = os.clock()
 				return
 			end
@@ -123,26 +122,26 @@ function module.PlayAnimation(
 
 		OnStepped = onSteppedInstance.Event,
 
-		OnFrameReached = function(self: Animation2D, Frame: number): RBXScriptConnection
+		OnFrameReached = function(self: Animation2D, Frame: number): RBXScriptSignal
 			local onFrameReachedInstance = Instance.new("BindableEvent")
 
 			table.insert(frameReachedSignals, onFrameReachedInstance)
 
-			local reachedSignal = onFrameReachedInstance.Event
+			local reachedSignal = onFrameReachedInstance
 			table.insert(framesToHit, { Frame, reachedSignal })
 
-			return reachedSignal
+			return reachedSignal.Event
 		end,
 
-		Pause = function(self: Animation2D)
+		Pause = function()
 			paused = true
 		end,
 
-		Resume = function(self: Animation2D)
+		Resume = function()
 			paused = false
 		end,
 
-		Stop = function(self: Animation2D)
+		Stop = function()
 			if not module.CheckPlaying(frame) then
 				return
 			end
@@ -161,7 +160,9 @@ function module.PlayAnimation(
 				return
 			end
 
-			image.Position = UDim2.fromScale(0, 0)
+			if not stayOnLastFrame then
+				image.Position = UDim2.fromScale(0, 0)
+			end
 		end,
 	}
 

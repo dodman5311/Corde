@@ -496,7 +496,7 @@ local function updatePlayerDirection()
 	updateCursorLocation()
 
 	local character = player.Character
-	if not character or acts:checkAct("Paused") then
+	if not character or workspace:GetAttribute("Paused") then
 		return
 	end
 	local gyro = character:FindFirstChild("Gyro")
@@ -553,7 +553,7 @@ local function updateDirection(vector)
 	local frame = character.Legs.UI.Frame
 	local arms = character.Torso.UI.Reload
 
-	if moveDirection.Magnitude > 0 and not acts:checkAct("Paused") then
+	if moveDirection.Magnitude > 0 and not workspace:GetAttribute("Paused") then
 		if uiAnimationService.CheckPlaying(frame) then
 			return
 		end
@@ -665,7 +665,7 @@ end
 
 local function updatePlayerMovement()
 	local character = player.Character
-	if not character or acts:checkAct("Paused") then
+	if not character or workspace:GetAttribute("Paused") then
 		return
 	end
 
@@ -682,11 +682,19 @@ local function updatePlayerMovement()
 	end
 end
 
+local currentWalkingGoal = nil
+
 local function updateMovementInput()
 	updatePlayerMovement()
 	updatePlayerDirection()
 
 	local moveVector = Vector3.zero
+
+	if currentWalkingGoal and player.Character then
+		moveVector = CFrame.lookAt(player.Character:GetPivot().Position, currentWalkingGoal).LookVector
+		updateDirection(Vector2.new(moveVector.X, moveVector.Z))
+		return
+	end
 
 	if globalInputService:GetInputSource().Type == "Touch" then
 		--local mobileMovementAction = globalInputService.inputActions["MobileMovement"]
@@ -709,7 +717,7 @@ local function updateMovementInput()
 end
 
 local function updateStats()
-	if player.Character and not acts:checkAct("Paused") then
+	if player.Character and not workspace:GetAttribute("Paused") then
 		if player.Character:GetAttribute("Hunger") < 0 then
 			player.Character:SetAttribute("Hunger", 0)
 			module.toggleSprint(false)
@@ -748,6 +756,21 @@ local function updateStats()
 	end
 
 	lastHeartbeat = os.clock()
+end
+
+function module.WalkToPosition(position: Vector2)
+	globalInputService.actionGroups.PlayerControl:Disable("WalkToPosition")
+	currentWalkingGoal = position
+end
+
+local function getNearestPoint(): Part
+	local point = CollectionService:GetTagged("PlayerWalkPoint")[1]
+	return point
+end
+
+function module:WalkToNearestPoint()
+	local point = getNearestPoint()
+	self:WalkToPosition(point.Position.X, point.Position.Z)
 end
 
 function module.StartGame(saveData: Types.GameState?, character: Model)

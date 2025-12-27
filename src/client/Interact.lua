@@ -22,6 +22,7 @@ local cursorUi
 local objectPlacedAt
 
 local Client = player.PlayerScripts.Client
+local Areas = require(script.Parent.Areas)
 local Hints = require(script.Parent.Hints)
 local actionPrompt = require(Client.ActionPrompt)
 local acts = require(Client.Acts)
@@ -274,6 +275,8 @@ local function attemptInteract(object: Instance)
 
 		util.PlaySound(sounds.Locked)
 		showLocked(cursorUi.Cursor.Interact)
+	elseif object:GetAttribute("InstantUse") then
+		module.UseObject(object)
 	else
 		util.PlayFrom(player.Character, sounds.Interacting, 0.05, 0.5)
 
@@ -297,7 +300,7 @@ local function pickupContainer()
 	end)
 end
 
-local function InteractiWithObject(object: Instance)
+function module.InteractiWithObject(object: Instance)
 	if objectsView:EnterView(object) or not object:HasTag("Interactable") then
 		return
 	end
@@ -306,7 +309,6 @@ local function InteractiWithObject(object: Instance)
 		pickupContainer()
 	elseif object:HasTag("NPC") or object:HasTag("Interest") then
 		if object:GetAttribute("Sequence") then
-			object:RemoveTag("Interactable")
 			sequences:beginSequence(object:GetAttribute("Sequence"), object)
 		else
 			dialogue:EnterDialogue(mouseTarget.Value)
@@ -359,8 +361,16 @@ local interactInputAction = globalInputService.CreateInputAction("Interact", fun
 		return
 	end
 
-	InteractiWithObject(object)
+	module.InteractiWithObject(object)
 end, util.getSetting("Keybinds", "Interact"), util.getSetting("Gamepad", "Interact"), "Button")
+
+objectsView.OnLeave:Connect(function(object)
+	if not object or acts:checkAct("Interacting") then
+		return
+	end
+	module.InteractiWithObject(object)
+end)
+
 interactInputAction:SetPosition(UDim2.fromScale(-0.2, -0.15))
 interactInputAction:SetImage("rbxassetid://109036245531351")
 
@@ -370,6 +380,11 @@ globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.
 
 interactTimer.OnEnded:Connect(function()
 	acts:removeAct("Interacting")
+end)
+
+Areas.AreaEntered:Connect(function(object: Part)
+	module.UseObject(object)
+	module.InteractiWithObject(object)
 end)
 
 return module

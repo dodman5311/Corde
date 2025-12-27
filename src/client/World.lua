@@ -1,57 +1,58 @@
 local module = {}
 
 local CollectionService = game:GetService("CollectionService")
+local GuiService = game:GetService("GuiService")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 
 local Client = player.PlayerScripts.Client
 
 local Types = require(ReplicatedStorage.Shared.Types)
-local acts = require(Client.Acts)
-local globalInputService = require(Client.GlobalInputService)
 local interact = require(Client.Interact)
+local pausedScale = require(Client.Scales).new("GamePaused")
 
-function module:pause()
-	if acts:checkAct("Paused") then
-		return
-	end
+function module:pause(pauseIndex: string?)
+	workspace:SetAttribute("Paused", pausedScale:Add(pauseIndex))
+end
 
-	acts:createAct("Paused")
+function module:resume(pauseIndex: string?)
+	workspace:SetAttribute("Paused", pausedScale:Remove(pauseIndex))
+end
 
-	for _, object in ipairs(workspace:GetDescendants()) do
-		if object:IsA("ParticleEmitter") then
-			object.TimeScale = 0
+local function pauseToggled()
+	local isPaused = workspace:GetAttribute("Paused")
+
+	if isPaused then
+		for _, object in ipairs(workspace:GetDescendants()) do
+			if object:IsA("ParticleEmitter") then
+				object.TimeScale = 0
+			end
+
+			if object:IsA("BasePart") and not object.Anchored then
+				object.Anchored = true
+				object:SetAttribute("ToBeUnanchored", true)
+			end
 		end
+	else
+		for _, object in ipairs(workspace:GetDescendants()) do
+			if object:IsA("ParticleEmitter") then
+				object.TimeScale = 1
+			end
 
-		if object:IsA("BasePart") and not object.Anchored then
-			object.Anchored = true
-			object:SetAttribute("ToBeUnanchored", true)
+			if object:IsA("BasePart") and object:GetAttribute("ToBeUnanchored") then
+				object.Anchored = false
+				object:SetAttribute("ToBeUnanchored", false)
+			end
 		end
 	end
 end
 
-function module:resume()
-	if not acts:checkAct("Paused") then
-		return
-	end
-
-	acts:removeAct("Paused")
-
-	for _, object in ipairs(workspace:GetDescendants()) do
-		if object:IsA("ParticleEmitter") then
-			object.TimeScale = 1
-		end
-
-		if object:IsA("BasePart") and object:GetAttribute("ToBeUnanchored") then
-			object.Anchored = false
-			object:SetAttribute("ToBeUnanchored", false)
-		end
-	end
-end
+workspace:GetAttributeChangedSignal("Paused"):Connect(pauseToggled)
 
 local function loadContainers(layer: Types.LayerData)
 	for _, container in ipairs(CollectionService:GetTagged("Container")) do
@@ -133,7 +134,7 @@ function module.Init()
 end
 
 RunService.Heartbeat:Connect(function()
-	if acts:checkAct("Paused") then
+	if workspace:GetAttribute("Paused") then
 		return
 	end
 
@@ -160,16 +161,14 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
--- globalInputService.CreateInputAction("PauseGame", function(state)
--- 	if state ~= Enum.UserInputState.Begin then
--- 		return
--- 	end
+GuiService.MenuOpened:Connect(function()
+	StarterGui:SetCore("ResetButtonCallback", false)
 
--- 	if acts:checkAct("Paused") then
--- 		module:resume()
--- 	else
--- 		module:pause()
--- 	end
--- end, Enum.KeyCode.P)
+	module:pause("RobloxMenu")
+end)
+
+GuiService.MenuClosed:Connect(function()
+	module:resume("RobloxMenu")
+end)
 
 return module

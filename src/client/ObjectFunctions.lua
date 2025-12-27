@@ -2,8 +2,6 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 
-local acts = require(client.Acts)
-local dialogue = require(client.Dialogue)
 local globalInputService = require(client.GlobalInputService)
 local sequences = require(client.Sequences)
 local util = require(client.Util)
@@ -13,10 +11,11 @@ local HUD
 local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, 0, true)
 
 local player = Players.LocalPlayer
-
 local signal = require(ReplicatedStorage.Packages.Signal)
 
 local objectFunctions = {
+	WalkToNearestPoint = function(object: Model) end,
+
 	Door = function(object: Model, instant: boolean?)
 		local ti = TweenInfo.new(1, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut, 0, false, 0.5)
 		local door = object.Door

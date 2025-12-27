@@ -635,7 +635,7 @@ end
 
 function module.fireKeyToggle(state, input)
 	if state == Enum.UserInputState.Begin then
-		if acts:checkAct("Paused") then
+		if workspace:GetAttribute("Paused") then
 			return
 		end
 
@@ -670,7 +670,7 @@ function module.readyKeyToggle(state, input)
 	end
 
 	if state == Enum.UserInputState.Begin then
-		if acts:checkAct("Paused") then
+		if workspace:GetAttribute("Paused") then
 			return
 		end
 
@@ -735,7 +735,7 @@ globalInputService.inputActions["Fire Weapon"]:SetImage("rbxassetid://7864230838
 globalInputService.inputActions["Fire Weapon"]:Disable()
 
 RunService.Heartbeat:Connect(function()
-	if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then
+	if not currentWeapon or not fireKeyDown or workspace:GetAttribute("Paused") then
 		return
 	end
 	local weaponData = currentWeapon.Value

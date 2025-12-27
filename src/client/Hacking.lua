@@ -479,7 +479,7 @@ end
 local function checkKeystrokeInput(state, input)
 	local point = currentActivePoint.Value
 
-	if state ~= Enum.UserInputState.Begin or acts:checkAct("Paused") or not point or not point.Parent then
+	if state ~= Enum.UserInputState.Begin or workspace:GetAttribute("Paused") or not point or not point.Parent then
 		return
 	end
 
@@ -545,7 +545,7 @@ function module.Init()
 end
 
 local function pressNetKey(state)
-	if acts:checkAct("Paused") then
+	if workspace:GetAttribute("Paused") then
 		return
 	end
 

@@ -5,9 +5,9 @@
 
 -- Settings
 
-local GRAIN_SIZE = 50 -- A number 1 to 100
+local GRAIN_SIZE = 200 -- A number 1 to 100
 local GRAIN_SPEED = 100 -- A number 1 to 100
-local GRAIN_VISIBILITY = 10 -- A number 1 to 100
+local GRAIN_VISIBILITY = 9 -- A number 1 to 100
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -38,7 +38,8 @@ GrainImage.Size = udim2(1, 0, 1, 0)
 GrainImage.BackgroundTransparency = 1
 GrainImage.ImageTransparency = vis
 GrainImage.ScaleType = Enum.ScaleType.Tile
-GrainImage.Image = "http://www.roblox.com/asset/?id=28756351"
+GrainImage.Image = "rbxassetid://107915992204306"
+GrainImage.ResampleMode = Enum.ResamplerMode.Pixelated
 GrainImage.Parent = GrainGui
 
 local last = 0

@@ -3,6 +3,7 @@ local module = {
 	currentArea = nil :: Part?,
 }
 --// Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local collectionService = game:GetService("CollectionService")
 local players = game:GetService("Players")
@@ -17,10 +18,12 @@ local client = script.Parent
 local Achievements = require(script.Parent.Achievements)
 local cameraService = require(client.Camera)
 local musicService = require(client.MusicService)
+local signal = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_signal@2.0.3"].signal)
 local util = require(client.Util)
 
 --// Values
 local shiftTi = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
+module.AreaEntered = signal.new() :: signal.Signal<Part>
 
 --// Functions
 local attributeEffects = {
@@ -69,6 +72,7 @@ local function onAreaEntered(part: Part)
 		effect(value)
 	end
 
+	module.AreaEntered:Fire(part)
 	CheckForEchoAchievement(part)
 end
 

@@ -104,6 +104,8 @@ local function showMirrorMan()
 	Achievements:AwardAchievement(Achievements.Ids.WomanInTheMirror)
 end
 
+function module.WalkToPosition() end
+
 function module.UseMirror()
 	globalInputService.actionGroups["PlayerControl"]:Disable("Sequence")
 	showBars()

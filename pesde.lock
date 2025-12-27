@@ -183,6 +183,13 @@ pathfs = [{ name = "jiwonz/pathfs", version = "^0.3.0", index = "https://github.
 result = [{ name = "lukadev_0/result", version = "^1.2.0", index = "https://github.com/pesde-pkg/index" }, "peer"]
 unzip = [{ name = "0x5eal/unzip", version = "^0.1.0", index = "https://github.com/pesde-pkg/index", target = "luau" }, "standard"]
 
+[graph."wally#elttob/fusion@0.3.0 roblox"]
+direct = ["Fusion", { wally = "wally#elttob/fusion", version = "^0.3.0", index = "default" }, "standard"]
+
+[graph."wally#elttob/fusion@0.3.0 roblox".pkg_ref]
+ref_ty = "wally"
+index_url = "https://github.com/UpliftGames/wally-index"
+
 [graph."wally#evaera/promise@4.0.0 roblox"]
 direct = ["Promise", { wally = "wally#evaera/promise", version = "^4.0.0", index = "default" }, "standard"]
 
@@ -214,13 +221,6 @@ index_url = "https://github.com/UpliftGames/wally-index"
 
 [graph."wally#howmanysmall/typed-promise@4.0.6 roblox".pkg_ref.dependencies]
 Promise = [{ wally = "wally#evaera/promise", version = ">=4.0.0, <5.0.0", index = "https://github.com/UpliftGames/wally-index" }, "standard"]
-
-[graph."wally#sleitnick/loader@2.0.0 roblox"]
-direct = ["Loader", { wally = "wally#sleitnick/loader", version = "^2.0.0", index = "default" }, "standard"]
-
-[graph."wally#sleitnick/loader@2.0.0 roblox".pkg_ref]
-ref_ty = "wally"
-index_url = "https://github.com/UpliftGames/wally-index"
 
 [graph."wally#sleitnick/net@0.1.0 roblox"]
 direct = ["Net", { wally = "wally#sleitnick/net", version = "^0.1.0", index = "default" }, "standard"]

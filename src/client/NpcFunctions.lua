@@ -674,7 +674,7 @@ function module.RunNpc(Npc: Npc)
 end
 
 RunService.Heartbeat:Connect(function()
-	if acts:checkAct("Paused") then
+	if workspace:GetAttribute("Paused") then
 		return
 	end
 

@@ -21,8 +21,7 @@ local DEFAULT_SETTINGS = {
 
 local PathfindingService = game:GetService("PathfindingService")
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local loader = require(ReplicatedStorage.Packages[".pesde"]["sleitnick_loader@2.0.0"].loader)
+
 local function output(func, msg)
 	func(((func == error and "SimplePath Error: ") or "SimplePath: ") .. msg)
 end

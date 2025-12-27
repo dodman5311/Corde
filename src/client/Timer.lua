@@ -184,7 +184,7 @@ end
 
 RUN_SERVICE.Heartbeat:Connect(function()
 	for _, timer in ipairs(runningTimers) do
-		if acts:checkAct("Paused") then
+		if workspace:GetAttribute("Paused") then
 			return
 		end
 		timer.OnTimerStepped:Fire(os.clock() - timer.CallTime)

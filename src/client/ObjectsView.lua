@@ -4,6 +4,7 @@ local module = {
 	currentDisplayedModel = nil,
 }
 local client = script.Parent
+local Signal = require(ReplicatedStorage.Packages.Signal)
 local acts = require(client.Acts)
 local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
@@ -15,6 +16,8 @@ local player = Players.LocalPlayer
 local objectsFolder = ReplicatedStorage.Assets.Models["3DObjects"]
 local HUD
 local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, 0, true)
+
+module.OnLeave = Signal.new()
 
 function module:EnterView(object: Instance)
 	local modelName = object:GetAttribute("3DModel")
@@ -66,8 +69,11 @@ function module:ExitView()
 	HUD.Leave3DViewPrompt.Visible = false
 	player:SetAttribute("MovementEnabled", true)
 
+	module.OnLeave:Fire(module.currentDisplayedModel)
+
 	task.wait(TRANSITION_INFO.Time)
 	acts:removeAct("InObjectView")
+
 	module.currentDisplayedModel:Destroy()
 	cameraService:EnterFollow()
 end

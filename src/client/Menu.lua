@@ -106,11 +106,12 @@ local function closeGui(transitionTime: number?)
 	menu.Main.Visible = false
 	menu.Background.Visible = false
 	menu.Difficulty.Visible = false
+	menu.GamePaused.Visible = false
 
 	task.wait(transitionTime / 3.5)
 
 	acts:removeAct("InMenuTransition")
-	world:resume()
+	world:resume("MainMenu")
 	util.tween(menu.Transition, TweenInfo.new(transitionTime / 1.75), { BackgroundTransparency = 1 }, false, function()
 		menu.Enabled = false
 	end, Enum.PlaybackState.Completed)
@@ -173,15 +174,6 @@ local function lockSelectionTo(buttons: {})
 		module.hoverFunctions[button:GetAttribute("Hover")].Exit(button)
 	end
 end
-
--- local function transitionFromMain()
--- 	uiAnimationService.StopAnimation(mainFrame.Logo)
--- 	musicService:StopTrack(0.025)
-
--- 	mainFrame.Visible = false
-
--- 	menu.Background.BackgroundColor3 = Color3.new()
--- end
 
 local function enterPage(page: string, ...)
 	if currentPage == page then
@@ -980,7 +972,7 @@ local function EscKey()
 	if currentPage then
 		returnPage()
 	elseif not inMainMenu then
-		world:pause()
+		world:pause("MainMenu")
 		switchToPage("Settings")
 		menu.Background.BackgroundTransparency = 1
 		menu.GamePaused.Visible = true
