@@ -1,9 +1,9 @@
 local util = {
 	bound = {},
 }
-local deb = game:GetService("Debris")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
+local deb = game:GetService("Debris")
 local ts = game:GetService("TweenService")
 
 local rng = Random.new()
@@ -28,14 +28,12 @@ function util.getSetting(groupName: string, settingName: string)
 			continue
 		end
 
-		
-
 		for _, setting in ipairs(group) do
 			if setting.Name ~= settingName then
 				continue
 			end
 
-			foundSetting = setting			
+			foundSetting = setting
 		end
 	end
 
@@ -81,17 +79,6 @@ function util.typeOut(label, text, letterPerSecond, nonSync)
 	end
 end
 
-local function tween(instance, tweenInfo, propertyTable)
-	local newTween = ts:Create(instance, tweenInfo, propertyTable)
-	newTween:Play()
-	newTween.Completed:Connect(function()
-		task.wait()
-		newTween:Destroy()
-	end)
-
-	return newTween
-end
-
 function util.getNearestEnemy(position, maxDistance, list)
 	local closest = math.huge
 	local enemy
@@ -128,48 +115,6 @@ end
 
 function util.circleCurve(t)
 	return math.sqrt(1 - (2 * t - 1) ^ 2)
-end
-
-function util.tween(
-	instance: Instance | {},
-	tweenInfo: TweenInfo,
-	propertyTable: {},
-	yield: boolean?,
-	endingFunction: any?,
-	endingState: Enum.PlaybackState?
-)
-	local createdTween
-
-	if typeof(instance) == "table" then
-		for _, v in pairs(instance) do
-			createdTween = tween(v, tweenInfo, propertyTable)
-		end
-	else
-		createdTween = tween(instance, tweenInfo, propertyTable)
-	end
-
-	if yield then
-		createdTween.Completed:Wait()
-		if not endingFunction then
-			return createdTween
-		end
-
-		local state = createdTween.PlaybackState
-		if state ~= (endingState or Enum.PlaybackState.Completed) then
-			return
-		end
-		endingFunction()
-	elseif endingFunction then
-		createdTween.Completed:Connect(function(state)
-			if state ~= (endingState or Enum.PlaybackState.Completed) then
-				return
-			end
-
-			endingFunction()
-		end)
-	end
-
-	return createdTween
 end
 
 function util.callFromCache(object)

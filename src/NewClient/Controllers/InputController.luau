@@ -1,25 +1,22 @@
 local InputController = {}
-type DeviceType = "Touch" | "Keyboard" | "Gamepad"
 
 --// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
 
 --// Instances
 local InputsFolder = ReplicatedStorage.Inputs
 
 --// Modules
+local FilmGrain = require(StarterPlayer.StarterPlayerScripts.Client.FilmGrain)
 local Scales = require(ReplicatedStorage.Shared.Utils.Scales)
 
 --// Values
 
 --// Functions
 local InputActionFunctions = {
-	Sprint = function(inputActionValue: any)
-		if inputActionValue then
-		else
-		end
-	end,
-	Movement = function(inputActionValue: any) end,
+	Sprint = function(inputActionValue: any) end,
+	Movement = function(inputActionValue: Vector2) end,
 	Look = function(inputActionValue: any) end,
 	Interact = function(inputActionValue: any) end,
 
@@ -42,6 +39,25 @@ local function connectInputActions()
 
 		local dedicatedFunction = InputActionFunctions[inputAction.Name]
 		inputAction.StateChanged:Connect(dedicatedFunction)
+
+		inputAction:SetAttribute("Disabled", false)
+
+		inputAction:GetAttributeChangedSignal("Disabled"):Connect(function()
+			inputAction.Enabled = not inputAction:GetAttribute("Disabled")
+		end)
+
+		inputAction.Changed:Connect(function(property: string)
+			if property ~= "Enabled" then
+				return
+			end
+
+			for _, inputActionChild in ipairs(inputAction:GetChildren()) do
+				if inputAction:GetAttribute("Disabled") then
+					continue
+				end
+				inputActionChild.Enabled = inputAction.Enabled
+			end
+		end)
 	end
 end
 
