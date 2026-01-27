@@ -8,8 +8,8 @@ local StarterPlayer = game:GetService("StarterPlayer")
 local InputsFolder = ReplicatedStorage.Inputs
 
 --// Modules
-local FilmGrain = require(StarterPlayer.StarterPlayerScripts.Client.FilmGrain)
-local Scales = require(ReplicatedStorage.Shared.Utils.Scales)
+
+--local Scales = require(ReplicatedStorage.Shared.Utils.Scales)
 
 --// Values
 
