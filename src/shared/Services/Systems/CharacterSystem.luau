@@ -13,6 +13,8 @@ type CharacterState<T = { any }> = {
 	MovementDirection: Vector2,
 	LookDirection: Vector2,
 	IsAlive: boolean,
+
+	MaxHealth: number,
 	Health: number,
 
 	Context: T,
@@ -49,11 +51,27 @@ local DEFAULT_CHARACTER_CONFIG: CharacterConfig = {
 	MaxHealth = 100,
 }
 
+local DEFAULT_CHARACTER_STATE = {}
+
 --// Functions
 
 function CharacterSystem:Init() end
 
 function CharacterSystem:Start() end
+
+local function OnTableChanged<K, V>(proxy: { [K]: V }): { [K]: V }
+	return setmetatable(proxy, {
+		__newindex = function(table, key, newValue)
+			local oldValue = table[key]
+
+			if oldValue == newValue then
+				return
+			end
+
+			rawset(proxy, key, newValue)
+		end,
+	}) :: any
+end
 
 function CharacterSystem.new(characterName: string, characterModel: Model): Character
 	local newModel = characterModel:Clone()
@@ -70,6 +88,7 @@ function CharacterSystem.new(characterName: string, characterModel: Model): Char
 		},
 
 		Instance = newModel,
+
 		PlayAnimation = function(self: Character, animationName: string) end,
 		StopAnimation = function(self: Character, animationName: string) end,
 		GetAnimation = function(self: Character, animationName: string) end,
@@ -79,38 +98,6 @@ function CharacterSystem.new(characterName: string, characterModel: Model): Char
 		Stop = function(self: Character) end,
 		Destroy = function(self: Character) end,
 	}
-
-	setmetatable(newCharacter.State, {
-		__index = newCharacter.State,
-
-		__newindex = function(table, key, newValue)
-			local oldValue = table[key]
-
-			if oldValue == newValue then
-				return
-			end
-
-			newCharacter.Config[key] = newValue
-
-			-- on value changed
-		end,
-	})
-
-	setmetatable(newCharacter.Config, {
-		__index = newCharacter.Config,
-
-		__newindex = function(table, key, newValue)
-			local oldValue = table[key]
-
-			if oldValue == newValue then
-				return
-			end
-
-			newCharacter.Config[key] = newValue
-
-			-- on value changed
-		end,
-	})
 
 	return newCharacter
 end
