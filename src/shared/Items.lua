@@ -3,7 +3,7 @@ local storedData = require(ReplicatedStorage.Shared.StoredData)
 
 local Items = {
 	--// Weapons
-	SG550 = {
+	Assault_Rifle = {
 		Name = "SG550",
 		Desc = "Standard issue assault rifle.",
 		Value = {
@@ -30,7 +30,7 @@ local Items = {
 		CanArchive = true,
 	},
 
-	SGM600 = {
+	Heavy_Rifle = {
 		Name = "SGM-600",
 		Desc = "Heavy Battle Rifle designed to combat UAE's. Fires 2 rounds each shot.", -- unidentified anomalous entities
 		Value = {
@@ -58,7 +58,7 @@ local Items = {
 		CanArchive = true,
 	},
 
-	Mag_Rag = {
+	Shotgun = {
 		Name = "Mag-Rag™ 12",
 		Desc = "Magazine fed shotgun.",
 		Value = {
@@ -85,7 +85,7 @@ local Items = {
 		CanArchive = true,
 	},
 
-	M45A1 = {
+	Pistol = {
 		Name = "M45A1",
 		Desc = "Basic 45. Pistol.",
 		Value = {
@@ -112,7 +112,7 @@ local Items = {
 		CanArchive = true,
 	},
 
-	CP_32 = {
+	Heavy_Pistol = {
 		Name = "CP-32",
 		Desc = "A bullpup pistol, designed for CQB against armored aponents.",
 		Value = {
@@ -249,7 +249,7 @@ local Items = {
 		Use = "Eat",
 	},
 
-	Stemc = {
+	StemC = {
 		Name = "S.T.E.M.C",
 		Desc = [[<b>S</b>tem
 <b>T</b>herapy &
@@ -273,7 +273,7 @@ local Items = {
 		},
 	},
 
-	StemcInjector = {
+	StemC_Injector = {
 		Name = "S.T.E.M.C Injector",
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		
@@ -290,7 +290,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		CombineData = {},
 	},
 
-	Stemb = {
+	StemB = {
 		Name = "S.T.E.M.B",
 		Desc = [[<b>S</b>.T.E.M.C. 
 <b>T</b>atcial
@@ -315,7 +315,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		},
 	},
 
-	StembInjector = {
+	StemB_Injector = {
 		Name = "S.T.E.M.B Injector",
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		
@@ -332,7 +332,7 @@ When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% hea
 		CombineData = {},
 	},
 
-	Stema = {
+	StemA = {
 		Name = "S.T.E.M.A",
 		Desc = [[<b>S</b>.T.E.M.B, 
 <b>T</b>echnology with
@@ -349,7 +349,7 @@ When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% hea
 		Use = "Heal",
 	},
 
-	StemaInjector = {
+	StemA_Injector = {
 		Name = "S.T.E.M.A Injector",
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		

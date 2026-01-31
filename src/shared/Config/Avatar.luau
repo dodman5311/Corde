@@ -1,5 +1,5 @@
 return {
-	Name = "Placeholder",
+	Name = "Avatar",
 	IsHumanoid = true,
 	TurnSpeed = 1,
 	FrameRate = 20,

@@ -1,57 +1,28 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+--!strict
 local CharacterSystem = {}
 
-type CharacterConfig = {
-	Name: string,
-
-	IsHumanoid: boolean,
-	TurnSpeed: number,
-	MaxHealth: number,
-}
-
-type CharacterState<T = { any }> = {
-	MovementDirection: Vector2,
-	LookDirection: Vector2,
-	IsAlive: boolean,
-
-	MaxHealth: number,
-	Health: number,
-
-	Context: T,
-}
-
-type Character = {
-	Config: CharacterConfig,
-	State: CharacterState,
-
-	Instance: Model,
-
-	PlayAnimation: (self: Character, animationName: string) -> any?,
-	StopAnimation: (self: Character, animationName: string) -> any?,
-	GetAnimation: (self: Character, animationName: string) -> any?,
-
-	Spawn: (self: Character, spawnLocation: Vector2) -> any?,
-	Run: (self: Character) -> any?,
-	Stop: (self: Character) -> any?,
-	Destroy: (self: Character) -> any?,
-}
-
 --// Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 --// Instances
 
 --// Modules
+local BindToAttributes = require(ReplicatedStorage.Shared.Utils.BindToAttributes)
+local Character = require(ReplicatedStorage.Shared.Config.Character)
+local CharacterTypes = require(ReplicatedStorage.Shared.Types.Character)
+local Signal = require(ReplicatedStorage.Packages.Signal)
+local SpriteSheetAnimator = require(ReplicatedStorage.Shared.Services.Components.SpriteSheetAnimator)
 
 --// Values
 
-local DEFAULT_CHARACTER_CONFIG: CharacterConfig = {
-	Name = "Placeholder",
-	IsHumanoid = true,
-	TurnSpeed = 1,
-	MaxHealth = 100,
-}
+type Character = CharacterTypes.Character
+type CharacterConfig = CharacterTypes.CharacterConfig
+type CharacterInstance = CharacterTypes.CharacterInstance
+type CharacterState = CharacterTypes.CharacterState
 
-local DEFAULT_CHARACTER_STATE = {}
+local DEFAULT_CHARACTER_CONFIG: CharacterConfig = Character
+local Characters = {}
 
 --// Functions
 
@@ -59,48 +30,157 @@ function CharacterSystem:Init() end
 
 function CharacterSystem:Start() end
 
-local function OnTableChanged<K, V>(proxy: { [K]: V }): { [K]: V }
-	return setmetatable(proxy, {
-		__newindex = function(table, key, newValue)
-			local oldValue = table[key]
+local function copyToTable(donor: {}, receiver: {})
+	for index, value in donor do
+		receiver[index] = value
+	end
+end
 
-			if oldValue == newValue then
+function CharacterSystem:GetCharacterFromInstance(characterInstance: Instance): Character?
+	for _, character: Character in ipairs(Characters) do
+		if character.Instance == characterInstance then
+			return character
+		end
+	end
+
+	return
+end
+
+local function BuildCharacterState(config: CharacterConfig): CharacterState
+	local characterState = {
+		MovementDirection = Vector2.zero,
+		LookDirection = Vector2.zero,
+		IsAlive = true,
+	}
+
+	for index, value in pairs(config) do
+		characterState[index] = value
+	end
+
+	return characterState :: CharacterState
+end
+
+function CharacterSystem.new(
+	characterName: string,
+	characterInstance: CharacterInstance,
+	config: CharacterConfig?
+): Character
+	config = config or DEFAULT_CHARACTER_CONFIG
+
+	local newInstance: CharacterInstance = characterInstance:Clone()
+	newInstance.Name = characterName
+
+	local state = BindToAttributes(newInstance)
+	copyToTable(BuildCharacterState(config :: CharacterConfig), state)
+
+	local newCharacter: Character = {
+		State = state,
+		Context = {},
+
+		Instance = newInstance,
+
+		PlayAnimation = function(
+			self: Character,
+			animationName: string,
+			frameDelay: number?,
+			loop: boolean?,
+			stayOnLastFrame: boolean?,
+			startOnFrame: number?
+		)
+			local frame = self:GetAnimation(animationName)
+			if not frame then
 				return
 			end
 
-			rawset(proxy, key, newValue)
+			frameDelay = frameDelay or 1 / self.State.FrameRate
+
+			return SpriteSheetAnimator.PlayAnimation(frame, frameDelay :: number, loop, stayOnLastFrame, startOnFrame)
 		end,
-	}) :: any
-end
+		StopAnimation = function(self: Character, animationName: string)
+			local frame = self:GetAnimation(animationName)
+			if not frame then
+				return
+			end
 
-function CharacterSystem.new(characterName: string, characterModel: Model): Character
-	local newModel = characterModel:Clone()
-	newModel.Name = characterName
+			SpriteSheetAnimator.StopAnimation(frame)
+		end,
+		GetAnimation = function(self: Character, animationName: string): (Frame?, SpriteSheetAnimator.Animation2D?)
+			local getAnimationFrame = self.Instance:FindFirstChild(animationName, true)
+			if not getAnimationFrame or not getAnimationFrame:FindFirstChild("Image") then
+				warn(`No animation by the name of {animationName} was found.`)
+				return
+			end
+			local animation2d: SpriteSheetAnimator.Animation2D = SpriteSheetAnimator.CheckPlaying(getAnimationFrame)
+			return getAnimationFrame, animation2d
+		end,
 
-	local newCharacter: Character = {
-		Config = DEFAULT_CHARACTER_CONFIG,
-		State = {
-			MovementDirection = Vector2.zero,
-			LookDirection = Vector2.zero,
-			IsAlive = true,
-			Health = DEFAULT_CHARACTER_CONFIG.MaxHealth,
-			Context = {},
-		},
+		Spawn = function(self: Character, spawnLocation: Vector2)
+			self.Instance.Parent = workspace
+			self.Instance:PivotTo(CFrame.new(spawnLocation.X, 0, spawnLocation.Y))
+			self:Run()
 
-		Instance = newModel,
+			return
+		end,
+		Run = function(self: Character)
+			table.insert(Characters, self)
 
-		PlayAnimation = function(self: Character, animationName: string) end,
-		StopAnimation = function(self: Character, animationName: string) end,
-		GetAnimation = function(self: Character, animationName: string) end,
+			return
+		end,
+		Stop = function(self: Character)
+			local index = table.find(Characters, self)
+			if not index then
+				return
+			end
+			table.remove(Characters, index)
 
-		Spawn = function(self: Character, spawnLocation: Vector2) end,
-		Run = function(self: Character) end,
-		Stop = function(self: Character) end,
-		Destroy = function(self: Character) end,
+			return
+		end,
+		Destroy = function(self: Character)
+			self:Stop()
+			self.Instance:Destroy()
+			self.OnDied:Destroy()
+			self.OnHealthChanged:Destroy()
+			self.OnMovementChanged:Destroy()
+
+			return
+		end,
+
+		OnDied = Signal.new(),
+		OnHealthChanged = Signal.new(),
+		OnMovementChanged = Signal.new(),
 	}
+
+	newInstance.AttributeChanged:Connect(function(attribute: string)
+		if attribute == "MaxHealth" or attribute == "Health" then
+			local health = newCharacter.State.Health
+			local maxHealth = newCharacter.State.MaxHealth
+
+			if health > maxHealth then
+				newCharacter.State.Health = maxHealth
+			elseif health < 0 then
+				newCharacter.State.Health = 0
+			end
+
+			newCharacter.OnHealthChanged:Fire(newCharacter.State.Health)
+
+			if newCharacter.State.Health == 0 and newCharacter.State.IsAlive == true then
+				newCharacter.State.IsAlive = false
+				newCharacter.OnDied:Fire()
+			end
+		elseif attribute == "MovementDirection" then
+			newCharacter.OnMovementChanged:Fire(newCharacter.State.MovementDirection)
+		end
+	end)
 
 	return newCharacter
 end
+
+RunService.Heartbeat:Connect(function()
+	for _, character: Character in ipairs(Characters) do
+		local movementDirection = character.State.MovementDirection
+		character.Instance.WalkVelocity.VectorVelocity = Vector3.new(movementDirection.X, 0, movementDirection.Y)
+	end
+end)
 
 --// Main //--
 return CharacterSystem
