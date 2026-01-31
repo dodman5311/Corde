@@ -18,6 +18,172 @@
               "className": "Folder",
               "children": [
                 {
+                  "name": "evaera_promise@4.0.0",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "promise",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\lib\\init.lua",
+                        "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\default.project.json"
+                      ],
+                      "children": [
+                        {
+                          "name": "init.spec",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\lib\\init.spec.lua"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "howmanysmall_janitor@1.18.3",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "Promise",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\Promise.luau"
+                      ]
+                    },
+                    {
+                      "name": "janitor",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\init.luau",
+                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\default.project.json"
+                      ],
+                      "children": [
+                        {
+                          "name": "FastDefer",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\FastDefer.luau"
+                          ]
+                        },
+                        {
+                          "name": "Promise",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\Promise.luau"
+                          ]
+                        },
+                        {
+                          "name": "__tests__",
+                          "className": "Folder",
+                          "children": [
+                            {
+                              "name": "Janitor.test",
+                              "className": "ModuleScript",
+                              "filePaths": [
+                                "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\__tests__\\Janitor.test.luau"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "jest.config",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\jest.config.luau"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "howmanysmall_typed-promise@4.0.6",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "Promise",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\Promise.luau"
+                      ]
+                    },
+                    {
+                      "name": "typed-promise",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\typed-promise\\src\\init.luau",
+                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\typed-promise\\default.project.json"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "sleitnick_net@0.1.0",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "net",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\sleitnick_net@0.1.0\\net\\init.lua"
+                      ],
+                      "children": [
+                        {
+                          "name": "wally",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\sleitnick_net@0.1.0\\net\\wally.toml"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "sleitnick_signal@2.0.3",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "signal",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\init.luau"
+                      ],
+                      "children": [
+                        {
+                          "name": "init.test",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\init.test.luau"
+                          ]
+                        },
+                        {
+                          "name": "wally",
+                          "className": "ModuleScript",
+                          "filePaths": [
+                            "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\wally.toml"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "surnautica_profileservice@1.0.0",
+                  "className": "Folder",
+                  "children": [
+                    {
+                      "name": "profileservice",
+                      "className": "ModuleScript",
+                      "filePaths": [
+                        "roblox_packages\\.pesde\\surnautica_profileservice@1.0.0\\profileservice\\src\\init.lua",
+                        "roblox_packages\\.pesde\\surnautica_profileservice@1.0.0\\profileservice\\default.project.json"
+                      ]
+                    }
+                  ]
+                },
+                {
                   "name": "elttob_fusion@0.3.0",
                   "className": "Folder",
                   "children": [
@@ -544,180 +710,7 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "name": "evaera_promise@4.0.0",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "promise",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\lib\\init.lua",
-                        "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\default.project.json"
-                      ],
-                      "children": [
-                        {
-                          "name": "init.spec",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\evaera_promise@4.0.0\\promise\\lib\\init.spec.lua"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "howmanysmall_janitor@1.18.3",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "Promise",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\Promise.luau"
-                      ]
-                    },
-                    {
-                      "name": "janitor",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\init.luau",
-                        "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\default.project.json"
-                      ],
-                      "children": [
-                        {
-                          "name": "FastDefer",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\FastDefer.luau"
-                          ]
-                        },
-                        {
-                          "name": "Promise",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\Promise.luau"
-                          ]
-                        },
-                        {
-                          "name": "__tests__",
-                          "className": "Folder",
-                          "children": [
-                            {
-                              "name": "Janitor.test",
-                              "className": "ModuleScript",
-                              "filePaths": [
-                                "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\__tests__\\Janitor.test.luau"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "name": "jest.config",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\howmanysmall_janitor@1.18.3\\janitor\\src\\jest.config.luau"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "howmanysmall_typed-promise@4.0.6",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "Promise",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\Promise.luau"
-                      ]
-                    },
-                    {
-                      "name": "typed-promise",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\typed-promise\\src\\init.luau",
-                        "roblox_packages\\.pesde\\howmanysmall_typed-promise@4.0.6\\typed-promise\\default.project.json"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "sleitnick_net@0.1.0",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "net",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\sleitnick_net@0.1.0\\net\\init.lua"
-                      ],
-                      "children": [
-                        {
-                          "name": "wally",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\sleitnick_net@0.1.0\\net\\wally.toml"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "sleitnick_signal@2.0.3",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "signal",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\init.luau"
-                      ],
-                      "children": [
-                        {
-                          "name": "init.test",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\init.test.luau"
-                          ]
-                        },
-                        {
-                          "name": "wally",
-                          "className": "ModuleScript",
-                          "filePaths": [
-                            "roblox_packages\\.pesde\\sleitnick_signal@2.0.3\\signal\\wally.toml"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "surnautica_profileservice@1.0.0",
-                  "className": "Folder",
-                  "children": [
-                    {
-                      "name": "profileservice",
-                      "className": "ModuleScript",
-                      "filePaths": [
-                        "roblox_packages\\.pesde\\surnautica_profileservice@1.0.0\\profileservice\\src\\init.lua",
-                        "roblox_packages\\.pesde\\surnautica_profileservice@1.0.0\\profileservice\\default.project.json"
-                      ]
-                    }
-                  ]
                 }
-              ]
-            },
-            {
-              "name": "Fusion",
-              "className": "ModuleScript",
-              "filePaths": [
-                "roblox_packages\\Fusion.luau"
               ]
             },
             {
@@ -754,6 +747,13 @@
               "filePaths": [
                 "roblox_packages\\Signal.luau"
               ]
+            },
+            {
+              "name": "Fusion",
+              "className": "ModuleScript",
+              "filePaths": [
+                "roblox_packages\\Fusion.luau"
+              ]
             }
           ]
         },
@@ -762,30 +762,116 @@
           "className": "Folder",
           "children": [
             {
+              "name": "Items",
+              "className": "ModuleScript",
+              "filePaths": [
+                "src/Shared\\Items.lua"
+              ]
+            },
+            {
+              "name": "SimplePath",
+              "className": "ModuleScript",
+              "filePaths": [
+                "src/Shared\\SimplePath.lua"
+              ]
+            },
+            {
+              "name": "StoredData",
+              "className": "ModuleScript",
+              "filePaths": [
+                "src/Shared\\StoredData\\init.lua"
+              ],
+              "children": [
+                {
+                  "name": "BrokenPhone",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\BrokenPhone.lua"
+                  ]
+                },
+                {
+                  "name": "DoorBroken",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\DoorBroken.lua"
+                  ]
+                },
+                {
+                  "name": "Gun Manual",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\Gun Manual.lua"
+                  ]
+                },
+                {
+                  "name": "Journal",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\Journal.lua"
+                  ]
+                },
+                {
+                  "name": "LockedFrom",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\LockedFrom.lua"
+                  ]
+                },
+                {
+                  "name": "N.E.T Manual",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\N.E.T Manual.lua"
+                  ]
+                },
+                {
+                  "name": "PanelBroken",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\PanelBroken.lua"
+                  ]
+                },
+                {
+                  "name": "PersonalNote",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\PersonalNote.lua"
+                  ]
+                },
+                {
+                  "name": "RationsPoster",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\StoredData\\RationsPoster.lua"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Types",
+              "className": "ModuleScript",
+              "filePaths": [
+                "src/Shared\\Types.lua"
+              ]
+            },
+            {
               "name": "Config",
               "className": "Folder",
               "children": [
-                {
-                  "name": "Character",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\Config\\Character.luau"
-                  ]
-                },
                 {
                   "name": "Avatar",
                   "className": "ModuleScript",
                   "filePaths": [
                     "src/Shared\\Config\\Avatar.luau"
                   ]
+                },
+                {
+                  "name": "Character",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\Config\\Character.luau"
+                  ]
                 }
-              ]
-            },
-            {
-              "name": "Items",
-              "className": "ModuleScript",
-              "filePaths": [
-                "src/Shared\\Items.lua"
               ]
             },
             {
@@ -924,109 +1010,23 @@
               ]
             },
             {
-              "name": "SimplePath",
-              "className": "ModuleScript",
-              "filePaths": [
-                "src/Shared\\SimplePath.lua"
-              ]
-            },
-            {
-              "name": "StoredData",
-              "className": "ModuleScript",
-              "filePaths": [
-                "src/Shared\\StoredData\\init.lua"
-              ],
-              "children": [
-                {
-                  "name": "BrokenPhone",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\BrokenPhone.lua"
-                  ]
-                },
-                {
-                  "name": "DoorBroken",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\DoorBroken.lua"
-                  ]
-                },
-                {
-                  "name": "Gun Manual",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\Gun Manual.lua"
-                  ]
-                },
-                {
-                  "name": "Journal",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\Journal.lua"
-                  ]
-                },
-                {
-                  "name": "LockedFrom",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\LockedFrom.lua"
-                  ]
-                },
-                {
-                  "name": "N.E.T Manual",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\N.E.T Manual.lua"
-                  ]
-                },
-                {
-                  "name": "PanelBroken",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\PanelBroken.lua"
-                  ]
-                },
-                {
-                  "name": "PersonalNote",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\PersonalNote.lua"
-                  ]
-                },
-                {
-                  "name": "RationsPoster",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\StoredData\\RationsPoster.lua"
-                  ]
-                }
-              ]
-            },
-            {
               "name": "Types",
               "className": "Folder",
               "children": [
-                {
-                  "name": "PlayerState",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/Shared\\Types\\PlayerState.luau"
-                  ]
-                },
                 {
                   "name": "Character",
                   "className": "ModuleScript",
                   "filePaths": [
                     "src/Shared\\Types\\Character.luau"
                   ]
+                },
+                {
+                  "name": "PlayerState",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/Shared\\Types\\PlayerState.luau"
+                  ]
                 }
-              ]
-            },
-            {
-              "name": "Types",
-              "className": "ModuleScript",
-              "filePaths": [
-                "src/Shared\\Types.lua"
               ]
             },
             {

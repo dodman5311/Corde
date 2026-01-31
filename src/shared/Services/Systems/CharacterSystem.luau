@@ -9,7 +9,7 @@ local RunService = game:GetService("RunService")
 
 --// Modules
 local BindToAttributes = require(ReplicatedStorage.Shared.Utils.BindToAttributes)
-local Character = require(ReplicatedStorage.Shared.Config.Character)
+local CharacterConfig = require(ReplicatedStorage.Shared.Config.Character)
 local CharacterTypes = require(ReplicatedStorage.Shared.Types.Character)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 local SpriteSheetAnimator = require(ReplicatedStorage.Shared.Services.Components.SpriteSheetAnimator)
@@ -21,14 +21,40 @@ type CharacterConfig = CharacterTypes.CharacterConfig
 type CharacterInstance = CharacterTypes.CharacterInstance
 type CharacterState = CharacterTypes.CharacterState
 
-local DEFAULT_CHARACTER_CONFIG: CharacterConfig = Character
-local Characters = {}
+local DEFAULT_CHARACTER_CONFIG: CharacterConfig = CharacterConfig
+local Characters: { Character } = {}
+local HeartBeatConnection: RBXScriptConnection?
 
 --// Functions
 
 function CharacterSystem:Init() end
 
-function CharacterSystem:Start() end
+function CharacterSystem:Start()
+	if HeartBeatConnection then
+		return
+	end
+	HeartBeatConnection = RunService.Heartbeat:Connect(function()
+		for _, character: Character in ipairs(Characters) do
+			local movementDirection = character.State.MovementDirection
+
+			local walkVel = character.Instance:FindFirstChild("WalkVelocity") :: LinearVelocity?
+			if not walkVel then
+				continue
+			end
+
+			walkVel.VectorVelocity = Vector3.new(movementDirection.X, 0, movementDirection.Y)
+		end
+	end)
+end
+
+function CharacterSystem:Stop()
+	if not HeartBeatConnection then
+		return
+	end
+
+	HeartBeatConnection:Disconnect()
+	HeartBeatConnection = nil
+end
 
 local function copyToTable(donor: {}, receiver: {})
 	for index, value in donor do
@@ -60,18 +86,15 @@ local function BuildCharacterState(config: CharacterConfig): CharacterState
 	return characterState :: CharacterState
 end
 
-function CharacterSystem.new(
-	characterName: string,
-	characterInstance: CharacterInstance,
-	config: CharacterConfig?
-): Character
+function CharacterSystem.new(characterInstance: CharacterInstance, config: CharacterConfig?): Character
 	config = config or DEFAULT_CHARACTER_CONFIG
 
+	local attributesChanged: RBXScriptConnection
 	local newInstance: CharacterInstance = characterInstance:Clone()
-	newInstance.Name = characterName
-
 	local state = BindToAttributes(newInstance)
+
 	copyToTable(BuildCharacterState(config :: CharacterConfig), state)
+	newInstance.Name = state.Name
 
 	local newCharacter: Character = {
 		State = state,
@@ -87,7 +110,7 @@ function CharacterSystem.new(
 			stayOnLastFrame: boolean?,
 			startOnFrame: number?
 		)
-			local frame = self:GetAnimation(animationName)
+			local frame, _ = self:GetAnimation(animationName)
 			if not frame then
 				return
 			end
@@ -97,7 +120,7 @@ function CharacterSystem.new(
 			return SpriteSheetAnimator.PlayAnimation(frame, frameDelay :: number, loop, stayOnLastFrame, startOnFrame)
 		end,
 		StopAnimation = function(self: Character, animationName: string)
-			local frame = self:GetAnimation(animationName)
+			local frame, _ = self:GetAnimation(animationName)
 			if not frame then
 				return
 			end
@@ -122,6 +145,9 @@ function CharacterSystem.new(
 			return
 		end,
 		Run = function(self: Character)
+			if table.find(Characters, self) then
+				return
+			end
 			table.insert(Characters, self)
 
 			return
@@ -136,6 +162,9 @@ function CharacterSystem.new(
 			return
 		end,
 		Destroy = function(self: Character)
+			if attributesChanged then
+				attributesChanged:Disconnect()
+			end
 			self:Stop()
 			self.Instance:Destroy()
 			self.OnDied:Destroy()
@@ -150,7 +179,7 @@ function CharacterSystem.new(
 		OnMovementChanged = Signal.new(),
 	}
 
-	newInstance.AttributeChanged:Connect(function(attribute: string)
+	attributesChanged = newInstance.AttributeChanged:Connect(function(attribute: string)
 		if attribute == "MaxHealth" or attribute == "Health" then
 			local health = newCharacter.State.Health
 			local maxHealth = newCharacter.State.MaxHealth
@@ -169,18 +198,13 @@ function CharacterSystem.new(
 			end
 		elseif attribute == "MovementDirection" then
 			newCharacter.OnMovementChanged:Fire(newCharacter.State.MovementDirection)
+		elseif attribute == "Name" then
+			newInstance.Name = newCharacter.State.Name
 		end
 	end)
 
 	return newCharacter
 end
-
-RunService.Heartbeat:Connect(function()
-	for _, character: Character in ipairs(Characters) do
-		local movementDirection = character.State.MovementDirection
-		character.Instance.WalkVelocity.VectorVelocity = Vector3.new(movementDirection.X, 0, movementDirection.Y)
-	end
-end)
 
 --// Main //--
 return CharacterSystem

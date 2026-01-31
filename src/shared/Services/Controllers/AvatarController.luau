@@ -9,17 +9,18 @@ local Assets = ReplicatedStorage.Assets
 --// Modules
 local AvatarConfig = require(ReplicatedStorage.Shared.Config.Avatar)
 local CharacterSystem = require(ReplicatedStorage.Shared.Services.Systems.CharacterSystem)
+local CharacterTypes = require(ReplicatedStorage.Shared.Types.Character)
 --local MovementSystem = require(ReplicatedStorage.Shared.Services.Systems.MovementSystem)
 
 --// Values
 
 --// Functions
-local function CreateCharacter(position: Vector2)
-	CharacterSystem.new("Avatar", Assets.Models.Avatar, AvatarConfig)
+local function CreateCharacter(): CharacterTypes.Character
+	return CharacterSystem.new("Avatar", Assets.Models.Avatar, AvatarConfig)
 end
 
 function CharacterController:Load(gameSave)
-	CreateCharacter(Vector2.zero)
+	CreateCharacter():Spawn(Vector2.zero)
 end
 
 function CharacterController:Init()
