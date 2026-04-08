@@ -9,6 +9,7 @@ local RunService = game:GetService("RunService")
 
 --// Modules
 local BindToAttributes = require(ReplicatedStorage.Shared.Utils.BindToAttributes)
+local CharacterAnimations = require(script.CharacterAnimations)
 local CharacterConfig = require(ReplicatedStorage.Shared.Config.Character)
 local CharacterTypes = require(ReplicatedStorage.Shared.Types.Character)
 local Signal = require(ReplicatedStorage.Packages.Signal)
@@ -27,7 +28,46 @@ local HeartBeatConnection: RBXScriptConnection?
 
 --// Functions
 
-function CharacterSystem:Init() end
+local function GetDirectionUnit(vector: Vector2): Vector3
+	local vector3Direction = Vector3.new(vector.X, 0, vector.Y)
+
+	if vector3Direction.Magnitude > 0 then
+		vector3Direction = vector3Direction.Unit
+	else
+		vector3Direction = Vector3.zero
+	end
+
+	return vector3Direction
+end
+
+local function UpdateMovementDirection(character: Character)
+	local movementDirection = character.State.MovementDirection
+
+	local walkVel = character.Instance:FindFirstChild("WalkVelocity") :: LinearVelocity?
+	if not walkVel then
+		return
+	end
+
+	local movementUnit = GetDirectionUnit(movementDirection) * character.State.WalkSpeed
+	walkVel.VectorVelocity = walkVel.VectorVelocity:Lerp(movementUnit, character.State.MovementFriction)
+end
+
+local function UpdateLookDirection(character: Character)
+	local lookDirection = character.State.LookDirection
+
+	local gyro = character.Instance:FindFirstChild("Gyro") :: AlignOrientation?
+	if not gyro then
+		return
+	end
+
+	local lookUnit = GetDirectionUnit(lookDirection)
+
+	local position = character.Instance:GetPivot().Position
+
+	if lookUnit.Magnitude > 0 then
+		gyro.CFrame = CFrame.lookAt(position, position + lookUnit)
+	end
+end
 
 function CharacterSystem:Start()
 	if HeartBeatConnection then
@@ -35,14 +75,8 @@ function CharacterSystem:Start()
 	end
 	HeartBeatConnection = RunService.Heartbeat:Connect(function()
 		for _, character: Character in ipairs(Characters) do
-			local movementDirection = character.State.MovementDirection
-
-			local walkVel = character.Instance:FindFirstChild("WalkVelocity") :: LinearVelocity?
-			if not walkVel then
-				continue
-			end
-
-			walkVel.VectorVelocity = Vector3.new(movementDirection.X, 0, movementDirection.Y)
+			UpdateMovementDirection(character)
+			UpdateLookDirection(character)
 		end
 	end)
 end
@@ -96,6 +130,8 @@ function CharacterSystem.new(characterInstance: CharacterInstance, config: Chara
 	copyToTable(BuildCharacterState(config :: CharacterConfig), state)
 	newInstance.Name = state.Name
 
+	local playingAnimations = {}
+
 	local newCharacter: Character = {
 		State = state,
 		Context = {},
@@ -110,31 +146,79 @@ function CharacterSystem.new(characterInstance: CharacterInstance, config: Chara
 			stayOnLastFrame: boolean?,
 			startOnFrame: number?
 		)
-			local frame, _ = self:GetAnimation(animationName)
-			if not frame then
+			local animationFrame, _ = self:GetAnimation(animationName)
+			if not animationFrame or not animationFrame.Parent then
 				return
 			end
 
+			local animationsTable = playingAnimations[animationFrame.Parent]
+
+			for _, otherAnimationFrame in ipairs(animationsTable) do
+				otherAnimationFrame.Visible = false
+			end
+
+			animationFrame.Visible = true
 			frameDelay = frameDelay or 1 / self.State.FrameRate
 
-			return SpriteSheetAnimator.PlayAnimation(frame, frameDelay :: number, loop, stayOnLastFrame, startOnFrame)
+			local animation = SpriteSheetAnimator.PlayAnimation(
+				animationFrame,
+				frameDelay :: number,
+				loop,
+				stayOnLastFrame,
+				startOnFrame
+			)
+
+			if not animationsTable then
+				playingAnimations[animationFrame.Parent] = {}
+				animationsTable = playingAnimations[animationFrame.Parent]
+			end
+			table.insert(animationsTable, animationFrame)
+
+			animation.OnEnded:Once(function()
+				table.remove(animationsTable, table.find(animationsTable, animationFrame))
+			end)
+
+			return animation
 		end,
 		StopAnimation = function(self: Character, animationName: string)
-			local frame, _ = self:GetAnimation(animationName)
-			if not frame then
+			local animationFrame, _ = self:GetAnimation(animationName)
+			if not animationFrame or not animationFrame.Parent then
 				return
 			end
 
-			SpriteSheetAnimator.StopAnimation(frame)
+			SpriteSheetAnimator.StopAnimation(animationFrame)
+
+			local animationsTable = playingAnimations[animationFrame.Parent]
+
+			table.remove(animationsTable, table.find(animationsTable, animationFrame))
+
+			if #animationsTable > 0 then
+				animationsTable[#animationsTable].Visible = true
+			end
+			return
 		end,
+		StopAllAnimations = function(self: Character)
+			for _, animationFrame in ipairs(self.Instance:GetDescendants()) do
+				if not animationFrame:IsA("GuiObject") or not animationFrame:FindFirstChild("Image") then
+					continue
+				end
+				animationFrame.Visible = false
+				SpriteSheetAnimator.StopAnimation(animationFrame)
+			end
+
+			playingAnimations = {}
+
+			return
+		end,
+
 		GetAnimation = function(self: Character, animationName: string): (Frame?, SpriteSheetAnimator.Animation2D?)
-			local getAnimationFrame = self.Instance:FindFirstChild(animationName, true)
-			if not getAnimationFrame or not getAnimationFrame:FindFirstChild("Image") then
+			local animationFrame = self.Instance:FindFirstChild(animationName, true)
+			if not animationFrame or not animationFrame:FindFirstChild("Image") then
 				warn(`No animation by the name of {animationName} was found.`)
 				return
 			end
-			local animation2d: SpriteSheetAnimator.Animation2D = SpriteSheetAnimator.CheckPlaying(getAnimationFrame)
-			return getAnimationFrame, animation2d
+			local animation2d: SpriteSheetAnimator.Animation2D = SpriteSheetAnimator.CheckPlaying(animationFrame)
+			return animationFrame, animation2d
 		end,
 
 		Spawn = function(self: Character, spawnLocation: Vector2)
@@ -150,9 +234,12 @@ function CharacterSystem.new(characterInstance: CharacterInstance, config: Chara
 			end
 			table.insert(Characters, self)
 
+			self.OnDied:Connect(function() end)
+
 			return
 		end,
 		Stop = function(self: Character)
+			self:StopAllAnimations()
 			local index = table.find(Characters, self)
 			if not index then
 				return
@@ -198,6 +285,7 @@ function CharacterSystem.new(characterInstance: CharacterInstance, config: Chara
 			end
 		elseif attribute == "MovementDirection" then
 			newCharacter.OnMovementChanged:Fire(newCharacter.State.MovementDirection)
+			-- connect character movement
 		elseif attribute == "Name" then
 			newInstance.Name = newCharacter.State.Name
 		end

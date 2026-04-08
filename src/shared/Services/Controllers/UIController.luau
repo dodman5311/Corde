@@ -19,5 +19,9 @@ function UIController:Start()
 	--Start Code
 end
 
+function UIController:Load()
+	--Start Code
+end
+
 --// Main //--
 return UIController

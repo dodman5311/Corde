@@ -1,19 +1,24 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Controllers = ReplicatedStorage.Shared.Services.Controllers
 
-local ModuleLoadOrder = {
-	"CameraController",
-	"CharacterController",
-	"InputController",
-	"UIController",
-}
+local AvatarController = require(Controllers.AvatarController)
+local CameraController = require(Controllers.CameraController)
+local UIController = require(Controllers.UIController)
 
-local function CallModuleMethods(methodName: string, ...)
-	for _, moduleName in ipairs(ModuleLoadOrder) do
-		local module = require(Controllers[moduleName])
-		module[methodName](module, ...)
-	end
+local function Init()
+	AvatarController:Init()
+	CameraController:Init()
+	UIController:Init()
 end
 
-CallModuleMethods("Init")
-CallModuleMethods("Start")
+local function Start()
+	AvatarController:Start()
+end
+
+local function LoadGame(gameSave)
+	local avatar = AvatarController:Load(gameSave)
+end
+
+Init()
+Start()
+LoadGame()

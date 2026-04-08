@@ -6,4 +6,7 @@ return {
 
 	MaxHealth = 100,
 	Health = 100,
+
+	WalkSpeed = 12,
+	MovementFriction = 1,
 }

@@ -1,9 +1,6 @@
-return {
-	Name = "Avatar",
-	IsHumanoid = true,
-	TurnSpeed = 1,
-	FrameRate = 20,
+local avatarConfig = table.clone(require(script.Parent.Character))
 
-	MaxHealth = 100,
-	Health = 100,
-}
+avatarConfig.Name = "Avatar"
+avatarConfig.MovementFriction = 0.1
+
+return avatarConfig

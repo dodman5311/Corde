@@ -1,9 +1,9 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = game:GetService("DataStoreService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local storeData = {}
 
-local Types = require(ReplicatedStorage.Shared.Types)
+--local Types = require(ReplicatedStorage.Shared.Types)
 
 local Net = require(ReplicatedStorage.Packages.Net)
 Net:RemoteFunction("SaveGameState")
@@ -14,7 +14,7 @@ local function deserializeVector3(tbl: { x: number, y: number, z: number }): Vec
 	return Vector3.new(tbl.X, tbl.Y, tbl.Z)
 end
 
-local function LoadData(player: Player, dataStore: DataStore): Types.GameState -- load data
+local function LoadData(player: Player, dataStore: DataStore) --: Types.GameState -- load data
 	local foundData
 
 	local success, errorMessage = pcall(function()
@@ -40,14 +40,14 @@ local function SaveData(player: Player, dataStore: DataStore, value)
 	end
 end
 
-local function saveGameState(player: Player, saveSlot: number, gameState: Types.GameState)
+local function saveGameState(player: Player, saveSlot: number, gameState) --: Types.GameState)
 	local dataStore = DataStoreService:GetDataStore("Slot_" .. saveSlot)
 	SaveData(player, dataStore, gameState)
 end
 
-local function getSavedGame(player: Player, saveSlot: number): Types.GameState
+local function getSavedGame(player: Player, saveSlot: number) --: Types.GameState
 	local dataStore = DataStoreService:GetDataStore("Slot_" .. saveSlot)
-	local data: Types.GameState = LoadData(player, dataStore)
+	local data = LoadData(player, dataStore) --: Types.GameState = LoadData(player, dataStore)
 
 	if not data or not data.Date then
 		return

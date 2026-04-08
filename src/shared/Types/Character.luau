@@ -15,6 +15,8 @@ export type CharacterConfig = {
 
 	MaxHealth: number,
 	Health: number,
+	WalkSpeed: number,
+	MovementFriction: number,
 }
 
 export type CharacterState = CharacterConfig & {
@@ -40,7 +42,8 @@ export type Character = {
 		startOnFrame: number?
 	) -> SpriteSheetAnimator.Animation2D?,
 
-	StopAnimation: (self: Character, animationName: string) -> nil,
+	StopAnimation: (self: Character, animationName: string) -> any?,
+	StopAllAnimations: (self: Character) -> any?,
 	GetAnimation: (self: Character, animationName: string) -> (Frame?, SpriteSheetAnimator.Animation2D?),
 
 	Spawn: (self: Character, spawnLocation: Vector2) -> any?,

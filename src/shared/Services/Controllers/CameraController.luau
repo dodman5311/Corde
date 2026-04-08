@@ -31,15 +31,15 @@ local camera = workspace.CurrentCamera
 StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
 
 local shakeOffset = CFrame.new()
+local CameraShaker = require(ReplicatedStorage.Shared.Utils.CameraShaker)
 local Tween = require(ReplicatedStorage.Shared.Utils.Tween)
-local cameraShaker = require(script.Parent.CameraShaker)
 local mouseView = Vector2.zero
 
 local function shakeCamera(shakeCframe)
 	shakeOffset = shakeCframe
 end
 
-module.shaker = cameraShaker.new(Enum.RenderPriority.Camera.Value + 1, shakeCamera)
+module.shaker = CameraShaker.new(Enum.RenderPriority.Camera.Value + 1, shakeCamera)
 module.shaker:Start()
 
 function module:EnterFirstPerson(rootCFrame: CFrame, viewRange: number?, fieldOfView: number?)
@@ -59,6 +59,8 @@ function module:EnterFollow()
 end
 
 function module:Init()
+	Players.LocalPlayer:SetAttribute("CursorLocation", Vector2.zero)
+
 	camera.CameraType = Enum.CameraType.Scriptable
 	camera.FieldOfView = module.fieldOfView
 	module.followViewDistance.current = module.followViewDistance.default
