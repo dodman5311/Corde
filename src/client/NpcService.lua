@@ -1,8 +1,8 @@
+local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = script.Parent
 local personalities = client.NpcPersonalities
-local SimplePath = require(ReplicatedStorage.Shared.SimplePath)
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(client.Acts)
 local janitor = require(ReplicatedStorage.Packages.Janitor)
@@ -44,12 +44,12 @@ function NpcService.new(npcName: string): Npc?
 
 		Heartbeat = {},
 
-		Path = SimplePath.new(newNpcModel, {
+		Path = PathfindingService:CreatePath {
 			WaypointSpacing = 3,
-			AgentHeight = 1.25,
-			AgentRadius = 3,
+			AgentHeight = 1,
+			AgentRadius = 0,
 			AgentCanJump = false,
-		}),
+		},
 		Timer = timer:newQueue(),
 		Timers = {},
 		Acts = acts:new(),
@@ -99,10 +99,6 @@ function NpcService.new(npcName: string): Npc?
 
 		Run = function(self: Npc)
 			npcFunctions.RunNpc(self)
-
-			if self.Instance:GetAttribute("Debug") then
-				self.Path.Visualize = true
-			end
 		end,
 
 		Spawn = function(self: Npc, position: Vector3 | CFrame): Npc

@@ -13,7 +13,10 @@ function module:SpawnFromSpawner(spawner: Part)
 end
 
 function module:SpawnFromData(name: string, position: Vector3, direction: number, health: number)
-	NpcService.new(name):Spawn(CFrame.new(position) * CFrame.Angles(0, direction, 0)):SetAttribute("Health", health)
+	local newNpc = NpcService.new(name)
+	local npcPosition = CFrame.new(position) * CFrame.Angles(0, direction, 0)
+	newNpc:Spawn(npcPosition)
+	newNpc.Instance:SetAttribute("Health", health)
 end
 
 function module.StartGame(saveData: Types.GameState)

@@ -56,8 +56,6 @@ export type Setting = {
 	OnChanged: (self: Setting) -> any?,
 }
 
-type Path = typeof(simplepath.new())
-
 export type Npc = {
 	Name: string,
 	Instance: Model,
