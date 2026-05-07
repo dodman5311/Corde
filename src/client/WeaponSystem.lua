@@ -130,7 +130,7 @@ function module.toggleHolstered(value)
 			return
 		end
 
-		showWeapon(currentWeapon.Value.Type)
+		showWeapon(currentWeapon.Config.Type)
 
 		globalInputService.inputActions["Fire Weapon"]:Enable()
 		util.PlayFrom(character, sounds.Unholster, 0.075)
@@ -160,9 +160,9 @@ function module.unequipWeapon()
 		return
 	end
 
-	currentWeapon.InUse = false
-	if currentWeapon.Value["CurrentMag"] then
-		currentWeapon.Value.CurrentMag.InUse = false
+	currentWeapon.State.InUse = false
+	if currentWeapon.State["CurrentMag"] then
+		currentWeapon.State.CurrentMag.State.InUse = false
 	end
 
 	local torso = character.Torso
@@ -187,7 +187,8 @@ function module.equipWeapon(weapon)
 
 	module.unequipWeapon()
 
-	local weaponData = weapon.Value
+	local weaponData = weapon.Config
+	local weaponState = weapon.State
 
 	fireSound.SoundId = weaponData.FireSound
 	fireSound.Volume = weaponData.Volume
@@ -195,15 +196,15 @@ function module.equipWeapon(weapon)
 
 	currentWeapon = weapon
 
-	weapon.InUse = true
+	weapon.State.InUse = true
 
-	if weaponData.CurrentMag and not util.SearchDictionary(inventory, weaponData.CurrentMag) then
-		weaponData.CurrentMag.InUse = false
-		weaponData.CurrentMag = nil
+	if weaponState.CurrentMag and not util.SearchDictionary(inventory, weaponState.CurrentMag) then
+		weaponState.CurrentMag.State.InUse = false
+		weaponState.CurrentMag = nil
 	end
 
-	if weaponData.CurrentMag then
-		weaponData.CurrentMag.InUse = true
+	if weaponState.CurrentMag then
+		weaponState.CurrentMag.State.InUse = true
 	end
 
 	util.PlayFrom(character, sounds.GunEquip, 0.15)
@@ -218,7 +219,7 @@ local function processCrosshair()
 
 	local size = 1 + mouseDistance
 
-	local spread = (currentWeapon and not module.weaponUnequipped) and currentWeapon.Value.Spread or 0
+	local spread = (currentWeapon and not module.weaponUnequipped) and currentWeapon.Config.Spread or 0
 	size = (mouseDistance * (spread + accuracyReduction.Position))
 
 	local crosshair = HUD.Crosshair
@@ -243,21 +244,22 @@ local function useAmmo()
 		return
 	end
 
-	local weaponData = currentWeapon.Value
+	local weaponData = currentWeapon.Config
+	local weaponState = currentWeapon.State
 
-	if not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0 then
+	if not weaponState.CurrentMag or weaponState.CurrentMag.State.Value <= 0 then
 		return
 	end
 
 	local logBulletCount = weaponData.BulletCount
 	if weaponData.UseAmmoForBulletCount then
-		weaponData.BulletCount = math.clamp(logBulletCount, 0, weaponData.CurrentMag.Value)
+		weaponData.BulletCount = math.clamp(logBulletCount, 0, weaponState.CurrentMag.State.Value)
 		task.defer(function()
 			weaponData.BulletCount = logBulletCount
 		end)
 	end
 
-	weaponData.CurrentMag.Value -= weaponData.UseAmmoForBulletCount and weaponData.BulletCount or 1
+	weaponState.CurrentMag.State.Value -= weaponData.UseAmmoForBulletCount and weaponData.BulletCount or 1
 
 	return true
 end
@@ -266,25 +268,27 @@ local function getNextMag(isInUse)
 	if not currentWeapon then
 		return
 	end
-	local weaponData = currentWeapon.Value
+	local weaponState = currentWeapon.State
 
-	if currentWeapon.Value.Type == 1 then
+	local searchFor = ""
+
+	if currentWeapon.Config.Type == 1 then
 		searchFor = "Rifle Mag"
-	elseif currentWeapon.Value.Type == 2 then
+	elseif currentWeapon.Config.Type == 2 then
 		searchFor = "Pistol Mag"
-	elseif currentWeapon.Value.Type == 3 then
+	elseif currentWeapon.Config.Type == 3 then
 		searchFor = "Shotgun Mag"
 	end
 
 	local foundMag
 
-	for slot, item: Types.item in pairs(inventory) do
+	for slot, item: Types.Item in pairs(inventory) do
 		if
 			not string.match(slot, "slot_")
 			or item.Name ~= searchFor
-			or item == weaponData.CurrentMag
-			or item.Value <= 0
-			or (isInUse and not item.InUse)
+			or item == weaponState.CurrentMag
+			or item.State.Value <= 0
+			or (isInUse and not item.State.InUse)
 		then
 			continue
 		end
@@ -300,11 +304,11 @@ local function unload()
 		return
 	end
 
-	local weaponData = currentWeapon.Value
+	local weaponState = currentWeapon.State
 
-	if weaponData.CurrentMag then
-		weaponData.CurrentMag.InUse = false
-		weaponData.CurrentMag = nil
+	if weaponState.CurrentMag then
+		weaponState.CurrentMag.State.InUse = false
+		weaponState.CurrentMag = nil
 	end
 
 	util.PlaySound(sounds.Unload, 0.1)
@@ -315,7 +319,8 @@ local function reload(itemToUse)
 		return
 	end
 
-	local weaponData = currentWeapon.Value
+	local weaponState = currentWeapon.State
+	local weaponData = currentWeapon.Config
 
 	local foundMag = itemToUse or getNextMag()
 	if not foundMag then
@@ -327,7 +332,7 @@ local function reload(itemToUse)
 		acts:waitForAct("Holstering")
 	end
 
-	local reloadTime = currentWeapon.Value.ReloadTime
+	local reloadTime = weaponData.ReloadTime
 
 	local torso = player.Character.Torso
 
@@ -336,7 +341,7 @@ local function reload(itemToUse)
 	util.PlayFrom(player.Character, reloadSound)
 
 	local frames = 24
-	if currentWeapon.Value.Type == 2 then
+	if weaponData.Type == 2 then
 		frames = 16
 	end
 
@@ -347,16 +352,16 @@ local function reload(itemToUse)
 
 	actionPrompt.showAction(reloadTime, "Reloading")
 
-	if weaponData.CurrentMag then
-		weaponData.CurrentMag.InUse = false
+	if weaponState.CurrentMag then
+		weaponState.CurrentMag.State.InUse = false
 	end
 
-	foundMag.InUse = true
+	foundMag.State.InUse = true
 
 	task.wait(reloadTime)
 	task.delay(0.1, module.toggleHolstered, false)
 
-	weaponData.CurrentMag = foundMag
+	weaponState.CurrentMag = foundMag
 	acts:removeAct("Reloading", "Interacting")
 end
 
@@ -372,7 +377,7 @@ local function checkChamber() -- @TODO Make compatable with rifle and shotgun
 
 	task.wait(UNHOLSTER_TIME)
 
-	local mag = currentWeapon.Value.CurrentMag
+	local mag = currentWeapon.State.CurrentMag
 
 	local images = {
 		full = "rbxassetid://108066626327817",
@@ -381,7 +386,7 @@ local function checkChamber() -- @TODO Make compatable with rifle and shotgun
 
 	local ti = TweenInfo.new(0.25)
 
-	if mag and mag.Value > 0 then
+	if mag and mag.State.Value > 0 then
 		HUD.ChamberCheck.Image.Image = images.full
 	else
 		HUD.ChamberCheck.Image.Image = images.empty
@@ -412,7 +417,7 @@ local function inflictPower(model: Model)
 		return
 	end
 
-	local weaponData = currentWeapon.Value
+	local weaponData = currentWeapon.Config
 
 	local walkVelocity: LinearVelocity = model:FindFirstChild("WalkVelocity")
 	if walkVelocity then
@@ -460,7 +465,7 @@ local function createBullet(weaponData)
 
 	local torso = character.Torso
 
-	local damage = currentWeapon.Value.Damage
+	local damage = currentWeapon.Config.Damage
 	if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty Reduce damage dealt
 		damage *= 0.75
 	end
@@ -518,7 +523,7 @@ local function fireWeapon(input)
 		return
 	end
 
-	local weaponData = currentWeapon.Value
+	local weaponData = currentWeapon.Config
 
 	if module.weaponUnequipped then
 		--module.toggleHolstered()
@@ -566,7 +571,7 @@ local function fireWeapon(input)
 
 	haptics.hapticPulse(input, Enum.VibrationMotor.Small, cameraRecoil, cameraRecoil / 1.5, "GunFire")
 
-	task.wait(60 / currentWeapon.Value.RateOfFire)
+	task.wait(60 / weaponData.RateOfFire)
 
 	acts:removeAct("Firing")
 end
@@ -589,16 +594,16 @@ inventory.ItemUsed:Connect(function(use, item)
 			return
 		end
 
-		if item.InUse then
+		if item.State.InUse then
 			unload()
 			return
 		end
 
-		if currentWeapon.Value.Type == 1 and item.Name ~= "Rifle Mag" then
+		if currentWeapon.Config.Type == 1 and item.Name ~= "Rifle Mag" then
 			return
-		elseif currentWeapon.Value.Type == 2 and item.Name ~= "Pistol Mag" then
+		elseif currentWeapon.Config.Type == 2 and item.Name ~= "Pistol Mag" then
 			return
-		elseif currentWeapon.Value.Type == 3 and item.Name ~= "Shotgun Mag" then
+		elseif currentWeapon.Config.Type == 3 and item.Name ~= "Shotgun Mag" then
 			return
 		end
 
@@ -611,9 +616,9 @@ inventory.ItemRemoved:Connect(function(item)
 		return
 	end
 
-	if item == currentWeapon.Value.CurrentMag then
-		item.InUse = false
-		currentWeapon.Value.CurrentMag = nil
+	if item == currentWeapon.State.CurrentMag then
+		item.State.InUse = false
+		currentWeapon.State.CurrentMag = nil
 	end
 end)
 
@@ -621,7 +626,7 @@ function module.StartGame()
 	module.equipWeapon(inventory:CheckSlot("Weapon_Slot"))
 
 	if currentWeapon then
-		currentWeapon.Value.CurrentMag = getNextMag(true)
+		currentWeapon.State.CurrentMag = getNextMag(true)
 	end
 end
 
@@ -644,11 +649,13 @@ function module.fireKeyToggle(state, input)
 		if not currentWeapon then
 			return
 		end
-		local weaponData = currentWeapon.Value
+		local weaponState = currentWeapon.State
 
 		fireWeapon(input)
 
-		if (not weaponData.CurrentMag or weaponData.CurrentMag.Value <= 0) and not acts:checkAct("Reloading") then
+		if
+			(not weaponState.CurrentMag or weaponState.CurrentMag.State.Value <= 0) and not acts:checkAct("Reloading")
+		then
 			util.PlayFrom(player.Character, sounds.GunClick)
 		end
 	elseif state == Enum.UserInputState.End then
@@ -738,7 +745,7 @@ RunService.Heartbeat:Connect(function()
 	if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then
 		return
 	end
-	local weaponData = currentWeapon.Value
+	local weaponData = currentWeapon.Config
 
 	if weaponData.FireMode ~= 2 then
 		return

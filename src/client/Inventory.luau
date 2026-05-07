@@ -40,7 +40,7 @@ local signal = require(ReplicatedStorage.Packages.Signal)
 local timer = require(client.Timer)
 local util = require(client.Util)
 
-type item = Types.item
+type item = Types.Item
 type holdingObject = {
 	Action: string?,
 	SlotFrame: Frame?,
@@ -58,8 +58,6 @@ local holdingObject: holdingObject = {
 	Connection = nil,
 }
 
-local hasRead = {}
-
 Inventory.ItemRemoved = signal.new()
 Inventory.ItemAdded = signal.new()
 Inventory.SlotValueChanged = signal.new()
@@ -72,6 +70,17 @@ local InventorySize = 8
 local STORAGE_SIZE = 12
 
 --// Functions
+
+function Inventory:CreateItemFromReference(itemReference: Types.ItemReference)
+	local newItem = table.clone(itemsList[itemReference.Key])
+	if itemReference.State then
+		newItem.State = itemReference.State
+	end
+
+	newItem.Key = itemReference.Key
+	return newItem
+end
+
 function Inventory:ShowNotification(itemName: string, notificationMessage: string, color: Color3?)
 	local newNotification = gui.Notification:Clone()
 	newNotification.Parent = player.PlayerGui.HUD.Notifications
@@ -150,28 +159,28 @@ end
 
 local combineActions = {
 	AddValue = function(item: item, itemToCombine: item, combineData)
-		if item.InUse or itemToCombine.InUse then
+		if item.State.InUse or itemToCombine.State.InUse then
 			return
 		end
 
-		for _ = itemToCombine.Value, combineData.MaxValue - 1 do
-			if item.Value == 0 then
+		for _ = itemToCombine.State.Value, combineData.Config.MaxValue - 1 do
+			if item.State.Value == 0 then
 				break
 			end
 
-			itemToCombine.Value += 1
-			item.Value -= 1
+			itemToCombine.State.Value += 1
+			item.State.Value -= 1
 		end
 
 		util.PlaySound(sounds.LoadBullets, 0.1, 0.9)
 	end,
 
 	AddItem = function(item: item, itemToCombine: item, combineData)
-		if item.InUse or itemToCombine.InUse then
+		if item.State.InUse or itemToCombine.State.InUse then
 			return
 		end
 
-		Inventory:AddItem(itemsList[combineData.Item])
+		Inventory:AddItem { Key = combineData.Item }
 
 		util.PlaySound(sounds.LoadBullets, 0.1, 0.9)
 	end,
@@ -179,7 +188,7 @@ local combineActions = {
 		Inventory:RemoveItem(item.Name)
 	end,
 	RemoveOnEmpty = function(item: item)
-		if item.Value <= 0 then
+		if item.State.Value <= 0 then
 			Inventory:RemoveItem(item.Name)
 		end
 	end,
@@ -228,7 +237,7 @@ function Inventory:ChangeSlot(slot, slotToChangeTo)
 		return
 	end
 
-	if slotToChangeTo == "Weapon_Slot" and typeof(item.Value) ~= "table" then
+	if slotToChangeTo == "Weapon_Slot" and item.ItemType ~= "Weapon" then
 		return
 	end
 
@@ -244,7 +253,7 @@ function Inventory:ChangeSlot(slot, slotToChangeTo)
 	self.SlotValueChanged:Fire(slotToChangeTo, self[slotToChangeTo])
 end
 
-function Inventory:AddItem(item: item)
+function Inventory:AddItem(itemReference: Types.ItemReference)
 	local slotToAddTo = self:GetFirstEmptySlot()
 
 	if not slotToAddTo then
@@ -252,8 +261,8 @@ function Inventory:AddItem(item: item)
 		return
 	end
 
-	local newItem = table.clone(item)
-	self:ShowNotification(item.Name, "Added to inventory")
+	local newItem = Inventory:CreateItemFromReference(itemReference)
+	self:ShowNotification(newItem.Name, "Added to inventory")
 
 	self[slotToAddTo] = newItem
 	self.ItemAdded:Fire(newItem, slotToAddTo)
@@ -261,6 +270,8 @@ function Inventory:AddItem(item: item)
 
 	return newItem, slotToAddTo
 end
+
+function Inventory:AddRawItem(Item: item) end
 
 function Inventory:RemoveItem(ItemNameOrSlot)
 	if not ItemNameOrSlot then
@@ -302,7 +313,7 @@ function Inventory:DropItem(index) -- index can be an item table, item name, or 
 		item, slot = self:SearchForItem(index)
 	end
 
-	if not item or item.CanArchive then
+	if not item or not item.CanDrop then
 		return
 	end
 
@@ -334,15 +345,15 @@ function Inventory:pickupFromContainer(object)
 
 	local toRemove = {}
 
-	for _, item: item in ipairs(containerData) do
-		local newItem, slot = self:AddItem(item)
+	for _, itemReference: Types.ItemReference in ipairs(containerData) do
+		local newItem, slot = self:AddItem(itemReference)
 		if not newItem then
 			util.PlaySound(sounds.InventoryFull)
 			break
 		end
-		table.insert(toRemove, item)
+		table.insert(toRemove, itemReference)
 
-		if util.getSetting("Gameplay", "Auto Read Notes") and item.Use == "Read" then
+		if util.getSetting("Gameplay", "Auto Read Notes") and newItem.UseAction == "Read" then
 			Inventory.OpenInventory()
 			Inventory:UseItem(UI.Inventory.Slots:FindFirstChild(slot))
 		end
@@ -352,8 +363,8 @@ function Inventory:pickupFromContainer(object)
 		util.PlaySound(sounds.ItemAdded, 0.05)
 	end
 
-	for _, item in ipairs(toRemove) do
-		table.remove(containerData, table.find(containerData, item))
+	for _, itemReference in ipairs(toRemove) do
+		table.remove(containerData, table.find(containerData, itemReference))
 	end
 
 	if object:GetAttribute("RemoveOnEmpty") and #containerData == 0 then
@@ -362,7 +373,7 @@ function Inventory:pickupFromContainer(object)
 end
 
 local function assignItemColor(slotUi, item)
-	if item.InUse then
+	if item.State.InUse then
 		slotUi.Value.TextColor3 = Color3.fromRGB(255, 185, 35)
 		slotUi.ItemName.TextColor3 = Color3.fromRGB(255, 185, 35)
 	else
@@ -386,11 +397,15 @@ local function setUpSlots(slotParent, isOpening)
 		end
 
 		if item then
-			slotUi:SetAttribute("ImageId", item.Icon)
+			slotUi:SetAttribute("ImageId", "rbxassetid://" .. item.IconId)
 			slotUi.ItemName.Text = item.Name
 			slotUi.ItemName.TextTransparency = 0
 
-			slotUi.Value.Text = typeof(item.Value) == "number" and item.Value or ""
+			if item.State.Value and typeof(item.State.Value) == "number" then
+				slotUi.Value.Text = item.State.Value
+			else
+				slotUi.Value.Text = ""
+			end
 
 			if slotUi.Select.Visible then
 				continue
@@ -442,7 +457,7 @@ local function setUpWeapon()
 		display.Visible = false
 		UI.Inventory.WeaponImage.Visible = true
 	else
-		local weaponData = weapon.Value
+		local weaponData = weapon.Config
 
 		accuracy.Bar.Size = UDim2.fromScale(math.abs(weaponData.Spread - 20) / 20, 1)
 		accuracy.Value.Text = (math.abs(weaponData.Spread - 20) / 20) * 100
@@ -495,10 +510,10 @@ local function compareWeapon(baseWeapon: item)
 	}
 
 	if weapon then
-		weaponData = weapon.Value
+		weaponData = weapon.Config
 	end
 
-	local baseWeaponData = baseWeapon.Value
+	local baseWeaponData = baseWeapon.Config
 
 	accuracy.Bar.Size = UDim2.fromScale(math.abs(baseWeaponData.Spread - 20) / 20, 1)
 	if baseWeaponData.Spread > weaponData.Spread then
@@ -783,7 +798,7 @@ local function showItemDesciption(item: item?, infoFrameParent)
 	infoFrame.Description.Text = item.Desc
 
 	infoFrame.BackgroundImage.Visible = true
-	infoFrame.BackgroundImage.Image.Image = item.Icon
+	infoFrame.BackgroundImage.Image.Image = "rbxassetid://" .. item.IconId
 	UIAnimationService.PlayAnimation(infoFrame.BackgroundImage, 0.1, true)
 end
 
@@ -806,10 +821,10 @@ local function slotUiHovered(slotUi)
 
 	task.wait()
 
-	if item.Use == "EquipWeapon" then
+	if item.UseAction == "EquipWeapon" then
 		UI.Inventory.WeaponCompare.Visible = true
 		compareWeapon(item)
-	elseif item.Use == "Eat" then
+	elseif item.UseAction == "Eat" then
 		showHungerResult(item)
 	end
 
@@ -873,12 +888,12 @@ function Inventory:UseItem(slotUi)
 		return
 	end
 
-	if item.Use == "EquipWeapon" then
+	if item.UseAction == "EquipWeapon" then
 		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
-	elseif item.Use == "Read" then
+	elseif item.UseAction == "Read" then
 		openNote(item)
 	else
-		Inventory.ItemUsed:Fire(item.Use, item, slotUi.Name)
+		Inventory.ItemUsed:Fire(item.UseAction, item, slotUi.Name)
 	end
 
 	slotUiExited(slotUi)
@@ -949,7 +964,7 @@ local function openOptionsMenu(slotUi)
 	slotUi.Button.NextSelectionDown = actionsFrame.Actions.Use
 	actionsFrame.Actions.Use.NextSelectionUp = slotUi.Button
 	util.tween(actionsFrame.Actions, ti, { Position = UDim2.fromScale(0, 0) })
-	actionsFrame.Actions.Drop.Visible = not item.CanArchive
+	actionsFrame.Actions.Drop.Visible = item.CanDrop
 
 	enterAction:Connect(function()
 		inAction = true
@@ -1050,7 +1065,7 @@ local function connectSlotButton(slotUi)
 		if holdingObject.Action == "Move" then
 			local item = Inventory:CheckSlot(holdingObject.SlotFrame.Name)
 
-			if item and item.InUse and slotNumberIndex > InventorySize then
+			if item and item.State.InUse and slotNumberIndex > InventorySize then
 				util.PlaySound(sounds.Deny)
 			else
 				local clickSound = util.PlaySound(sounds.OptionClick)

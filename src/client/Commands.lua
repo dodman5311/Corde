@@ -1,8 +1,8 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local items = require(ReplicatedStorage.Shared.Items)
 local Net = require(ReplicatedStorage.Packages.Net)
+local items = require(ReplicatedStorage.Shared.Items)
 
 local function convertToArray(dictionary)
 	local array = {}
@@ -118,7 +118,7 @@ local commands = {
 					if not items[itemName] then
 						continue
 					end
-					inventory:AddItem(items[itemName])
+					inventory:AddItem { Key = itemName }
 				end
 			end,
 		},

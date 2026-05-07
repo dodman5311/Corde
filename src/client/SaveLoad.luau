@@ -36,10 +36,17 @@ local function packInventory()
 	local inv = {}
 
 	for i = 1, 25 do
-		inv["slot_" .. i] = Inventory["slot_" .. i]
+		local item = Inventory["slot_" .. i]
+		if not item then
+			continue
+		end
+		inv["slot_" .. i] = { Key = item.Key, State = item.State }
 	end
 
-	inv["Weapon_Slot"] = Inventory["Weapon_Slot"]
+	local weapon = Inventory["Weapon_Slot"]
+	if weapon then
+		inv["Weapon_Slot"] = { Key = weapon.Key, State = weapon.State }
+	end
 
 	return inv
 end
@@ -150,9 +157,11 @@ function saveLoad:LoadGame(saveSlot: number)
 
 	getInteractables()
 
+	print(gameState.PlayerStats.Inventory)
+
 	if gameState then
-		for slot, item in pairs(gameState.PlayerStats.Inventory) do
-			Inventory[slot] = item
+		for slot, itemReference in pairs(gameState.PlayerStats.Inventory) do
+			Inventory[slot] = Inventory:CreateItemFromReference(itemReference)
 		end
 	end
 

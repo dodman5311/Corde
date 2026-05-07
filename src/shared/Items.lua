@@ -1,13 +1,36 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Types = require(script.Parent.Types)
 local storedData = require(ReplicatedStorage.Shared.StoredData)
 
-Items = {
+local Items: { [string]: Types.Item } = {
+
+	Template_Item = {
+		ItemType = "Item",
+		Name = "",
+		IconId = 0,
+		Desc = "",
+
+		UseAction = "",
+		CanDrop = true,
+
+		Config = {},
+		State = {
+			InUse = false,
+		},
+		CombineData = {},
+	},
 
 	--// Weapons
-	SG550 = {
+	Assault_Rifle = {
+		ItemType = "Weapon",
 		Name = "SG550",
+		IconId = 74163431732494,
 		Desc = "Standard issue assault rifle.",
-		Value = {
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
 			Type = 1,
 			RateOfFire = 700,
 			FireSound = "rbxassetid://4334525640",
@@ -16,7 +39,6 @@ Items = {
 			ReloadTime = 3,
 			Damage = 18,
 			BulletCount = 1,
-			CurrentMag = nil,
 			FireMode = 2,
 			Spread = 6,
 			StoppingPower = 0.1,
@@ -24,17 +46,22 @@ Items = {
 			Recoil = 55,
 			DisplayImage = "rbxassetid://133886120497836",
 		},
-		InUse = false,
-		Icon = "rbxassetid://74163431732494",
-		Use = "EquipWeapon",
-
-		CanArchive = true,
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
 	},
 
-	SGM600 = {
+	Battle_Rifle = {
+		ItemType = "Weapon",
 		Name = "SGM-600",
-		Desc = "Heavy Battle Rifle designed to combat UAE's. Fires 2 rounds each shot.", -- unidentified anomalous entities
-		Value = {
+		IconId = 0,
+		Desc = "Heavy Battle Rifle designed to combat UAE's. Fires 2 rounds each shot.",
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
 			Type = 1,
 			RateOfFire = 420,
 			FireSound = "rbxassetid://113459455743841",
@@ -44,7 +71,6 @@ Items = {
 			Damage = 20,
 			UseAmmoForBulletCount = true,
 			BulletCount = 2,
-			CurrentMag = nil,
 			FireMode = 1,
 			Spread = 2,
 			StoppingPower = 0.75,
@@ -52,17 +78,22 @@ Items = {
 			Recoil = 70,
 			DisplayImage = "rbxassetid://133886120497836",
 		},
-		InUse = false,
-		Icon = "",
-		Use = "EquipWeapon",
-
-		CanArchive = true,
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
 	},
 
-	Mag_Rag = {
+	Shotgun = {
+		ItemType = "Weapon",
 		Name = "Mag-Rag™ 12",
+		IconId = 109720113275520,
 		Desc = "Magazine fed shotgun.",
-		Value = {
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
 			Type = 3,
 			RateOfFire = 100,
 			FireSound = "rbxassetid://115097223835358",
@@ -71,7 +102,6 @@ Items = {
 			ReloadTime = 3.5,
 			Damage = 11,
 			BulletCount = 6,
-			CurrentMag = nil,
 			FireMode = 1,
 			Spread = 18,
 			StoppingPower = 0.8,
@@ -79,17 +109,22 @@ Items = {
 			Recoil = 90,
 			DisplayImage = "rbxassetid://136619685843407",
 		},
-		InUse = false,
-		Icon = "rbxassetid://109720113275520",
-		Use = "EquipWeapon",
-
-		CanArchive = true,
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
 	},
 
-	M45A1 = {
+	Pistol = {
+		ItemType = "Weapon",
 		Name = "M45A1",
+		IconId = 94406546559401,
 		Desc = "Basic 45. Pistol.",
-		Value = {
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
 			Type = 2,
 			RateOfFire = 400,
 			FireSound = "rbxassetid://4527561460",
@@ -98,7 +133,6 @@ Items = {
 			ReloadTime = 2,
 			Damage = 16.75,
 			BulletCount = 1,
-			CurrentMag = nil,
 			FireMode = 1,
 			Spread = 8,
 			StoppingPower = 0.25,
@@ -106,17 +140,22 @@ Items = {
 			Recoil = 60,
 			DisplayImage = "rbxassetid://79496777132333",
 		},
-		InUse = false,
-		Icon = "rbxassetid://94406546559401",
-		Use = "EquipWeapon",
-
-		CanArchive = true,
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
 	},
 
-	CP_32 = {
+	Heavy_Pistol = {
+		ItemType = "Weapon",
 		Name = "CP-32",
-		Desc = "A bullpup pistol, designed for CQB against armored aponents.",
-		Value = {
+		IconId = 96910840102644,
+		Desc = "A bullpup pistol, designed for CQB against armored aponents",
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
 			Type = 2,
 			RateOfFire = 325,
 			FireSound = "rbxassetid://77759027041140",
@@ -125,7 +164,6 @@ Items = {
 			ReloadTime = 2.4,
 			Damage = 30,
 			BulletCount = 1,
-			CurrentMag = nil,
 			FireMode = 1,
 			Spread = 6,
 			StoppingPower = 0.15,
@@ -133,76 +171,106 @@ Items = {
 			Recoil = 80,
 			DisplayImage = "rbxassetid://99388402288970",
 		},
-		InUse = false,
-		Icon = "rbxassetid://96910840102644",
-		Use = "EquipWeapon",
-
-		CanArchive = true,
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
 	},
 
 	--// Ammo
 	Shotgun_Mag = {
+		ItemType = "Equipment",
 		Name = "Shotgun Mag",
+		IconId = 97360139010521,
 		Desc = "Magazine for a shotgun",
-		Value = 8,
-		InUse = false,
-		Icon = "rbxassetid://97360139010521",
-		Use = "Reload",
+
+		UseAction = "Reload",
+		CanDrop = true,
+
+		Config = {
+			MaxValue = 8,
+		},
+		State = {
+			Value = 8,
+			InUse = false,
+		},
 		CombineData = {
 			["Shotgun Mag"] = {
 				Action = "AddValue",
-				MaxValue = 8,
 			},
 		},
 	},
 
 	Rifle_Mag = {
+		ItemType = "Equipment",
 		Name = "Rifle Mag",
+		IconId = 17429767099,
 		Desc = "Magazine for a rifle",
-		Value = 30,
-		InUse = false,
-		Icon = "rbxassetid://17429767099",
-		Use = "Reload",
+
+		UseAction = "Reload",
+		CanDrop = true,
+
+		Config = {
+			MaxValue = 30,
+		},
+		State = {
+			Value = 30,
+			InUse = false,
+		},
 		CombineData = {
 			["Rifle Mag"] = {
 				Action = "AddValue",
-				MaxValue = 30,
 			},
 		},
 	},
 
 	Pistol_Mag = {
+		ItemType = "Equipment",
 		Name = "Pistol Mag",
+		IconId = 17429886486,
 		Desc = "Magazine for a pistol",
-		Value = 10,
-		InUse = false,
-		Icon = "rbxassetid://17429886486",
-		Use = "Reload",
+
+		UseAction = "Reload",
+		CanDrop = true,
+
+		Config = {
+			MaxValue = 10,
+		},
+		State = {
+			Value = 10,
+			InUse = false,
+		},
 		CombineData = {
-			["Pistol Mag"] = {
+			["Rifle Mag"] = {
 				Action = "AddValue",
-				MaxValue = 10,
 			},
 		},
 	},
 
 	Pistol_Bullets = {
+		ItemType = "Resource",
 		Name = "Pistol Bullets",
-		Desc = "bullets for a pistol",
-		Value = 30,
-		InUse = false,
-		Icon = "rbxassetid://120524406905008",
-		Use = nil,
+		IconId = 120524406905008,
+		Desc = "Bullets for a pistol",
+
+		UseAction = "",
+		CanDrop = true,
+
+		Config = {
+			MaxValue = 30,
+		},
+		State = {
+			Value = 30,
+			InUse = false,
+		},
 		CombineData = {
 			["Pistol Mag"] = {
 				Action = "AddValue",
-				MaxValue = 10,
 				Result = "RemoveOnEmpty",
 			},
 
 			["Pistol Bullets"] = {
 				Action = "AddValue",
-				MaxValue = 30,
 				Result = "RemoveOnEmpty",
 			},
 		},
@@ -210,48 +278,62 @@ Items = {
 
 	--// Food and Health
 	Cat_Food = {
+		ItemType = "Resource",
 		Name = "Cat Food",
+		IconId = 125543981396297,
 		Desc = [[Canned, wet, cat food.
 		
 <b>+10% Hunger</b>]],
-		Value = {
-			Hunger = 10,
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 10,
 		},
-		InUse = false,
-		Icon = "rbxassetid://125543981396297",
-		Use = "Eat",
+		State = {},
 	},
 
 	Can_Of_Nuts = {
+		ItemType = "Resource",
 		Name = "Can of Nuts",
+		IconId = 125543981396297,
 		Desc = [[Can of assorted nuts.
 		
 <b>+8 Hunger</b>]],
-		Value = {
-			Hunger = 8,
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 8,
 		},
-		InUse = false,
-		Icon = "rbxassetid://125543981396297",
-		Use = "Eat",
+		State = {},
 	},
 
 	Spam = {
+		ItemType = "Resource",
 		Name = "Spam",
+		IconId = 125543981396297,
 		Desc = [[Canned pork product.
 		
 <b>+20% Hunger</b>
 <b>+5% Health</b>]],
-		Value = {
-			Hunger = 20,
-			Health = 5,
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 20,
+			HealthRestoration = 5,
 		},
-		InUse = false,
-		Icon = "rbxassetid://125543981396297",
-		Use = "Eat",
+		State = {},
 	},
 
 	Stemc = {
+		ItemType = "Resource",
 		Name = "S.T.E.M.C",
+		IconId = 106365304733869,
 		Desc = [[<b>S</b>tem
 <b>T</b>herapy &
 <b>E</b>lectro
@@ -259,40 +341,49 @@ Items = {
 <b>C</b>orrection
 
 <b>+20% Health</b>]],
-		Value = {
-			Health = 20,
+
+		UseAction = "Heal",
+		CanDrop = true,
+
+		Config = {
+			HealthRestoration = 20,
 		},
-		InUse = false,
-		Icon = "rbxassetid://106365304733869",
-		Use = "Heal",
+		State = {},
 		CombineData = {
 			["S.T.E.M.C"] = {
 				Action = "RemoveAll",
-				Item = "Stemb",
 				Result = "AddItem",
+				Item = "Stemb",
 			},
 		},
 	},
 
-	StemcInjector = {
+	Stemc_Injector = {
+		ItemType = "Equipment",
 		Name = "S.T.E.M.C Injector",
+		IconId = 107682922166577,
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		
 When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% health</b>
 
 <b>+15% Health</b>]],
-		Value = {
+
+		UseAction = "EquipStem",
+		CanDrop = true,
+
+		Config = {
 			ActivateValue = 50,
-			Health = 15,
+			HealthRestoration = 15,
 		},
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = "EquipStem",
-		CombineData = {},
+		State = {
+			InUse = false,
+		},
 	},
 
 	Stemb = {
+		ItemType = "Resource",
 		Name = "S.T.E.M.B",
+		IconId = 98624220766754,
 		Desc = [[<b>S</b>.T.E.M.C. 
 <b>T</b>atcial
 <b>E</b>dition for
@@ -300,13 +391,14 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 <b>B</b>iomechanics
 
 <b>+45% Health</b>]],
-		Value = {
-			Health = 45,
-		},
-		InUse = false,
-		Icon = "rbxassetid://98624220766754",
-		Use = "Heal",
 
+		UseAction = "Heal",
+		CanDrop = true,
+
+		Config = {
+			HealthRestoration = 45,
+		},
+		State = {},
 		CombineData = {
 			["S.T.E.M.B"] = {
 				Action = "RemoveAll",
@@ -316,25 +408,32 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		},
 	},
 
-	StembInjector = {
+	Stemb_Injector = {
+		ItemType = "Equipment",
 		Name = "S.T.E.M.B Injector",
+		IconId = 107682922166577,
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		
 When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% health</b>
 
 <b>+35% Health</b>]],
-		Value = {
+
+		UseAction = "EquipStem",
+		CanDrop = true,
+
+		Config = {
 			ActivateValue = 25,
-			Health = 35,
+			HealthRestoration = 35,
 		},
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = "EquipStem",
-		CombineData = {},
+		State = {
+			InUse = false,
+		},
 	},
 
 	Stema = {
+		ItemType = "Resource",
 		Name = "S.T.E.M.A",
+		IconId = 78681397230063,
 		Desc = [[<b>S</b>.T.E.M.B, 
 <b>T</b>echnology with
 <b>E</b>xperimental
@@ -342,190 +441,291 @@ When equipped, will use the loaded S.T.E.M.B automatically <b>when below 25% hea
 <b>A</b>dvancements
 
 <b>+100% Health</b>]],
-		Value = {
-			Health = 100,
+
+		UseAction = "Heal",
+		CanDrop = true,
+
+		Config = {
+			HealthRestoration = 100,
 		},
-		InUse = false,
-		Icon = "rbxassetid://78681397230063",
-		Use = "Heal",
+		State = {},
 	},
 
-	StemaInjector = {
+	Stema_Injector = {
+		ItemType = "Equipment",
 		Name = "S.T.E.M.A Injector",
+		IconId = 107682922166577,
 		Desc = [[assists with the injection S.T.E.Ms for quicker application. 
 		
 When equipped, will use the loaded S.T.E.M.A automatically <b>just before death</b>
 
 <b>+85% Health</b>]],
-		Value = {
+
+		UseAction = "EquipStem",
+		CanDrop = true,
+
+		Config = {
 			ActivateValue = 0,
-			Health = 85,
+			HealthRestoration = 85,
 		},
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = "EquipStem",
-		CombineData = {},
+		State = {
+			InUse = false,
+		},
 	},
 
 	--// Keys
 	Toolbox_Key = {
+		ItemType = "Item",
 		Name = "Small key",
+		IconId = 122322561802092,
 		Desc = "Looks to go to a tool box",
-		Value = nil,
-		Icon = "rbxassetid://122322561802092",
-		Use = nil,
-		InUse = false,
-		CanArchive = true,
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	Screwdriver = {
+		ItemType = "Item",
 		Name = "Screwdriver",
+		IconId = 138234409072848,
 		Desc = "A tool for screwing and unscrewing screws",
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://138234409072848",
-		Use = nil,
-		CanArchive = true,
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	Armory_Key = {
+		ItemType = "Item",
 		Name = "Armory Key",
+		IconId = 77384355406607,
 		Desc = "Key for the armory",
-		Value = nil,
-		Icon = "rbxassetid://77384355406607",
-		Use = nil,
-		InUse = false,
-		CanArchive = true,
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	Room_103_Key = {
+		ItemType = "Item",
 		Name = "Room 103 Key",
+		IconId = 77384355406607,
 		Desc = "Key for room 103",
-		Value = nil,
-		Icon = "rbxassetid://77384355406607",
-		Use = nil,
-		InUse = false,
-		CanArchive = true,
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	Console_Key = {
+		ItemType = "Item",
 		Name = "Console Room Key",
+		IconId = 77384355406607,
 		Desc = "Key for the console room",
-		Value = nil,
-		Icon = "rbxassetid://77384355406607",
-		Use = nil,
-		InUse = false,
-		CanArchive = true,
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	--// Tools
-	AccessPad = {
+	Access_Pad = {
+		ItemType = "Equipment",
 		Name = "Access-Pad",
-		Desc = [[A device used to connect to and access various VAX technology that isn't registered in the N.E.T system. ]],
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = "UsePad",
-		CanArchive = true,
+		IconId = 107682922166577,
+		Desc = [[A device used to connect to and access various VAX technology that isn't registered in the N.E.T system.]],
+
+		UseAction = "UsePad",
+		CanDrop = false,
+
+		Config = {},
+		State = {
+			IsUse = false,
+		},
 	},
 
 	Flashlight = {
+		ItemType = "Equipment",
 		Name = "Flashlight",
+		IconId = 125778243412139,
 		Desc = [[A shoulder mounted flashlight.]],
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://125778243412139",
-		Use = "ToggleFlashlight",
-		CanArchive = true,
+
+		UseAction = "ToggleFlashlight",
+		CanDrop = false,
+
+		Config = {},
+		State = {
+			IsUse = false,
+		},
 	},
 
 	--// Notes
-	OldPhone = {
+	Old_Phone = {
+		ItemType = "Note",
 		Name = "Old Phone",
-		Desc = "An old phone with a crack in the screen.",
-		Value = { Message = storedData:GetData("BrokenPhone"), Image = "rbxassetid://72233013402684" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
-		CanArchive = true,
+		IconId = 82487541380359,
+		Desc = [[An old phone with a crack in the screen.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("BrokenPhone"),
+			Image = "rbxassetid://72233013402684",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
-	PersonalNote = {
+	Personal_Note = {
+		ItemType = "Note",
 		Name = "Personal Note",
-		Desc = "A small scuffed note.",
-		Value = { Message = storedData:GetData("PersonalNote"), Image = "rbxassetid://133550222984676" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A small scuffed note.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("PersonalNote"),
+			Image = "rbxassetid://133550222984676",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
-	RationsPoster = {
+	Rations_Poster = {
+		ItemType = "Note",
 		Name = "Rations Poster",
-		Desc = "A poster about rations and hunger.",
-		Value = { Message = storedData:GetData("RationsPoster"), Image = "rbxassetid://111890673888434" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A poster about rations and hunger.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("RationsPoster"),
+			Image = "rbxassetid://111890673888434",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
-	MysteriousJournal = {
+	Mysterious_Journal = {
+		ItemType = "Note",
 		Name = "Journal",
-		Desc = "A journal.",
-		Value = { Message = storedData:GetData("Journal"), Image = "rbxassetid://94886205976075" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A journal.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("Journal"),
+			Image = "rbxassetid://94886205976075",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
-	NetManual = {
+	Net_Manual = {
+		ItemType = "Note",
 		Name = "N.E.T Module Manual",
-		Desc = "A user manual for the N.E.T Module.",
-		Value = { Message = storedData:GetData("N.E.T Manual"), Image = "rbxassetid://96472182587307" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A user manual for the N.E.T Module.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("N.E.T Manual"),
+			Image = "rbxassetid://96472182587307",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
-	GunManual = {
+	Gun_Manual = {
+		ItemType = "Note",
 		Name = "M45A1 Manual",
-		Desc = "A safety manual for the M45A1.",
-		Value = { Message = storedData:GetData("Gun Manual"), Image = "rbxassetid://104443115073021" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A safety & usage manual for the M45A1.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = storedData:GetData("Gun Manual"),
+			Image = "rbxassetid://104443115073021",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
 	Photo = {
+		ItemType = "Note",
 		Name = "Old Photo",
-		Desc = "A photo of me and my dad.",
-		Value = { Message = { "A photo of me and my dad." }, Image = "rbxassetid://135824933780230" },
-		Icon = "rbxassetid://82487541380359",
-		Use = "Read",
-		InUse = false,
+		IconId = 82487541380359,
+		Desc = [[A photo of me and my dad.]],
+
+		UseAction = "Read",
+		CanDrop = true,
+
+		Config = {
+			Message = { "A photo of me and my dad." },
+			Image = "rbxassetid://135824933780230",
+		},
+		State = {
+			IsUse = false,
+		},
 	},
 
 	--// Misc
-	NetModule = {
+	Net_Module = {
+		ItemType = "Item",
 		Name = "N.E.T Module",
+		IconId = 110962933996937,
 		Desc = [[<b>N</b>eural 
 <b>E</b>xtention 
 <b>T</b>ransmitter. 
 
 A Bio Module that connects the user to nearby devices.]],
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://110962933996937",
-		Use = "InstallNet",
-		CanArchive = true,
+
+		UseAction = "InstallNet",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 	},
 
 	Injector = {
+		ItemType = "Item",
 		Name = "S.T.E.M Injector",
-		Desc = "Assists with the injection S.T.E.Ms for quicker application. <b>Unloaded</b>",
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://107682922166577",
-		Use = nil,
+		IconId = 107682922166577,
+		Desc = [[Assists with the injection S.T.E.Ms for quicker application. <b>Unloaded</b>]],
+
+		UseAction = "",
+		CanDrop = true,
+
+		Config = {},
+		State = {},
 		CombineData = {
 			["S.T.E.M.C"] = {
 				Action = "RemoveAll",
@@ -548,12 +748,16 @@ A Bio Module that connects the user to nearby devices.]],
 	},
 
 	Toolbox = {
+		ItemType = "Item",
 		Name = "Toolbox",
-		Desc = "A locked toolbox",
-		Value = nil,
-		InUse = false,
-		Icon = "rbxassetid://135848984864658",
-		Use = nil,
+		IconId = 135848984864658,
+		Desc = [[A locked toolbox.]],
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
 		CombineData = {
 			["Small key"] = {
 				Result = "RemoveAll",
@@ -561,20 +765,6 @@ A Bio Module that connects the user to nearby devices.]],
 				Action = "AddItem",
 			},
 		},
-		CanArchive = true,
 	},
 }
-
-function Items.SetValue(item, value: any | "Random", min: number?, max: number?)
-	local clone = table.clone(item)
-
-	if value == "Random" then
-		clone.Value = math.random(min or 1, max or item.Value)
-	else
-		clone.Value = value
-	end
-
-	return clone
-end
-
 return Items

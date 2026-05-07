@@ -79,6 +79,10 @@ end
 
 local function loadObjects(layer: Types.LayerData)
 	for _, object: Model in ipairs(CollectionService:GetTagged("Interactable")) do
+		if not object:FindFirstAncestor("Workspace") then
+			return
+		end
+
 		for _, objectData in ipairs(layer.Objects) do
 			if (objectData.Position - object:GetPivot().Position).Magnitude > 0.05 then
 				continue
@@ -137,25 +141,25 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
-	for _, item in ipairs(CollectionService:GetTagged("PhysicsItem")) do -- Process Physics
-		item.Orientation = Vector3.new(0, item.Orientation.Y, 0)
+	for _, itemObject in ipairs(CollectionService:GetTagged("PhysicsItem")) do -- Process Physics
+		itemObject.Orientation = Vector3.new(0, itemObject.Orientation.Y, 0)
 
 		if
-			item.AssemblyLinearVelocity == Vector3.new(0, 0, 0)
-			and item.AssemblyAngularVelocity == Vector3.new(0, 0, 0)
+			itemObject.AssemblyLinearVelocity == Vector3.new(0, 0, 0)
+			and itemObject.AssemblyAngularVelocity == Vector3.new(0, 0, 0)
 		then
 			continue
 		end
 
-		item.AssemblyLinearVelocity /= 1 + item.Mass
-		item.AssemblyAngularVelocity /= 1 + item.Mass
+		itemObject.AssemblyLinearVelocity /= 1 + itemObject.Mass
+		itemObject.AssemblyAngularVelocity /= 1 + itemObject.Mass
 
-		if item.AssemblyLinearVelocity.Magnitude <= 0.25 then
-			item.AssemblyLinearVelocity = Vector3.zero
+		if itemObject.AssemblyLinearVelocity.Magnitude <= 0.25 then
+			itemObject.AssemblyLinearVelocity = Vector3.zero
 		end
 
-		if item.AssemblyAngularVelocity.Magnitude <= 0.25 then
-			item.AssemblyAngularVelocity = Vector3.zero
+		if itemObject.AssemblyAngularVelocity.Magnitude <= 0.25 then
+			itemObject.AssemblyAngularVelocity = Vector3.zero
 		end
 	end
 end)

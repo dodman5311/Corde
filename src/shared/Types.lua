@@ -90,16 +90,30 @@ export type Npc = {
 	Run: (Npc: Npc) -> nil,
 }
 
-export type item = {
-	Name: "string",
-	Desc: "string",
-	Value: any,
-	InUse: boolean,
-	Icon: "string",
-	Use: "Eat" | "Read" | "EquipWeapon" | "Reload",
+export type ItemType = "Weapon" | "Equipment" | "Resource" | "Item" | "Note"
 
-	CombineData: {}?,
-	CanArchive: boolean?,
+export type ItemReference = {
+	Key: string,
+	State: { [string]: any }?,
+}
+
+export type Item = {
+	Key: string?,
+	ItemType: ItemType,
+	Name: string,
+	IconId: number,
+	Desc: string,
+
+	UseAction: string,
+	CanDrop: boolean,
+
+	Config: { [string]: any },
+	State: {
+		[string]: any,
+	},
+	CombineData: {
+		[string]: any,
+	}?,
 }
 
 export type weaponData = {
@@ -120,16 +134,8 @@ export type weaponData = {
 	DisplayImage: string,
 }
 
-export type weapon = {
-	Name: "string",
-	Desc: "string",
-	Value: weaponData,
-	InUse: boolean,
-	Icon: "string",
-	Use: "EquipWeapon",
-
-	CombineData: {}?,
-	CanArchive: boolean?,
+export type weapon = Item & {
+	Config: weaponData,
 }
 
 return {}

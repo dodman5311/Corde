@@ -395,12 +395,14 @@ function module.ConsumeItem(item, use)
 		return
 	end
 
-	if item.Value.Hunger then
-		player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + item.Value.Hunger)
+	local addedHunger = item.State.Value.HungerRestoration
+	if addedHunger then
+		player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + addedHunger)
 	end
 
-	if item.Value.Health then
-		module:ChangePlayerHealth(item.Value.Health, "Add")
+	local addedHealth = item.State.Value.HealthRestoration
+	if addedHealth then
+		module:ChangePlayerHealth(addedHealth, "Add")
 	end
 
 	util.PlaySound(sounds[use], 0.05)
@@ -799,15 +801,15 @@ local itemFunctions = {
 	Eat = module.ConsumeItem,
 	Heal = module.ConsumeItem,
 	ToggleFlashlight = function(item)
-		item.InUse = not item.InUse
+		item.State.InUse = not item.State.InUse
 
-		if item.InUse then
+		if item.State.InUse then
 			util.PlaySound(sounds.FlashlightOn)
 		else
 			util.PlaySound(sounds.FlashlightOff)
 		end
 
-		player.Character:FindFirstChild("Flashlight", true).Enabled = item.InUse
+		player.Character:FindFirstChild("Flashlight", true).Enabled = item.State.InUse
 	end,
 	InstallNet = function(item)
 		if areas.currentArea and areas.currentArea.Name == "MirrorArea" then

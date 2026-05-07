@@ -93,8 +93,8 @@ local actionsFunctions = {
 		return inventory:RemoveItem(itemName)
 	end,
 
-	AddItem = function(itemName)
-		inventory:AddItem(items[itemName])
+	AddItem = function(itemName: string)
+		inventory:AddItem { Key = itemName }
 	end,
 
 	DisableInteract = function()
