@@ -395,12 +395,12 @@ function module.ConsumeItem(item, use)
 		return
 	end
 
-	local addedHunger = item.State.Value.HungerRestoration
+	local addedHunger = item.State.HungerRestoration
 	if addedHunger then
 		player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + addedHunger)
 	end
 
-	local addedHealth = item.State.Value.HealthRestoration
+	local addedHealth = item.State.HealthRestoration
 	if addedHealth then
 		module:ChangePlayerHealth(addedHealth, "Add")
 	end

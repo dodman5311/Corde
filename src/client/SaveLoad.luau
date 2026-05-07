@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 --// Instances
 local player = Players.LocalPlayer
+local Layers = ReplicatedStorage.Layers
 
 --// Modules
 local Areas = require(script.Parent.Areas)
@@ -71,17 +72,71 @@ local function getInteractables()
 	end
 end
 
-function getGameState(): Types.GameState
-	local currentLayerIndex = workspace:GetAttribute("CurrentLayerIndex")
+local function checkInLayer(object, layerKey)
+	if layerKey == workspace:GetAttribute("CurrentLayerKey") then
+		return object:FindFirstAncestor("Map")
+	else
+		return object:FindFirstAncestor(layerKey)
+	end
+end
 
-	layersData[currentLayerIndex] = { Npcs = {}, Containers = {}, Objects = {} }
+local function saveLayer(layerKey: string)
+	layersData[layerKey] = { Npcs = {}, Containers = {}, Objects = {} }
+
+	for _, object in pairs(interactables) do
+		if not checkInLayer(object, layerKey) then
+			continue
+		end
+
+		table.insert(layersData[layerKey].Objects, {
+			Name = object.Name,
+			Position = serializeVector3(object:GetPivot().Position),
+			Locked = object:GetAttribute("Locked"),
+			Used = object:GetAttribute("Used"),
+			Tags = object:GetTags(),
+		})
+	end
+
+	for _, npc: Types.Npc in ipairs(NpcFunctions.npcs) do
+		local model: Model = npc.Instance
+		if not checkInLayer(model, layerKey) then
+			continue
+		end
+
+		local _, y = model:GetPivot().Rotation:ToOrientation()
+
+		table.insert(layersData[layerKey].Npcs, {
+			Name = npc.Name,
+			Position = serializeVector3(model:GetPivot().Position),
+			Direction = y,
+			Health = model:GetAttribute("Health"),
+		})
+	end
+
+	for _, container in ipairs(CollectionService:GetTagged("Container")) do
+		if container:GetAttribute("DroppedAt") or not checkInLayer(container, layerKey) then
+			continue
+		end
+
+		table.insert(layersData[layerKey].Containers, {
+			Name = container.Name,
+			Position = serializeVector3(container:GetPivot().Position),
+			Contents = require(container.Container),
+		})
+	end
+end
+
+function getGameState(): Types.GameState
+	for _, layerFolder in ipairs(Layers:GetChildren()) do
+		saveLayer(layerFolder.Name)
+	end
 
 	local character = player.Character
 	local gameState: Types.GameState = {
 		Date = DateTime.now():FormatLocalTime("lll", "en-us"),
 		PlayTime = (os.clock() - workspace:GetAttribute("StartTime")) + workspace:GetAttribute("PlayTime"),
 		Area = Areas.currentArea and Areas.currentArea.Name or "Unknown",
-		CurrentLayerIndex = currentLayerIndex,
+		CurrentLayerKey = workspace:GetAttribute("CurrentLayerKey"),
 		Difficulty = workspace:GetAttribute("Difficulty"),
 
 		PlayerStats = {
@@ -95,41 +150,6 @@ function getGameState(): Types.GameState
 		Layers = layersData,
 	}
 
-	for _, object in pairs(interactables) do
-		table.insert(gameState.Layers[currentLayerIndex].Objects, {
-			Name = object.Name,
-			Position = serializeVector3(object:GetPivot().Position),
-			Locked = object:GetAttribute("Locked"),
-			Used = object:GetAttribute("Used"),
-			Tags = object:GetTags(),
-		})
-	end
-
-	for _, npc: Types.Npc in ipairs(NpcFunctions.npcs) do
-		local model: Model = npc.Instance
-
-		local _, y = model:GetPivot().Rotation:ToOrientation()
-
-		table.insert(gameState.Layers[currentLayerIndex].Npcs, {
-			Name = npc.Name,
-			Position = serializeVector3(model:GetPivot().Position),
-			Direction = y,
-			Health = model:GetAttribute("Health"),
-		})
-	end
-
-	for _, container in ipairs(CollectionService:GetTagged("Container")) do
-		if container:GetAttribute("DroppedAt") then
-			continue
-		end
-		table.insert(gameState.Layers[currentLayerIndex].Containers, {
-			Name = container.Name,
-			Position = serializeVector3(container:GetPivot().Position),
-			Contents = require(container.Container),
-		})
-	end
-
-	print(gameState)
 	return gameState
 end
 
@@ -156,8 +176,6 @@ function saveLoad:LoadGame(saveSlot: number)
 	-- CHANGE SECTION
 
 	getInteractables()
-
-	print(gameState.PlayerStats.Inventory)
 
 	if gameState then
 		for slot, itemReference in pairs(gameState.PlayerStats.Inventory) do

@@ -815,6 +815,7 @@ module.pageFunctions = {
 						saveFrame.SaveDate.Text = saveData.Date
 						saveFrame.Area.Text = saveData.Area
 						saveFrame.TimePlayed.Text = formatTime(saveData.PlayTime)
+						saveFrame.Layer.Text = saveData.CurrentLayerKey
 
 						local difficulty = "Solemn"
 						saveFrame.Difficulty.TextColor3 = Color3.new(1, 1, 1)
@@ -1036,7 +1037,7 @@ function module.Init()
 end
 
 objectFunctions.SaveGameEvent:Connect(function()
-	switchToPage("Save")
+	switchToPage("Save", "Save")
 end)
 
 return module

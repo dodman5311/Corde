@@ -86,7 +86,7 @@ function NpcService.new(npcName: string): Npc?
 		end,
 
 		Place = function(self: Npc, position: Vector3 | CFrame)
-			self.Instance.Parent = workspace
+			self.Instance.Parent = workspace.Map
 
 			if typeof(position) == "Vector3" then
 				self.Instance:PivotTo(CFrame.new(position + Vector3.new(0, 2.5, 0)))

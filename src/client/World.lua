@@ -9,6 +9,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local Client = player.PlayerScripts.Client
+local Layers = ReplicatedStorage.Layers
 
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(Client.Acts)
@@ -53,8 +54,20 @@ function module:resume()
 	end
 end
 
-local function loadContainers(layer: Types.LayerData)
+local function checkInLayer(object, layerKey)
+	if layerKey == workspace:GetAttribute("CurrentLayerKey") then
+		return object:FindFirstAncestor("Map")
+	else
+		return object:FindFirstAncestor(layerKey)
+	end
+end
+
+local function loadContainers(layer: Types.LayerData, key: string)
 	for _, container in ipairs(CollectionService:GetTagged("Container")) do
+		if not checkInLayer(container, key) then
+			continue
+		end
+
 		local foundMatch = false
 		for _, containerData in ipairs(layer.Containers) do
 			if containerData.Position == container:GetPivot().Position then
@@ -77,10 +90,10 @@ local function loadContainers(layer: Types.LayerData)
 	end
 end
 
-local function loadObjects(layer: Types.LayerData)
+local function loadObjects(layer: Types.LayerData, key: string)
 	for _, object: Model in ipairs(CollectionService:GetTagged("Interactable")) do
-		if not object:FindFirstAncestor("Workspace") then
-			return
+		if not checkInLayer(object, key) then
+			continue
 		end
 
 		for _, objectData in ipairs(layer.Objects) do
@@ -105,25 +118,60 @@ local function loadObjects(layer: Types.LayerData)
 	end
 end
 
-local function loadLayer(layer: Types.LayerData)
-	print("AttemptLoad")
-	if not layer then
+local function loadLayerAssets()
+	local layerKey = workspace:GetAttribute("CurrentLayerKey") or ""
+	local layerFolder = Layers:FindFirstChild(layerKey)
+	if not layerFolder then
 		return
 	end
 
-	loadContainers(layer)
-	loadObjects(layer)
+	for _, layerAsset in ipairs(layerFolder:GetChildren()) do
+		layerAsset.Parent = workspace.Map
+	end
+end
+
+local function storeCurrentLayer()
+	local layerKey = workspace:GetAttribute("CurrentLayerKey") or ""
+	local layerFolder = Layers:FindFirstChild(layerKey)
+	if not layerFolder then
+		return
+	end
+
+	for _, layerAsset in ipairs(workspace.Map:GetChildren()) do
+		layerAsset.Parent = layerFolder
+	end
+end
+
+function module.LoadLayer(layerKey: string)
+	print("AttemptLoad")
+
+	storeCurrentLayer()
+	workspace:SetAttribute("CurrentLayerKey", layerKey)
+
+	loadLayerAssets()
+end
+
+local function loadLayersFromData(layers)
+	if not layers then
+		return
+	end
+
+	for key, layerData: Types.LayerData in pairs(layers) do
+		loadContainers(layerData, key)
+		loadObjects(layerData, key)
+	end
 end
 
 function module.StartGame(saveData: Types.GameState?)
-	workspace:SetAttribute("CurrentLayerIndex", saveData and saveData.CurrentLayerIndex or "Demo")
-
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = -math.huge
 		shadowPart.Material = Enum.Material.ForceField
 	end
 
-	loadLayer(saveData and saveData.Layers[saveData.CurrentLayerIndex])
+	local layerKey = saveData and saveData.CurrentLayerKey or "Demo"
+	local layers = saveData and saveData.Layers
+	loadLayersFromData(layers)
+	module.LoadLayer(layerKey)
 
 	workspace:SetAttribute("StartTime", os.clock())
 

@@ -152,6 +152,21 @@ local commands = {
 				npcSystem.new(npcToSpawn.Name):Spawn(require(script.Parent.Interact).MouseHitLocation)
 			end,
 		},
+
+		Load_Layer = {
+			Parameters = function()
+				return {
+					{ Name = "Layer Key", Options = ReplicatedStorage.Layers:GetChildren() },
+				}
+			end,
+
+			Execute = function(_, layerKey)
+				if not layerKey then
+					return
+				end
+				require(script.Parent.World).LoadLayer(layerKey.Name)
+			end,
+		},
 	},
 }
 

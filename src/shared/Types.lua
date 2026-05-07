@@ -29,7 +29,7 @@ export type GameState = {
 	Date: string,
 	PlayTime: number,
 	Area: string,
-	CurrentLayerIndex: string,
+	CurrentLayerKey: string,
 	Difficulty: number,
 
 	PlayerStats: {

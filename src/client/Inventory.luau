@@ -612,11 +612,11 @@ local function clearKeyPrompts()
 end
 
 local function showNoteKeyprompts(note: item)
-	if typeof(note.Value.Message[1]) == "string" then
+	if typeof(note.Config.Message[1]) == "string" then
 		return
 	end
 
-	local keyprompts = note.Value.Message[1]
+	local keyprompts = note.Config.Message[1]
 
 	for _, prompt in ipairs(keyprompts) do
 		local key, button, preText, yPos, index = table.unpack(prompt)
@@ -651,9 +651,9 @@ local function nextNotePage(note: item, indexChange: number)
 		return
 	end
 
-	local size = #note.Value.Message
+	local size = #note.Config.Message
 
-	if typeof(note.Value.Message[1]) ~= "string" then
+	if typeof(note.Config.Message[1]) ~= "string" then
 		size -= 1
 	end
 
@@ -690,10 +690,10 @@ local function nextNotePage(note: item, indexChange: number)
 		return
 	end
 
-	if typeof(note.Value.Message[1]) ~= "string" then
-		noteUi.Message.Text = note.Value.Message[currentNoteIndex + 1]
+	if typeof(note.Config.Message[1]) ~= "string" then
+		noteUi.Message.Text = note.Config.Message[currentNoteIndex + 1]
 	else
-		noteUi.Message.Text = note.Value.Message[currentNoteIndex]
+		noteUi.Message.Text = note.Config.Message[currentNoteIndex]
 	end
 
 	showNoteKeyprompts(note)
@@ -709,7 +709,7 @@ local function openNote(note: item)
 	noteUi.Visible = true
 
 	noteUi.NoteImage.ImageColor3 = Color3.new(1, 1, 1)
-	noteUi.NoteImage.Image = note.Value.Image
+	noteUi.NoteImage.Image = note.Config.Image
 
 	message.TextSize = math.floor(message.AbsoluteSize.X / 50)
 
