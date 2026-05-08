@@ -183,6 +183,8 @@ function saveLoad:LoadGame(saveSlot: number)
 		end
 	end
 
+	print(gameState)
+
 	return gameState
 end
 

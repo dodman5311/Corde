@@ -101,6 +101,10 @@ function NpcService.new(npcName: string): Npc?
 			npcFunctions.RunNpc(self)
 		end,
 
+		Stop = function(self: Npc)
+			self.Janitor:Cleanup()
+		end,
+
 		Spawn = function(self: Npc, position: Vector3 | CFrame): Npc
 			self:Place(position)
 			self:Run()

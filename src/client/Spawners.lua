@@ -8,14 +8,15 @@ local Types = require(ReplicatedStorage.Shared.Types)
 
 function module:SpawnFromSpawner(spawner: Part)
 	if spawner:GetAttribute("SpawnType") == "Npc" then
-		NpcService.new(spawner:GetAttribute("ToSpawn")):Spawn(spawner.CFrame)
+		local newNpc = NpcService.new(spawner:GetAttribute("ToSpawn"))
+		newNpc:Place(spawner.CFrame)
 	end
 end
 
 function module:SpawnFromData(name: string, position: Vector3, direction: number, health: number)
 	local newNpc = NpcService.new(name)
 	local npcPosition = CFrame.new(position) * CFrame.Angles(0, direction, 0)
-	newNpc:Spawn(npcPosition)
+	newNpc:Place(npcPosition)
 	newNpc.Instance:SetAttribute("Health", health)
 end
 
