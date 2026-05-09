@@ -75,6 +75,7 @@ export type Npc = {
 	Acts: {},
 	Janitor: any,
 	OnDied: any?,
+	IsRunning: boolean,
 
 	Spawn: (Npc: Npc, Position: Vector3 | CFrame) -> Npc,
 
@@ -86,8 +87,9 @@ export type Npc = {
 	Exists: (Npc: Npc) -> boolean,
 
 	Destroy: (Npc: Npc) -> nil,
-	Place: (Npc: Npc, Position: Vector3 | CFrame) -> Instance,
+	Place: (Npc: Npc, Position: Vector3 | CFrame, Parent: Instance?) -> Instance,
 	Run: (Npc: Npc) -> nil,
+	Stop: (Npc: Npc) -> nil,
 }
 
 export type ItemType = "Weapon" | "Equipment" | "Resource" | "Item" | "Note"

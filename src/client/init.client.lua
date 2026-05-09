@@ -1,4 +1,8 @@
 local modules = {}
+local orderedCall = {
+	"Spawners",
+	"World",
+}
 
 for _, module in ipairs(script:GetChildren()) do
 	if not module:IsA("ModuleScript") then
@@ -9,7 +13,21 @@ for _, module in ipairs(script:GetChildren()) do
 end
 
 local function callModuleAction(actionName: string, ...)
-	for _, module in pairs(modules) do
+	for _, moduleName in ipairs(orderedCall) do
+		local module = modules[moduleName]
+
+		if not module or not module[actionName] then
+			continue
+		end
+
+		module[actionName](...)
+	end
+
+	for moduleName, module in pairs(modules) do
+		if table.find(orderedCall, moduleName) then
+			continue
+		end
+
 		if not module[actionName] then
 			continue
 		end

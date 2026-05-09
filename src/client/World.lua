@@ -11,9 +11,10 @@ local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 local Layers = ReplicatedStorage.Layers
 
+local NpcService = require(script.Parent.NpcService)
+local Spawners = require(script.Parent.Spawners)
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(Client.Acts)
-local globalInputService = require(Client.GlobalInputService)
 local interact = require(Client.Interact)
 
 function module:pause()
@@ -145,10 +146,15 @@ end
 function module.LoadLayer(layerKey: string)
 	print("AttemptLoad")
 
+	NpcService:StopAll() -- stop npcs from processing
+
 	storeCurrentLayer()
 	workspace:SetAttribute("CurrentLayerKey", layerKey)
 
-	loadLayerAssets()
+	Spawners:SpawnLayerNpcs(layerKey)
+
+	loadLayerAssets() -- load the layer then run the Npcs
+	NpcService:RunInWorkspace()
 end
 
 local function loadLayersFromData(layers)

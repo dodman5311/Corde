@@ -57,6 +57,8 @@ function NpcService.new(npcName: string): Npc?
 
 		OnDied = signal.new(),
 
+		IsRunning = false,
+
 		IsState = function(self: Npc, state: string)
 			return self.MindState.Current.Value == state
 		end,
@@ -85,8 +87,9 @@ function NpcService.new(npcName: string): Npc?
 			return subject and subject.Parent and subject.PrimaryPart and subject.PrimaryPart.Parent
 		end,
 
-		Place = function(self: Npc, position: Vector3 | CFrame)
-			self.Instance.Parent = workspace.Map
+		Place = function(self: Npc, position: Vector3 | CFrame, parent: Instance?)
+			parent = parent or workspace.Map
+			self.Instance.Parent = parent
 
 			if typeof(position) == "Vector3" then
 				self.Instance:PivotTo(CFrame.new(position + Vector3.new(0, 2.5, 0)))
@@ -98,10 +101,19 @@ function NpcService.new(npcName: string): Npc?
 		end,
 
 		Run = function(self: Npc)
+			if self.IsRunning then
+				return
+			end
+			self.IsRunning = true
 			npcFunctions.RunNpc(self)
 		end,
 
 		Stop = function(self: Npc)
+			if not self.IsRunning then
+				return
+			end
+			self.IsRunning = false
+			self.Heartbeat = {}
 			self.Janitor:Cleanup()
 		end,
 
@@ -113,8 +125,7 @@ function NpcService.new(npcName: string): Npc?
 		end,
 
 		Destroy = function(self: Npc)
-			self.Heartbeat = {}
-			self.Janitor:Cleanup()
+			self:Stop()
 			self.Instance:Destroy()
 			table.remove(npcFunctions.npcs, table.find(npcFunctions.npcs, self))
 		end,
@@ -123,6 +134,21 @@ function NpcService.new(npcName: string): Npc?
 	table.insert(npcFunctions.npcs, Npc)
 
 	return Npc
+end
+
+function NpcService:StopAll()
+	for _, npc: Npc in ipairs(npcFunctions.npcs) do
+		npc:Stop()
+	end
+end
+
+function NpcService:RunInWorkspace()
+	for _, npc: Npc in ipairs(npcFunctions.npcs) do
+		if not npc.Instance:FindFirstAncestor("Workspace") then
+			continue
+		end
+		npc:Run()
+	end
 end
 
 return NpcService

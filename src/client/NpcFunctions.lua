@@ -350,6 +350,10 @@ module.events = {
 module.actions = {
 	SetStats = function(npc: Npc, stats: { [string]: any })
 		for attribute, value in pairs(stats) do
+			if npc.Instance:GetAttribute(attribute) then
+				continue
+			end
+
 			if attribute == "Health" then
 				npc.Instance:SetAttribute("MaxHealth", value)
 			end
