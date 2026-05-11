@@ -204,6 +204,7 @@ function module.equipWeapon(weapon)
 	end
 
 	if weaponState.CurrentMag then
+		print("EquipStateSet")
 		weaponState.CurrentMag.State.InUse = true
 	end
 
@@ -323,6 +324,7 @@ local function reload(itemToUse)
 	local weaponData = currentWeapon.Config
 
 	local foundMag = itemToUse or getNextMag()
+
 	if not foundMag then
 		return
 	end

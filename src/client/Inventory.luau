@@ -71,8 +71,24 @@ local STORAGE_SIZE = 12
 
 --// Functions
 
+local function deepClone(original)
+	-- Define the new table for the copy
+	local clone = table.clone(original)
+
+	-- Loop through the original table to check for table values
+	-- If a table is found as a value, deep clone it to the key (index)
+	for key, value in original do
+		if type(value) == "table" then
+			clone[key] = deepClone(value)
+		end
+	end
+
+	-- Return the finalized copy of the deep cloned table
+	return clone
+end
+
 function Inventory:CreateItemFromReference(itemReference: Types.ItemReference)
-	local newItem = table.clone(itemsList[itemReference.Key])
+	local newItem = deepClone(itemsList[itemReference.Key])
 	if itemReference.State then
 		newItem.State = itemReference.State
 	end
@@ -571,9 +587,13 @@ local function showHungerResult(foodItem: item)
 	end
 
 	local hunger = character:GetAttribute("Hunger")
-	local newHungerValue = hunger + foodItem.Value.Hunger
+	local newHungerValue = hunger + foodItem.Config.HungerRestoration
 	local invertedHungerValue = math.clamp(math.abs((hunger / 100) - 1), 0.001, 0.989)
 	local invertedNewHungerValue = math.clamp(math.abs((newHungerValue / 100) - 1), 0.001, 0.989)
+
+	if invertedNewHungerValue > invertedHungerValue then
+		return
+	end
 
 	local sequence = NumberSequence.new {
 		NumberSequenceKeypoint.new(0, 1),

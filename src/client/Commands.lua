@@ -120,6 +120,8 @@ local commands = {
 					end
 					inventory:AddItem { Key = itemName }
 				end
+
+				print(inventory)
 			end,
 		},
 	},

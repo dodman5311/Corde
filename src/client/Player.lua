@@ -150,9 +150,9 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
 local WALK_SPEED = 6.875
-local SPRINT_SPEED = 9 --3.85
+local SPRINT_SPEED = 10 --9 --3.85
 
-local HUNGER_RATE = 0.65 -- 0.5
+local HUNGER_RATE = 0.75 --0.65 -- 0.5
 local RAM_RECOVERY_RATE = 0.035
 
 local function checkEquippedStem(healthPercent: number)
@@ -822,11 +822,15 @@ local itemFunctions = {
 	end,
 	EquipStem = function(item)
 		if currentStimEquipped then
-			currentStimEquipped.InUse = false
+			currentStimEquipped.State.InUse = false
 		end
 
-		currentStimEquipped = item
-		currentStimEquipped.InUse = true
+		if currentStimEquipped == item then
+			currentStimEquipped = nil
+		else
+			currentStimEquipped = item
+			currentStimEquipped.State.InUse = true
+		end
 
 		checkEquippedStem(getHealthPercentage(player.Character))
 	end,

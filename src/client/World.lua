@@ -169,6 +169,7 @@ local function loadLayersFromData(layers)
 end
 
 function module.StartGame(saveData: Types.GameState?)
+	print(saveData)
 	for _, shadowPart: BasePart in ipairs(CollectionService:GetTagged("ShadowPart")) do
 		shadowPart.Transparency = -math.huge
 		shadowPart.Material = Enum.Material.ForceField
