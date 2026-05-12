@@ -1,7 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
+local Janitor = require(ReplicatedStorage.Packages.Janitor)
+local Pathfinder = require(script.Parent.Pathfinder)
 local Timer = require(StarterPlayer.StarterPlayerScripts.Client.Timer)
-local simplepath = require(ReplicatedStorage.Shared.SimplePath)
 
 export type LayerData = {
 	Npcs: {
@@ -69,11 +70,11 @@ export type Npc = {
 
 	Heartbeat: { [string]: any? },
 
-	Path: Path,
+	Path: Pathfinder.State,
 	Timer: Timer.TimerQueue,
 	Timers: { [string]: Timer.Timer },
 	Acts: {},
-	Janitor: any,
+	Janitor: Janitor.Janitor,
 	OnDied: any?,
 	IsRunning: boolean,
 

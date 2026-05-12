@@ -8,6 +8,7 @@ local rng = Random.new()
 local PathfindingService = game:GetService("PathfindingService")
 
 local client = script.Parent
+local Pathfinder = require(ReplicatedStorage.Shared.Pathfinder)
 local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
 local bloodEffects = require(client.BloodEffects)
@@ -438,18 +439,21 @@ module.actions = {
 			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 		end
 
-		if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
-			target = nil
-		end
-
-		target = checkEarshot(npc) or target
 		npc.MindTarget.Value = target
-
-		if target ~= nil then
-			npc.MindData["LastTarget"] = target
-		end
-
 		return target, distance
+
+		-- if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
+		-- 	target = nil
+		-- end
+
+		-- target = checkEarshot(npc) or target
+		-- npc.MindTarget.Value = target
+
+		-- if target ~= nil then
+		-- 	npc.MindData["LastTarget"] = target
+		-- end
+
+		-- return target, distance
 	end,
 
 	LookAtTarget = function(npc: Npc, doLerp, lerpAlpha)
@@ -520,74 +524,57 @@ module.actions = {
 	LookAtPath = function(npc: Npc, lerpAlpha: number?)
 		local doLerp = lerpAlpha and true or false
 
-		local waypoints = npc.Path._waypoints
+		local npcPosition = npc.Instance:GetPivot().Position
+		local npcPosition2D = Vector3.new(npcPosition.X, 0.25, npcPosition.Z)
 
-		if not waypoints or #waypoints < 3 then
+		if not npc.MindData.PathGoal then
 			return
 		end
 
-		local nextWaypoint = waypoints[2]
+		local direction = Pathfinder.GetDirection(npc.Path, npcPosition2D, npc.MindData.PathGoal)
+		if direction:FuzzyEq(Vector3.zero) then
+			return
+		end
 
-		lookAtPostition(npc, nextWaypoint.Position, doLerp, lerpAlpha)
+		lookAtPostition(npc, npcPosition + direction, doLerp, lerpAlpha)
 	end,
 
 	RunPath = function(npc: Npc)
 		local target = npc:GetTarget()
 		if target then
 			local targetPos = target:GetPivot().Position
-			local Position2D = Vector3.new(targetPos.X, npc.Instance.PrimaryPart.Position.Y, targetPos.Z)
+			local Position2D = Vector3.new(targetPos.X, -1.2, targetPos.Z)
 			npc.MindData.PathGoal = Position2D
 		end
 
+		local npcPosition = npc.Instance:GetPivot().Position
+		local npcPosition2D = Vector3.new(npcPosition.X, -1.2, npcPosition.Z)
+
 		if npc.MindData.PathGoal then
-			npc.Path:Run(npc.MindData.PathGoal)
+			Pathfinder.Update(npc.Path, npcPosition2D, npc.MindData.PathGoal)
 		end
 	end,
 
-	ConnectPath = function(npc: Npc)
-		local path = npc.Path
-
-		path.Blocked:Connect(function()
-			npc.MindData.HasReachedGoal = true
-			npc.MindData.NextWaypoint = nil
-		end)
-
-		--In case of an error
-		path.Error:Connect(function()
-			npc.MindData.HasReachedGoal = true
-			npc.MindData.NextWaypoint = nil
-			npc.MindData.PathGoal = nil
-		end)
-
-		path.Reached:Connect(function(model, finalWaypoint)
-			npc.MindData.HasReachedGoal = true
-			npc.MindData.NextWaypoint = nil --finalWaypoint
-			npc.MindData.PathGoal = nil
-		end)
-
-		path.WaypointReached:Connect(function(_, _, nextWaypoint)
-			npc.MindData.NextWaypoint = nextWaypoint
-			npc.MindData.HasReachedGoal = true
-		end)
-
-		npc.MindData.NextWaypoint = nil
-	end,
-
-	runPathWithDirection = function(npc: Npc, lerpAlpha)
+	MoveAlongPath = function(npc: Npc, lerpAlpha)
+		module.actions.RunPath(npc)
 		module.actions.LookAtPath(npc, lerpAlpha)
-		module.actions.MoveForwards(npc, lerpAlpha)
-	end,
 
-	PathfindToLastTarget = function(npc: Npc, lerpAlpha: number?)
-		local target = npc.LastTarget
-		if not target then
-			return
+		if npc.MindData.PathGoal then
+			local npcPosition = npc.Instance:GetPivot().Position
+			local npcPosition2D = Vector3.new(npcPosition.X, 0.25, npcPosition.Z)
+
+			local direction = Pathfinder.GetDirection(npc.Path, npcPosition2D, npc.MindData.PathGoal)
+			if direction:FuzzyEq(Vector3.zero) then
+				module.actions.StopMoving(npc)
+			end
+
+			module.actions.MoveForwards(npc)
+		else
+			module.actions.StopMoving(npc)
 		end
 
-		local newPath = PathfindingService:FindPathAsync(npc.Instance:GetPivot().Position, target:GetPivot().Position)
-
-		for _, v in ipairs(newPath:GetWaypoints()) do
-			module.actions.MoveTowardsPoint(npc, v.Position, lerpAlpha)
+		if npc.Path.path.Status == Enum.PathStatus.NoPath then
+			module.actions.StopMoving(npc)
 		end
 	end,
 

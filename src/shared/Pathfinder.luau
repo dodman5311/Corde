@@ -109,6 +109,8 @@ local function ComputePath(state: State, currentPosition: Vector3, targetPositio
 		local path = state.path
 		local success = pcall(path.ComputeAsync, path, currentPosition, targetPosition)
 
+		print(path.Status)
+
 		if success and path.Status == Enum.PathStatus.Success then
 			state.waypoints = path:GetWaypoints()
 			state.waypointIndex = 2
@@ -217,6 +219,7 @@ function Path.Update(state: State, currentPosition: Vector3, targetPosition: Vec
 end
 
 function Path.Cleanup(state: State)
+	print("CLEAN")
 	if state.computeThread then
 		task.cancel(state.computeThread)
 	end

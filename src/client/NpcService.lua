@@ -1,8 +1,8 @@
-local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = script.Parent
 local personalities = client.NpcPersonalities
+local Pathfinder = require(ReplicatedStorage.Shared.Pathfinder)
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(client.Acts)
 local janitor = require(ReplicatedStorage.Packages.Janitor)
@@ -31,6 +31,11 @@ function NpcService.new(npcName: string): Npc?
 	stateValue.Parent = newNpcModel
 	stateValue.Name = "State"
 
+	local obstacleParams = RaycastParams.new()
+	obstacleParams.FilterType = Enum.RaycastFilterType.Include
+	obstacleParams.FilterDescendantsInstances = { workspace.Map }
+	obstacleParams.CollisionGroup = "Enemy"
+
 	local Npc: Npc = {
 		Name = npcName,
 		Instance = newNpcModel,
@@ -44,12 +49,13 @@ function NpcService.new(npcName: string): Npc?
 
 		Heartbeat = {},
 
-		Path = PathfindingService:CreatePath {
-			WaypointSpacing = 3,
-			AgentHeight = 1,
-			AgentRadius = 0,
+		Path = Pathfinder.state({
+			AgentRadius = 3,
+			AgentHeight = 2,
+			AgentStepHeight = 1.9,
 			AgentCanJump = false,
-		},
+			AgentCanClimb = true,
+		}, Vector3.zero, obstacleParams, nil, true),
 		Timer = timer:newQueue(),
 		Timers = {},
 		Acts = acts:new(),
@@ -88,7 +94,7 @@ function NpcService.new(npcName: string): Npc?
 		end,
 
 		Place = function(self: Npc, position: Vector3 | CFrame, parent: Instance?)
-			parent = parent or workspace.Map
+			parent = workspace --parent or workspace.Map
 			self.Instance.Parent = parent
 
 			if typeof(position) == "Vector3" then
@@ -130,6 +136,10 @@ function NpcService.new(npcName: string): Npc?
 			table.remove(npcFunctions.npcs, table.find(npcFunctions.npcs, self))
 		end,
 	}
+
+	Npc.Janitor:Add(function()
+		Pathfinder.Cleanup(Npc.Path)
+	end)
 
 	table.insert(npcFunctions.npcs, Npc)
 

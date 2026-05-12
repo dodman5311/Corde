@@ -10,55 +10,17 @@ local NpcStats = {
 
 local ATTACK_DISTANCE = 8.75
 
-local function ShowDebugPath(path: Path)
-	print(path.Status)
-	for _, waypointAttachment in ipairs(CollectionService:GetTagged("DebugWaypoint")) do
-		waypointAttachment:Destroy()
-	end
-
-	for _, waypoint: PathWaypoint in ipairs(path:GetWaypoints()) do
-		local newAttachment = Instance.new("Attachment")
-		newAttachment.Visible = true
-		newAttachment.Parent = workspace
-		newAttachment.WorldPosition = waypoint.Position
-		newAttachment.Name = waypoint.Action.Name
-		newAttachment:AddTag("DebugWaypoint")
-	end
-end
-
-local function PathfindTowardsTarget(npc: Types.Npc)
-	local model = npc.Instance
-	local path = npc.Path
-	local npcCFrame = model:GetPivot()
-	local npcPosition = npcCFrame.Position
-
-	local target = npc:GetTarget()
-	if not target then
-		return
-	end
-
-	local targetCFrame = target:GetPivot()
-	local targetPosition = targetCFrame.Position
-
-	path:ComputeAsync(npcPosition, targetPosition)
-
-	if NpcStats.Debug then
-		ShowDebugPath(path)
-	end
-end
-
 local module: Types.npcPersonality = {
 	Start = {
 		{ Function = "SetStats", Parameters = { NpcStats } },
 		{ Function = "SwitchToState", Parameters = { "Idle" } },
 		{ Function = "PlayAnimation", Parameters = { "Animation_Idle", 0.2, true } },
-
-		--{ Function = "ConnectPath" },
+		--	{ Function = "ConnectPath" },
 	},
 
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
-		{ Function = "Custom", Parameters = { PathfindTowardsTarget } },
+		{ Function = "MoveAlongPath", Parameters = { 0.05 } },
 
 		--{ Function = "LookAtTarget", Parameters = { true, 0.05 } },
 
