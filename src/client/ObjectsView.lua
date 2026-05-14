@@ -4,6 +4,7 @@ local module = {
 	currentDisplayedModel = nil,
 }
 local client = script.Parent
+local AttributeEffects = require(script.Parent.AttributeEffects)
 local acts = require(client.Acts)
 local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
@@ -66,6 +67,9 @@ function module:ExitView()
 	HUD.Leave3DViewPrompt.Visible = false
 	player:SetAttribute("MovementEnabled", true)
 
+	-- do exit effects
+	AttributeEffects.DoEffects(module.currentDisplayedModel)
+
 	task.wait(TRANSITION_INFO.Time)
 	acts:removeAct("InObjectView")
 	module.currentDisplayedModel:Destroy()
@@ -81,7 +85,9 @@ local function exitViewInput(state)
 end
 
 function module.Init()
+	module.exitInput:SetPriority(Enum.ContextActionPriority.High)
 	module.exitInput:Disable()
+	globalInputService.AddToActionGroup("PlayerControl", module.exitInput)
 
 	HUD = Players.LocalPlayer.PlayerGui.HUD
 	HUD.Leave3DViewPrompt.Leave.Activated:Connect(function()

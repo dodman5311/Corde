@@ -28,6 +28,23 @@ local commands = {
 				require(script.Parent.Sequences):beginSequence(Value)
 			end,
 		},
+
+		Play_Sound = {
+			Parameters = function()
+				local sounds = ReplicatedStorage.Assets.Sounds:GetChildren()
+
+				return {
+					{ Name = "Sound", Options = sounds },
+				}
+			end,
+
+			Execute = function(_, Value)
+				if not Value then
+					return
+				end
+				Value:Play()
+			end,
+		},
 	},
 
 	Player = {
@@ -129,8 +146,17 @@ local commands = {
 	World = {
 		Go_To_Area = {
 			Parameters = function()
+				local areas = {}
+				for _, v in ipairs(CollectionService:GetTagged("Area")) do
+					if v:FindFirstAncestor("Workspace") then
+						table.insert(areas, v)
+					end
+				end
 				return {
-					{ Name = "AreaName", Options = CollectionService:GetTagged("Area") },
+					{
+						Name = "AreaName",
+						Options = areas,
+					},
 				}
 			end,
 

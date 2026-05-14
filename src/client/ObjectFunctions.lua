@@ -14,6 +14,7 @@ local TRANSITION_INFO = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDi
 
 local player = Players.LocalPlayer
 
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local signal = require(ReplicatedStorage.Packages.Signal)
 
 local objectFunctions = {
@@ -23,6 +24,7 @@ local objectFunctions = {
 
 		object:RemoveTag("Interactable")
 		object:RemoveTag("Hackable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 		if instant then
 			ti = TweenInfo.new(0)
@@ -41,6 +43,7 @@ local objectFunctions = {
 
 		object:RemoveTag("Interactable")
 		object:RemoveTag("Hackable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 		if instant then
 			ti = TweenInfo.new(0)
@@ -66,6 +69,7 @@ local objectFunctions = {
 
 	PlaySequence = function(object: Model)
 		object:RemoveTag("Interactable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 		local sequenceIndex = object:GetAttribute("SequenceIndex")
 		sequences:beginSequence(sequenceIndex)
@@ -78,6 +82,7 @@ local objectFunctions = {
 
 		object:RemoveTag("Interactable")
 		object:RemoveTag("Hackable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 		object.Off.Transparency = 1
 		object.On.Transparency = 0
@@ -103,6 +108,7 @@ local objectFunctions = {
 		local rightDoor = door.RightDoor
 
 		object:RemoveTag("Interactable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 		if instant then
 			ti = TweenInfo.new(0)

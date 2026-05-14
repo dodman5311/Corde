@@ -49,8 +49,6 @@ local function checkLights()
 		return
 	end
 
-	local lights = cs:GetTagged("Light")
-
 	for _, light in ipairs(lights) do
 		if not light:FindFirstAncestor("Workspace") then
 			continue

@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 local moveDirection = Vector2.zero
@@ -25,6 +26,7 @@ local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 local weapons = require(Client.WeaponSystem)
 local lastHeartbeat = os.clock()
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Types = require(ReplicatedStorage.Shared.Types)
 local areas = require(Client.Areas)
 local cameraService = require(Client.Camera)
@@ -57,6 +59,8 @@ local thumbstick1Pos = Vector3.zero
 local thumbstick2Pos = Vector3.zero
 local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
+
+local WalkingToPoint
 
 -- Mobile joysticks --
 
@@ -139,6 +143,8 @@ weapons.onWeaponToggled:Connect(function(value)
 		lookJoystick.StickImage = "rbxassetid://109944710788886"
 	end
 end)
+
+local interactables = CollectionService:GetTagged("Interactable")
 
 ----------------------
 
@@ -426,7 +432,7 @@ local function getClosestInteractable()
 	local closestInteractable
 	local pos = Vector2.zero
 
-	for _, interactable in ipairs(CollectionService:GetTagged("Interactable")) do
+	for _, interactable in ipairs(interactables) do
 		if not interactable:FindFirstAncestor("Workspace") then
 			continue
 		end
@@ -498,7 +504,12 @@ local function updatePlayerDirection()
 	updateCursorLocation()
 
 	local character = player.Character
-	if not character or acts:checkAct("Paused") then
+	if
+		not character
+		or acts:checkAct("Paused")
+		or not player:GetAttribute("MovementEnabled")
+		or cameraService.mode == "FirstPerson"
+	then
 		return
 	end
 	local gyro = character:FindFirstChild("Gyro")
@@ -545,6 +556,9 @@ end
 local function updateDirection(vector)
 	if vector then
 		moveDirection = vector
+		if WalkingToPoint then
+			moveDirection = WalkingToPoint
+		end
 	end
 
 	local character = player.Character
@@ -677,11 +691,7 @@ local function updatePlayerMovement()
 	local moveToPoint = module.moveUnit * character:GetAttribute("Walkspeed")
 	local walkVelocity = character.WalkVelocity
 
-	if cameraService.mode == "FirstPerson" then
-		walkVelocity.VectorVelocity = Vector3.zero
-	else
-		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)
-	end
+	walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(moveToPoint, 0.1)
 end
 
 local function updateMovementInput()
@@ -702,7 +712,8 @@ local function updateMovementInput()
 		moveVector.Magnitude < MOVEMENT_THRESHOLD
 		or not globalInputService.actionGroups["PlayerControl"].IsEnabled
 		or acts:checkAct("InDialogue")
-		or (not player:GetAttribute("MovementEnabled"))
+		or not player:GetAttribute("MovementEnabled")
+		or cameraService.mode == "FirstPerson"
 	then
 		moveVector = Vector3.zero
 	end
@@ -871,6 +882,47 @@ end)
 
 dialogue.DialogueActionSignal:Connect(function(actionName, ...)
 	module[actionName](module, ...)
+end)
+
+GlobalEvents.Control.WalkPlayerToPoint:Connect(function(point: Vector2)
+	local character = player.Character
+	if WalkingToPoint or not character then
+		return
+	end
+
+	-- Stop all player inputs
+	player:SetAttribute("MovementEnabled", false)
+	globalInputService.actionGroups.PlayerControl:Disable("MovingPlayer")
+	module.toggleSprint(false)
+
+	local characterPosition = character:GetPivot().Position
+	local point3D = Vector3.new(point.X, characterPosition.Y, point.Y)
+	local lookTi = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
+	local gyro = character:FindFirstChild("Gyro")
+	if gyro then
+		util.tween(gyro, lookTi, { CFrame = CFrame.lookAt(characterPosition, point3D) })
+	end
+
+	WalkingToPoint = point - Vector2.new(characterPosition.X, characterPosition.Z)
+
+	-- will yeild until the desitination is reached
+	while true do
+		RunService.Heartbeat:Wait()
+		local distance = (character:GetPivot().Position - point3D).Magnitude
+
+		if distance <= 1 then
+			break
+		end
+	end
+
+	WalkingToPoint = nil
+
+	player:SetAttribute("MovementEnabled", true)
+	globalInputService.actionGroups.PlayerControl:Enable("MovingPlayer")
+end)
+
+GlobalEvents.Control.UpdateInteractablesList:Connect(function()
+	interactables = CollectionService:GetTagged("Interactable")
 end)
 
 return module

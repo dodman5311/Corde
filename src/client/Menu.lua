@@ -1,6 +1,7 @@
 local module = {}
 --// Services
 local CollectionService = game:GetService("CollectionService")
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local userSettings = UserSettings():GetService("UserGameSettings")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +11,8 @@ local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 
 --// Modules
+local Camera = require(script.Parent.Camera)
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Types = require(ReplicatedStorage.Shared.Types)
 local acts = require(script.Parent.Acts)
 local gameSettings = require(script.Parent.GameSettings)
@@ -87,6 +90,18 @@ local function doTransition(transitionTime: number?)
 	end)
 end
 
+local function MuffleMusic(enable: boolean)
+	local Eq: EqualizerSoundEffect = SoundService.Music.EQ
+
+	local ti = TweenInfo.new(0.5)
+
+	if enable then
+		util.tween(Eq, ti, { HighGain = -50, LowGain = -10, MidGain = -25 })
+	else
+		util.tween(Eq, ti, { HighGain = 0, LowGain = 0, MidGain = 0 })
+	end
+end
+
 local function closeGui(transitionTime: number?)
 	acts:createAct("InMenuTransition")
 
@@ -99,8 +114,13 @@ local function closeGui(transitionTime: number?)
 	inMainMenu = false
 	transitionTime = transitionTime or 3.5
 
-	util.tween(menu.Transition, TweenInfo.new(transitionTime / 7), { BackgroundTransparency = 0 }, true)
+	MuffleMusic(false)
 
+	util.tween(menu.Transition, TweenInfo.new(transitionTime / 7), { BackgroundTransparency = 0 }, true)
+	Camera.followViewDistance.current = Camera.followViewDistance.default
+	Lighting.PauseBlur.Enabled = false
+
+	menu.GamePaused.Visible = false
 	menu.Save.Visible = false
 	menu.Settings.Visible = false
 	menu.Main.Visible = false
@@ -192,6 +212,8 @@ local function enterPage(page: string, ...)
 	scales.activeScales["InteractDisabled"]:Add("Menu")
 	if globalInputService.actionGroups["PlayerControl"] then
 		globalInputService.actionGroups.PlayerControl:Disable("Menu")
+		Camera.followViewDistance.current = 0
+		Lighting.PauseBlur.Enabled = true
 	end
 
 	module.pageFunctions[page].Enter(...)
@@ -973,6 +995,16 @@ module.buttonFunctions = {
 	end,
 }
 
+local function OpenPauseMenu()
+	world:pause()
+	switchToPage("Settings")
+	menu.Background.BackgroundTransparency = 1
+	menu.GamePaused.Visible = true
+	GlobalEvents.Control.ForceInventoryClose:Fire()
+
+	MuffleMusic(true)
+end
+
 local function EscKey()
 	if acts:checkAct("InMenuTransition") then
 		return
@@ -981,10 +1013,7 @@ local function EscKey()
 	if currentPage then
 		returnPage()
 	elseif not inMainMenu then
-		world:pause()
-		switchToPage("Settings")
-		menu.Background.BackgroundTransparency = 1
-		menu.GamePaused.Visible = true
+		OpenPauseMenu()
 	end
 end
 

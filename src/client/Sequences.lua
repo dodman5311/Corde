@@ -18,6 +18,7 @@ UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
 local Achievements = require(script.Parent.Achievements)
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
 local musicService = require(Client.MusicService)
@@ -415,6 +416,7 @@ end
 
 function module.keyhole(object: Model)
 	object:RemoveTag("Interactable")
+	GlobalEvents.Control.UpdateInteractablesList:Fire()
 
 	local fade = UI.Fade
 	local ti = TweenInfo.new(1, Enum.EasingStyle.Linear)

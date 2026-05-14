@@ -14,10 +14,11 @@ export type InputAction = {
 	},
 	Callback: (inputState: Enum.UserInputState, input: InputObject) -> any?,
 	Priority: number?,
+
 	IsEnabled: () -> boolean,
 
-	Enable: (self: InputAction) -> nil,
-	Disable: (self: InputAction) -> nil,
+	Enable: (self: InputAction, setByGroup: boolean?) -> nil,
+	Disable: (self: InputAction, setByGroup: boolean?) -> nil,
 	Refresh: (self: InputAction) -> nil,
 	GetMobileInput: (self: InputAction) -> (ImageButton | GuiJoystick)?,
 	GetMobileIcon: (self: InputAction) -> string,
@@ -29,6 +30,9 @@ export type InputAction = {
 
 	SetImage: (self: InputAction, image: string) -> nil,
 	SetPosition: (self: InputAction, position: UDim2) -> nil,
+
+	GroupLocked: boolean,
+	GroupValLog: boolean,
 }
 
 export type GuiJoystick = MobileJoysticks.GuiJoystick
@@ -353,12 +357,18 @@ function globalInputService.CreateInputAction(
 		Callback = func,
 		Priority = nil,
 
+		GroupLocked = false,
+		GroupValLog = false,
+
 		IsEnabled = function()
 			return inputIsEnabled
 		end,
 
-		Enable = function(self: InputAction)
-			if inputIsEnabled then
+		Enable = function(self: InputAction, setByGroup: boolean?)
+			if not setByGroup then
+				self.GroupValLog = true
+			end
+			if inputIsEnabled or self.GroupLocked then
 				return
 			end
 
@@ -415,12 +425,16 @@ function globalInputService.CreateInputAction(
 			end
 		end,
 
-		Disable = function(self: InputAction)
+		Disable = function(self: InputAction, setByGroup: boolean?)
+			if not setByGroup then
+				self.GroupValLog = false
+			end
 			if not inputIsEnabled then
 				return
 			end
 
 			inputIsEnabled = false
+
 			if mobileJoystick then
 				mobileJoystick:Destroy()
 			end
@@ -533,11 +547,15 @@ function globalInputService.CreateActionGroup(name: string): ActionGroup
 
 		if actionGroup.IsEnabled then
 			for _, action: InputAction in pairs(actionGroup.Actions) do
-				action:Enable()
+				action.GroupLocked = false
+				if action.GroupValLog then
+					action:Enable(true)
+				end
 			end
 		else
 			for _, action: InputAction in pairs(actionGroup.Actions) do
-				action:Disable()
+				action.GroupLocked = true
+				action:Disable(true)
 			end
 		end
 	end)

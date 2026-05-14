@@ -439,21 +439,21 @@ module.actions = {
 			distance = (target:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 		end
 
-		npc.MindTarget.Value = target
-		return target, distance
-
-		-- if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
-		-- 	target = nil
-		-- end
-
-		-- target = checkEarshot(npc) or target
 		-- npc.MindTarget.Value = target
-
-		-- if target ~= nil then
-		-- 	npc.MindData["LastTarget"] = target
-		-- end
-
 		-- return target, distance
+
+		if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
+			target = nil
+		end
+
+		target = checkEarshot(npc) or target
+		npc.MindTarget.Value = target
+
+		if target ~= nil then
+			npc.MindData["LastTarget"] = target
+		end
+
+		return target, distance
 	end,
 
 	LookAtTarget = function(npc: Npc, doLerp, lerpAlpha)

@@ -15,6 +15,7 @@ UI.Parent = player.PlayerGui
 UI.Enabled = false
 
 local client = script.Parent
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Hints = require(script.Parent.Hints)
 local acts = require(client.Acts)
 local camera = require(client.Camera)
@@ -103,6 +104,7 @@ local actionsFunctions = {
 		end
 
 		currentNpc:RemoveTag("Interactable")
+		GlobalEvents.Control.UpdateInteractablesList:Fire()
 	end,
 
 	Hint = function(index)

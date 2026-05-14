@@ -28,6 +28,7 @@ local currentSelectedSlot
 
 --// Modules
 local Achievements = require(script.Parent.Achievements)
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Types = require(ReplicatedStorage.Shared.Types)
 local UIAnimationService = require(client.UIAnimationService)
 local acts = require(client.Acts)
@@ -1429,6 +1430,13 @@ function Inventory.Init()
 end
 
 --// Main //--
+
+GlobalEvents.Control.ForceInventoryClose:Connect(function()
+	if not Inventory.InventoryOpen then
+		return
+	end
+	Inventory.CloseInventory()
+end)
 
 Inventory.ToggleInventoryInput = globalInputService.CreateInputAction(
 	"Inventory",

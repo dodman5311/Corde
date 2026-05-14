@@ -3,50 +3,23 @@ local module = {
 	currentArea = nil :: Part?,
 }
 --// Services
-local SoundService = game:GetService("SoundService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local collectionService = game:GetService("CollectionService")
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
 
 --// Instances
 local player = players.LocalPlayer
-local camera = workspace.CurrentCamera
+local areas = {}
 
 --// Modues
-local client = script.Parent
 local Achievements = require(script.Parent.Achievements)
-local cameraService = require(client.Camera)
-local musicService = require(client.MusicService)
-local util = require(client.Util)
+local AttributeEffects = require(script.Parent.AttributeEffects)
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 
 --// Values
-local shiftTi = TweenInfo.new(3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
 
 --// Functions
-local attributeEffects = {
-	FieldOfView = function(value)
-		if value == "Default" then
-			value = cameraService.fieldOfView
-		end
-
-		util.tween(camera, shiftTi, { FieldOfView = tonumber(value) })
-	end,
-
-	Track = function(trackName)
-		if
-			workspace:GetAttribute("InCombat")
-			-- and musicService.playingTrack
-			--and musicService.playingTrack.Name == "SuddenDeath"
-		then
-			return
-		end
-		musicService:PlayTrack(trackName)
-	end,
-
-	Reverb = function(reverbName)
-		SoundService.AmbientReverb = Enum.ReverbType[reverbName]
-	end,
-}
 
 local function CheckForEchoAchievement(part)
 	if part.Name == "EchoChamber" then
@@ -54,26 +27,19 @@ local function CheckForEchoAchievement(part)
 	end
 end
 
-local function onAreaEntered(part: Part)
-	if not part then
+local function onAreaEntered(areaPart: Part)
+	if not areaPart then
 		return
 	end
 
-	for attributeName, value in pairs(part:GetAttributes()) do
-		local effect = attributeEffects[attributeName]
+	AttributeEffects.DoEffects(areaPart)
 
-		if not effect then
-			continue
-		end
-
-		effect(value)
-	end
-
-	CheckForEchoAchievement(part)
+	GlobalEvents.React.AreaEntered:Fire(areaPart)
+	CheckForEchoAchievement(areaPart)
 end
 
 local function setUpAreaParts()
-	for _, part: Part in ipairs(collectionService:GetTagged("Area")) do
+	for _, part: Part in ipairs(areas) do
 		part.Transparency = 1
 		part.CanCollide = false
 		part.CanQuery = false
@@ -90,7 +56,10 @@ local function onHeartbeat()
 
 	module.currentArea = nil
 
-	for _, part in ipairs(collectionService:GetTagged("Area")) do
+	for _, part in ipairs(areas) do
+		if not part:FindFirstAncestor("Workspace") then
+			continue
+		end
 		local partsInBox = workspace:GetPartBoundsInBox(part.CFrame, part.Size)
 
 		if not table.find(partsInBox, character.PrimaryPart) then
@@ -108,6 +77,7 @@ local function onHeartbeat()
 end
 
 function module.Init()
+	areas = collectionService:GetTagged("Area")
 	setUpAreaParts()
 end
 

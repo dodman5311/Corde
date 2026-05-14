@@ -22,6 +22,7 @@ local cursorUi
 local objectPlacedAt
 
 local Client = player.PlayerScripts.Client
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Hints = require(script.Parent.Hints)
 local actionPrompt = require(Client.ActionPrompt)
 local acts = require(Client.Acts)
@@ -307,6 +308,8 @@ local function InteractiWithObject(object: Instance)
 	elseif object:HasTag("NPC") or object:HasTag("Interest") then
 		if object:GetAttribute("Sequence") then
 			object:RemoveTag("Interactable")
+			GlobalEvents.Control.UpdateInteractablesList:Fire()
+
 			sequences:beginSequence(object:GetAttribute("Sequence"), object)
 		else
 			dialogue:EnterDialogue(mouseTarget.Value)
@@ -370,6 +373,11 @@ globalInputService.inputActions.Interact:SetPriority(Enum.ContextActionPriority.
 
 interactTimer.OnEnded:Connect(function()
 	acts:removeAct("Interacting")
+end)
+
+GlobalEvents.React.AreaEntered:Connect(function(areaPart: Part)
+	module.UseObject(areaPart)
+	InteractiWithObject(areaPart)
 end)
 
 return module
