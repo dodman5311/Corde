@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 
+local Elevator = require(script.Parent.Elevator)
 local acts = require(client.Acts)
 local dialogue = require(client.Dialogue)
 local globalInputService = require(client.GlobalInputService)
@@ -156,6 +157,10 @@ local objectFunctions = {
 		end
 
 		Inventory.OpenInventory(true)
+	end,
+
+	OpenElevator = function()
+		Elevator:ShowGuiAnimation()
 	end,
 }
 

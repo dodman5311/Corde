@@ -141,4 +141,45 @@ export type weapon = Item & {
 	Config: weaponData,
 }
 
+export type WorldSpaceGui = {
+	Name: string,
+	Base: Part,
+	Sway: number,
+	Enabled: boolean,
+
+	GetFrames: (self: WorldSpaceGui) -> { WorldSpaceFrame },
+	AddFrame: (self: WorldSpaceGui, frame: Frame) -> WorldSpaceFrame,
+	GetFrame: (self: WorldSpaceGui, frameName: string) -> WorldSpaceFrame?,
+
+	Destroy: (self: WorldSpaceGui) -> any?,
+}
+
+export type WorldSpaceFrame = {
+	Name: string,
+	WorldSpaceGui: WorldSpaceGui,
+	Enabled: boolean,
+
+	Base: Part,
+	Gui: SurfaceGui,
+
+	GetObject: (self: WorldSpaceFrame, objectName: string) -> GuiObject?,
+	TweenObject: (
+		self: WorldSpaceFrame,
+		object: string,
+		tweenInfo: TweenInfo,
+		propertyTable: { [string]: any },
+		callbackFunction: (() -> any?)?,
+		callbackStateCondition: Enum.PlaybackState?
+	) -> Tween,
+	SetObjectProperties: (
+		self: WorldSpaceFrame,
+		object: string | { string },
+		propertyTable: { [string]: any }
+	) -> any?,
+
+	DestroyObject: (self: WorldSpaceFrame, objectName: string) -> any?,
+
+	Destroy: (self: WorldSpaceFrame) -> any?,
+}
+
 return {}

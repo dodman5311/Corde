@@ -559,6 +559,8 @@ module.actions = {
 		module.actions.RunPath(npc)
 		module.actions.LookAtPath(npc, lerpAlpha)
 
+		print(npc.Path.path.Status)
+
 		if npc.MindData.PathGoal then
 			local npcPosition = npc.Instance:GetPivot().Position
 			local npcPosition2D = Vector3.new(npcPosition.X, 0.25, npcPosition.Z)

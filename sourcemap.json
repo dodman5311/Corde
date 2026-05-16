@@ -460,6 +460,13 @@
                   ]
                 },
                 {
+                  "name": "AttributeEffects",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/client\\AttributeEffects.luau"
+                  ]
+                },
+                {
                   "name": "BloodEffects",
                   "className": "ModuleScript",
                   "filePaths": [
@@ -522,6 +529,13 @@
                   "className": "ModuleScript",
                   "filePaths": [
                     "src/client\\Dialogue.lua"
+                  ]
+                },
+                {
+                  "name": "Elevator",
+                  "className": "ModuleScript",
+                  "filePaths": [
+                    "src/client\\Elevator.luau"
                   ]
                 },
                 {
@@ -804,13 +818,6 @@
                   "className": "ModuleScript",
                   "filePaths": [
                     "src/client\\World.lua"
-                  ]
-                },
-                {
-                  "name": "AttributeEffects",
-                  "className": "ModuleScript",
-                  "filePaths": [
-                    "src/client\\AttributeEffects.luau"
                   ]
                 }
               ]

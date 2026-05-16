@@ -175,7 +175,7 @@ function module.StartGame(saveData: Types.GameState?)
 		shadowPart.Material = Enum.Material.ForceField
 	end
 
-	local layerKey = saveData and saveData.CurrentLayerKey or "Demo"
+	local layerKey = saveData and saveData.CurrentLayerKey or "Living Quarters"
 	local layers = saveData and saveData.Layers
 	loadLayersFromData(layers)
 	module.LoadLayer(layerKey)

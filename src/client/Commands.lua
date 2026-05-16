@@ -45,6 +45,17 @@ local commands = {
 				Value:Play()
 			end,
 		},
+
+		ShowElevatorMenu = {
+			Parameters = function()
+				return {}
+			end,
+
+			Execute = function(_, Value)
+				task.wait(1)
+				require(script.Parent.Elevator):ShowGuiAnimation()
+			end,
+		},
 	},
 
 	Player = {

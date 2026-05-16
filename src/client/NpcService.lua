@@ -32,8 +32,6 @@ function NpcService.new(npcName: string): Npc?
 	stateValue.Name = "State"
 
 	local obstacleParams = RaycastParams.new()
-	obstacleParams.FilterType = Enum.RaycastFilterType.Include
-	obstacleParams.FilterDescendantsInstances = { workspace.Map }
 	obstacleParams.CollisionGroup = "Enemy"
 
 	local Npc: Npc = {
@@ -50,11 +48,11 @@ function NpcService.new(npcName: string): Npc?
 		Heartbeat = {},
 
 		Path = Pathfinder.state({
-			AgentRadius = 3,
-			AgentHeight = 2,
-			AgentStepHeight = 1.9,
+			AgentRadius = 3.5,
+			AgentHeight = 1.25,
+			AgentStepHeight = 0.75,
 			AgentCanJump = false,
-			AgentCanClimb = true,
+			AgentCanClimb = false,
 		}, Vector3.zero, obstacleParams, nil, true),
 		Timer = timer:newQueue(),
 		Timers = {},
@@ -94,7 +92,7 @@ function NpcService.new(npcName: string): Npc?
 		end,
 
 		Place = function(self: Npc, position: Vector3 | CFrame, parent: Instance?)
-			parent = workspace --parent or workspace.Map
+			parent = parent or workspace.Map
 			self.Instance.Parent = parent
 
 			if typeof(position) == "Vector3" then

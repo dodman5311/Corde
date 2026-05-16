@@ -63,6 +63,7 @@ local CUSTOM_MOBILE_BUTTON_IMAGES = {
 local AppRatingPromptService = game:GetService("AppRatingPromptService")
 local CollectionService = game:GetService("CollectionService")
 local ContextActionService = game:GetService("ContextActionService")
+local GamepadService = game:GetService("GamepadService")
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -583,6 +584,7 @@ function globalInputService.AddToActionGroup(actionGroup: ActionGroup | string, 
 end
 
 function globalInputService:SelectGui(frame: GuiObject)
+	GamepadService:DisableGamepadCursor()
 	if self:GetInputSource().Type == "Gamepad" then
 		GuiService:Select(frame)
 	end
@@ -596,7 +598,7 @@ end
 UserInputService.InputBegan:Connect(setInputType)
 UserInputService.InputChanged:Connect(setInputType)
 
-inputServiceGui.DisplayOrder = -1
+inputServiceGui.DisplayOrder = 99
 inputServiceGui.Name = "InputServiceGui"
 inputServiceGui.Parent = Player:WaitForChild("PlayerGui")
 

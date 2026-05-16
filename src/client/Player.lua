@@ -531,7 +531,7 @@ local function updatePlayerDirection()
 
 	local yOrientation = character.PrimaryPart.Orientation.Y
 	local sway = logPlayerDirection - yOrientation
-	local torsoMotor = character.PrimaryPart.Torso
+	local torsoMotor = character.PrimaryPart.Torso_F
 	local legs = character.Legs
 
 	torsoMotor.C1 = torsoMotor.C1:Lerp(CFrame.new(0, 0, 0) * CFrame.Angles(0, -math.rad(sway * 3), 0), 0.4)
@@ -567,7 +567,7 @@ local function updateDirection(vector)
 	end
 
 	local frame = character.Legs.UI.Frame
-	local arms = character.Torso.UI.Reload
+	local arms = character.Torso_F.UI.Reload
 
 	if moveDirection.Magnitude > 0 and not acts:checkAct("Paused") then
 		if uiAnimationService.CheckPlaying(frame) then
@@ -905,10 +905,15 @@ GlobalEvents.Control.WalkPlayerToPoint:Connect(function(point: Vector2)
 
 	WalkingToPoint = point - Vector2.new(characterPosition.X, characterPosition.Z)
 
-	-- will yeild until the desitination is reached
-	while true do
+	-- will yeild until the desitination is reached'
+
+	local distance = (character:GetPivot().Position - point3D).Magnitude
+	local waitTime = distance / WALK_SPEED
+	local startTime = os.clock()
+
+	while os.clock() - startTime <= waitTime do
 		RunService.Heartbeat:Wait()
-		local distance = (character:GetPivot().Position - point3D).Magnitude
+		distance = (character:GetPivot().Position - point3D).Magnitude
 
 		if distance <= 1 then
 			break

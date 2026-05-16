@@ -70,7 +70,7 @@ local function showWeapon(weaponType)
 		return
 	end
 
-	local torso = character.Torso
+	local torso = character.Torso_F
 	local reload = torso.UI.Reload
 	local fire = torso.UI.Fire
 
@@ -165,7 +165,7 @@ function module.unequipWeapon()
 		currentWeapon.State.CurrentMag.State.InUse = false
 	end
 
-	local torso = character.Torso
+	local torso = character.Torso_F
 	local reload = torso.UI.Reload
 
 	uiAnimationService.StopAnimation(reload)
@@ -336,7 +336,7 @@ local function reload(itemToUse)
 
 	local reloadTime = weaponData.ReloadTime
 
-	local torso = player.Character.Torso
+	local torso = player.Character.Torso_F
 
 	acts:createAct("Reloading", "Interacting")
 
@@ -465,7 +465,7 @@ local function createBullet(weaponData)
 		return
 	end
 
-	local torso = character.Torso
+	local torso = character.Torso_F
 
 	local damage = currentWeapon.Config.Damage
 	if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty Reduce damage dealt
@@ -493,7 +493,7 @@ end
 
 local function createShell()
 	local character = player.Character
-	local torso = character.Torso
+	local torso = character.Torso_F
 	local shell: Part = models.Shell:Clone()
 
 	Debris:AddItem(shell, 5)
@@ -536,7 +536,7 @@ local function fireWeapon(input)
 		return
 	end
 
-	local torso = character.Torso
+	local torso = character.Torso_F
 
 	acts:createAct("Firing")
 
