@@ -6,8 +6,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local GlobalInputService = require(script.Parent.GlobalInputService)
 local MouseOver = require(script.Parent.MouseOver)
+local ObjectsView = require(script.Parent.ObjectsView)
 local Scales = require(script.Parent.Scales)
 local Timer = require(script.Parent.Timer)
 local Util = require(script.Parent.Util)
@@ -41,15 +43,21 @@ local glitchTimer = Timer:new("ElevatorGlitchTimer", 0.2, function()
 end)
 
 local c = 0
+local animationThread
 
 --// Functions
 local function ResetButtons()
+	local ti = TweenInfo.new(0.2)
+
 	for _, button in ipairs(Floors:GetChildren()) do
 		if button:GetAttribute("LayerKey") == workspace:GetAttribute("CurrentLayerKey") then
 			button.YouAreHere.Visible = true
 		else
 			button.YouAreHere.Visible = false
 		end
+
+		Util.tween(button.Center, ti, { Size = UDim2.fromScale(1, 1), ImageColor3 = Color3.new(1, 1, 1) })
+		Util.tween(button.YouAreHere, ti, { Size = UDim2.fromScale(1, 1) })
 	end
 end
 
@@ -85,16 +93,6 @@ local function UpdateLayerDescription(layerNumber, layerKey)
 end
 
 function Elevator:ShowGuiAnimation()
-	if MenuIsOpen then
-		return
-	end
-
-	MenuIsOpen = true
-	ResetGui()
-	UI.Enabled = true
-
-	Scales.activeScales["InteractDisabled"]:Add("Elevator")
-
 	local ti = TweenInfo.new(0.25, Enum.EasingStyle.Linear)
 	local ti_0 = TweenInfo.new(1, Enum.EasingStyle.Quint)
 	local ti_1 = TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut)
@@ -102,6 +100,7 @@ function Elevator:ShowGuiAnimation()
 	local ti_3 = TweenInfo.new(0.75, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
 
 	Util.PlaySound(NetSounds.NetOpen)
+	Frame.Visible = true
 
 	Util.tween(Background, ti, { BackgroundTransparency = 0.05 })
 	Edges.Visible = true
@@ -126,45 +125,71 @@ function Elevator:ShowGuiAnimation()
 		Util.flickerUi(button, 0.025, 8, true)
 		task.wait(0.1)
 	end
-
 	GlobalInputService:SelectGui(Floors)
+	animationThread = nil
+end
+
+function Elevator:OpenElevatorMenu()
+	if MenuIsOpen then
+		return
+	end
+
+	MenuIsOpen = true
+	ResetGui()
+	UI.Enabled = true
+
+	Scales.activeScales["InteractDisabled"]:Add("Elevator")
+	ObjectsView:EnterViewSpaceLayer(function()
+		self:CloseElevatorMenu()
+	end, 1)
+
+	if animationThread then
+		task.cancel(animationThread)
+		animationThread = nil
+	end
+
+	animationThread = task.spawn(self.ShowGuiAnimation, self)
 end
 
 function Elevator:HideGuiAnimation()
-	if MenuIsOpen then
+	Frame.Visible = false
+end
+
+function Elevator:CloseElevatorMenu()
+	if not MenuIsOpen then
 		return
 	end
 
 	Scales.activeScales["InteractDisabled"]:Remove("Elevator")
 	MenuIsOpen = false
+	UI.Enabled = false
+
+	self:HideGuiAnimation()
 end
 
 local function ButtonEntered(button)
 	local ti = TweenInfo.new(0.1)
 
-	Util.PlaySound(NetSounds.Select, 0.025)
+	ResetButtons()
 
+	Util.PlaySound(NetSounds.Select, 0.025)
 	Util.tween(button.Parent.Center, ti, { Size = UDim2.fromScale(1.1, 1.1), ImageColor3 = Color3.new(1) })
 	Util.tween(button.Parent.YouAreHere, ti, { Size = UDim2.fromScale(1.1, 1.1) })
 	UpdateLayerDescription(tonumber(button.Parent.Name), button.Parent:GetAttribute("LayerKey"))
-end
-
-local function ButtonLeft(button)
-	local ti = TweenInfo.new(0.2)
-	Util.tween(button.Parent.Center, ti, { Size = UDim2.fromScale(1, 1), ImageColor3 = Color3.new(1, 1, 1) })
-	Util.tween(button.Parent.YouAreHere, ti, { Size = UDim2.fromScale(1, 1) })
 end
 
 local function ConnectButtons()
 	for _, buttonFrame in ipairs(Floors:GetChildren()) do
 		local button = buttonFrame.Button :: TextButton
 
-		local enter, leave = MouseOver.MouseEnterLeaveEvent(button)
+		local enter = MouseOver.MouseEnterLeaveEvent(button)
 		enter:Connect(function()
 			ButtonEntered(button)
 		end)
-		leave:Connect(function()
-			ButtonLeft(button)
+
+		button.MouseButton1Click:Connect(function()
+			GlobalEvents.Control.GoToLayer:Fire(buttonFrame:GetAttribute("LayerKey"))
+			ResetButtons()
 		end)
 	end
 end

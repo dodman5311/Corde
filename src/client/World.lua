@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 local Layers = ReplicatedStorage.Layers
 
+local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local NpcService = require(script.Parent.NpcService)
 local Spawners = require(script.Parent.Spawners)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -144,7 +145,7 @@ local function storeCurrentLayer()
 end
 
 function module.LoadLayer(layerKey: string)
-	print("AttemptLoad")
+	print("AttemptLoad", layerKey)
 
 	NpcService:StopAll() -- stop npcs from processing
 
@@ -217,6 +218,10 @@ RunService.Heartbeat:Connect(function()
 			itemObject.AssemblyAngularVelocity = Vector3.zero
 		end
 	end
+end)
+
+GlobalEvents.Control.GoToLayer:Connect(function(layerKey)
+	module.LoadLayer(layerKey)
 end)
 
 -- globalInputService.CreateInputAction("PauseGame", function(state)

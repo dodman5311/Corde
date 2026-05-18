@@ -3,7 +3,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local client = script.Parent
 
 local Elevator = require(script.Parent.Elevator)
-local acts = require(client.Acts)
 local dialogue = require(client.Dialogue)
 local globalInputService = require(client.GlobalInputService)
 local sequences = require(client.Sequences)
@@ -159,8 +158,12 @@ local objectFunctions = {
 		Inventory.OpenInventory(true)
 	end,
 
-	OpenElevator = function()
-		Elevator:ShowGuiAnimation()
+	OpenElevator = function(object: Model)
+		if player.Character:GetAttribute("HasNet") then
+			Elevator:OpenElevatorMenu(object:FindFirstAncestor("Elevator"))
+		else
+			dialogue:SayFromPlayer("I need a N.E.T module to use this.")
+		end
 	end,
 }
 

@@ -1,7 +1,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local module = {
 	currentDisplayedModel = nil,
+	ViewSpaces = {},
 }
 local client = script.Parent
 local AttributeEffects = require(script.Parent.AttributeEffects)
@@ -57,7 +59,49 @@ function module:EnterView(object: Instance)
 	return newModel
 end
 
+function module:MoveCameraPosition(index: number?, tweenInfo: TweenInfo?)
+	print(index)
+	index = index or 0
+	local object = self.currentDisplayedModel
+	local cameraRoot = object.PrimaryPart:FindFirstChild("CameraRoot")
+	if not cameraRoot then
+		return
+	end
+
+	local indexedAttachment = object.PrimaryPart:FindFirstChild("CameraPos_" .. index)
+	if not indexedAttachment then
+		return
+	end
+
+	local ti = tweenInfo or TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+	local linkCameraCFrame = RunService.RenderStepped:Connect(function()
+		cameraService.firstPersonData.RootCFrame = cameraRoot.WorldCFrame
+	end)
+
+	util.tween(cameraRoot, ti, { WorldCFrame = indexedAttachment.WorldCFrame }).Completed:Once(function()
+		linkCameraCFrame:Disconnect()
+	end)
+end
+
+function module:EnterViewSpaceLayer(exitFunction: (...any?) -> any?, viewIndex: number?, tweenInfo: TweenInfo?)
+	viewIndex = viewIndex or 0
+	table.insert(self.ViewSpaces, { func = exitFunction, viewIndex = viewIndex, tweenInfo = tweenInfo })
+	self:MoveCameraPosition(viewIndex, tweenInfo)
+end
+
 function module:ExitView()
+	if #module.ViewSpaces > 0 then
+		local spaceAction = module.ViewSpaces[1]
+		task.spawn(spaceAction.func)
+
+		local lastIndex = math.max(spaceAction.viewIndex - 1, 0)
+		self:MoveCameraPosition(lastIndex, spaceAction["tweenInfo"])
+
+		table.remove(module.ViewSpaces, 1)
+		return
+	end
+
 	globalInputService.inputActions.Interact:Disable()
 	util.tween(HUD.Transition, TRANSITION_INFO, { BackgroundTransparency = 0 }, false, function()
 		globalInputService.inputActions.Interact:Enable()

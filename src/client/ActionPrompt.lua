@@ -6,14 +6,43 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 
+local Acts = require(script.Parent.Acts)
 local acts = require(Client.Acts)
-local util = require(Client.Util)
 local signals = require(ReplicatedStorage.Packages.Signal)
+local util = require(Client.Util)
 
 module.ActionBegun = signals.new()
 
 local ti_0 = TweenInfo.new(0.075, Enum.EasingStyle.Linear)
 local ti_1 = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+local function updateActionPromptFrame(frame, value)
+	local barFrame = frame.BarFrame
+
+	barFrame.Bar.Size = UDim2.fromScale(1, value)
+	barFrame.B.Size = UDim2.fromScale(1, value)
+	barFrame.R.Size = UDim2.fromScale(1, value)
+end
+
+local function tweenActionPromptFrame(frame, barTi)
+	local barFrame = frame.BarFrame
+
+	util.tween(barFrame.Bar, barTi, { Size = UDim2.fromScale(1, 1) })
+	util.tween(barFrame.B, barTi, { Size = UDim2.fromScale(1, 1) })
+	util.tween(barFrame.R, barTi, { Size = UDim2.fromScale(1, 1) }, false, function()
+		module.hideActionPrompt()
+	end)
+end
+
+local function showActionPromptFrame(frame, actionTitle)
+	updateActionPromptFrame(frame, 0)
+
+	frame.Action.Text = actionTitle
+	frame.ActionR.Text = actionTitle
+	frame.ActionB.Text = actionTitle
+
+	util.tween(frame, ti_0, { GroupTransparency = 0 })
+end
 
 function module.showActionPrompt(actionTitle: string)
 	if not player.Character then
@@ -28,17 +57,13 @@ function module.showActionPrompt(actionTitle: string)
 	local prompt = promptPart.UI
 
 	local frame = prompt.Frame
-	local barFrame = frame.BarFrame
+	showActionPromptFrame(frame, actionTitle)
 
-	barFrame.Bar.Size = UDim2.fromScale(1, 0)
-	barFrame.B.Size = UDim2.fromScale(1, 0)
-	barFrame.R.Size = UDim2.fromScale(1, 0)
-
-	frame.Action.Text = actionTitle
-	frame.ActionR.Text = actionTitle
-	frame.ActionB.Text = actionTitle
-
-	util.tween(frame, ti_0, { GroupTransparency = 0 })
+	if Acts:checkAct("InObjectView") then
+		local cursor = player.PlayerGui.Cursor
+		local actionPrompt = cursor.Cursor.ActionPrompt
+		showActionPromptFrame(actionPrompt, actionTitle)
+	end
 end
 
 function module.showEnergyUsage(amount)
@@ -78,7 +103,18 @@ function module.hideActionPrompt()
 	end
 
 	acts:removeAct("Interacting")
-	util.tween(player.Character.ActionPrompt.UI.Frame, ti_1, { GroupTransparency = 1 })
+
+	local character = player.Character
+	local promptPart = character.ActionPrompt
+	local prompt = promptPart.UI
+
+	local frame = prompt.Frame
+
+	util.tween(frame, ti_1, { GroupTransparency = 1 })
+
+	local cursor = player.PlayerGui.Cursor
+	local actionPrompt = cursor.Cursor.ActionPrompt
+	util.tween(actionPrompt, ti_1, { GroupTransparency = 1 })
 end
 
 function module.updateActionValue(value: number)
@@ -91,11 +127,11 @@ function module.updateActionValue(value: number)
 	local prompt = promptPart.UI
 
 	local frame = prompt.Frame
-	local barFrame = frame.BarFrame
+	updateActionPromptFrame(frame, value)
 
-	barFrame.Bar.Size = UDim2.fromScale(1, value)
-	barFrame.B.Size = UDim2.fromScale(1, value)
-	barFrame.R.Size = UDim2.fromScale(1, value)
+	local cursor = player.PlayerGui.Cursor
+	local actionPrompt = cursor.Cursor.ActionPrompt
+	updateActionPromptFrame(actionPrompt, value)
 end
 
 function module.showAction(showTime, actionTitle)
@@ -108,17 +144,17 @@ function module.showAction(showTime, actionTitle)
 	local prompt = promptPart.UI
 
 	local frame = prompt.Frame
-	local barFrame = frame.BarFrame
-
 	local barTi = TweenInfo.new(showTime, Enum.EasingStyle.Linear)
 
 	module.showActionPrompt(actionTitle)
 
-	util.tween(barFrame.Bar, barTi, { Size = UDim2.fromScale(1, 1) })
-	util.tween(barFrame.B, barTi, { Size = UDim2.fromScale(1, 1) })
-	util.tween(barFrame.R, barTi, { Size = UDim2.fromScale(1, 1) }, false, function()
-		module.hideActionPrompt()
-	end)
+	tweenActionPromptFrame(frame, barTi)
+
+	if Acts:checkAct("InObjectView") then
+		local cursor = player.PlayerGui.Cursor
+		local actionPrompt = cursor.Cursor.ActionPrompt
+		tweenActionPromptFrame(actionPrompt, barTi)
+	end
 end
 
 function module.showActionTimer(actionTimer, actionTitle)

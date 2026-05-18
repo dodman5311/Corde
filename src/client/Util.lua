@@ -1,9 +1,9 @@
 local util = {
 	bound = {},
 }
-local deb = game:GetService("Debris")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
+local deb = game:GetService("Debris")
 local ts = game:GetService("TweenService")
 
 local rng = Random.new()
@@ -28,14 +28,12 @@ function util.getSetting(groupName: string, settingName: string)
 			continue
 		end
 
-		
-
 		for _, setting in ipairs(group) do
 			if setting.Name ~= settingName then
 				continue
 			end
 
-			foundSetting = setting			
+			foundSetting = setting
 		end
 	end
 

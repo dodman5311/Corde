@@ -6,6 +6,7 @@ local Events = {
 		ForceInventoryClose = Signal.new() :: Signal.Signal<>,
 		WalkPlayerToPoint = Signal.new() :: Signal.Signal<Vector2>,
 		UpdateInteractablesList = Signal.new() :: Signal.Signal<>,
+		GoToLayer = Signal.new() :: Signal.Signal<string>,
 	},
 	React = {
 		AreaEntered = Signal.new() :: Signal.Signal<Part>,

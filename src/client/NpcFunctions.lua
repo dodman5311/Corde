@@ -135,7 +135,6 @@ local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damag
 
 	for _, part in ipairs(newHitbox) do
 		local model = part:FindFirstAncestorOfClass("Model")
-		print(part, model)
 		if not model then
 			continue
 		end
@@ -558,8 +557,6 @@ module.actions = {
 	MoveAlongPath = function(npc: Npc, lerpAlpha)
 		module.actions.RunPath(npc)
 		module.actions.LookAtPath(npc, lerpAlpha)
-
-		print(npc.Path.path.Status)
 
 		if npc.MindData.PathGoal then
 			local npcPosition = npc.Instance:GetPivot().Position
