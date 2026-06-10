@@ -16,6 +16,7 @@ local areas = {}
 local Achievements = require(script.Parent.Achievements)
 local AttributeEffects = require(script.Parent.AttributeEffects)
 local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
+local Util = require(script.Parent.Util)
 
 --// Values
 
