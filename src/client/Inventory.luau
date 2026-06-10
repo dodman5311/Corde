@@ -70,6 +70,12 @@ Inventory.statusPumpTimer = timer:new("HealthPump", 1)
 local InventorySize = 8
 local STORAGE_SIZE = 12
 
+local FULL_HEALTH_COLOR = Color3.fromRGB(125, 245, 255)
+local MED_HEALTH_COLOR = Color3.fromRGB(255, 245, 0)
+local LOW_HEALTH_COLOR = Color3.fromRGB(255, 0, 0)
+local MED_HEALTH_POINT = 0.6
+local LOW_HEALTH_POINT = 0.25
+
 --// Functions
 
 local function deepClone(original)
@@ -1356,7 +1362,14 @@ local function updatePlayerStatus()
 	local hunger = character:GetAttribute("Hunger")
 	local invertedHungerValue = math.abs((hunger / 100) - 1)
 
-	heathDisplay.ImageColor3 = Color3.new(1):Lerp(Color3.fromRGB(125, 245, 255), health)
+	if health >= MED_HEALTH_POINT then
+		heathDisplay.ImageColor3 = MED_HEALTH_COLOR:Lerp(FULL_HEALTH_COLOR, util.map(health, MED_HEALTH_POINT, 1, 0, 1))
+	else
+		heathDisplay.ImageColor3 = LOW_HEALTH_COLOR:Lerp(
+			MED_HEALTH_COLOR,
+			util.map(math.max(health, LOW_HEALTH_POINT), LOW_HEALTH_POINT, MED_HEALTH_POINT, 0, 1)
+		)
+	end
 
 	hungerDisplay.UIGradient.Offset = Vector2.new(0, invertedHungerValue)
 

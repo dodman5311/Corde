@@ -268,6 +268,8 @@ function module.InstallModule()
 	glitchSound.PlaybackSpeed = 2.5
 	glitchSound.Ended:Wait()
 
+	soundsFolder.StaticHit.Volume = 0.5
+
 	sequenceFrame.Glitch.Visible = false
 	background.Visible = false
 	smudge.Visible = false
@@ -291,7 +293,7 @@ function module.InstallModule()
 	end)
 
 	playPingSound()
-	showTextForPeriod("You’re my favorite.", sequenceFrame.ScreenText, 3, Color3.new(1))
+	showTextForPeriod("A metal man sings the black bird's song.", sequenceFrame.ScreenText, 3, Color3.new(1))
 
 	util.PlaySound(soundsFolder.StaticHit)
 	sequenceFrame.RedX.Visible = true
@@ -306,7 +308,7 @@ function module.InstallModule()
 	sequenceFrame.RedX.Visible = false
 
 	playPingSound()
-	showTextForPeriod("Did you know that?", sequenceFrame.ScreenText, 2.5)
+	showTextForPeriod("And the sun dies by a plastic reason", sequenceFrame.ScreenText, 3)
 	util.PlaySound(soundsFolder.StaticHit)
 
 	sequenceFrame.Heart.Visible = true
@@ -321,7 +323,7 @@ function module.InstallModule()
 	sequenceFrame.Cells.Visible = false
 
 	playPingSound()
-	showTextForPeriod("It's okay.", sequenceFrame.ScreenText, 0.25)
+	showTextForPeriod("But don't worry.", sequenceFrame.ScreenText, 0.25)
 	util.PlaySound(soundsFolder.StaticHit)
 	-- VOID VISIONS
 	sequenceFrame.Void.Visible = true
@@ -359,8 +361,8 @@ function module.InstallModule()
 	sequenceFrame.ScreenText.Visible = true
 
 	playPingSound()
-	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I won't let you go." })
-	task.wait(3)
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I like your pattern." })
+	task.wait(2.5)
 	util.PlaySound(soundsFolder.StaticHit)
 	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Child." })
 	task.wait(0.05)
@@ -412,6 +414,8 @@ function module.InstallModule()
 	netMusic.Ended:Once(function()
 		musicService:ReturnToLastTrack(0.1)
 	end)
+
+	soundsFolder.StaticHit.Volume = 1.5
 end
 
 function module.keyhole(object: Model)
