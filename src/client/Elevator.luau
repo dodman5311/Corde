@@ -182,8 +182,12 @@ local function ConnectButtons()
 	for _, buttonFrame in ipairs(Floors:GetChildren()) do
 		local button = buttonFrame.Button :: TextButton
 
-		local enter = MouseOver.MouseEnterLeaveEvent(button)
-		enter:Connect(function()
+		-- local enter = MouseOver.MouseEnterLeaveEvent(button)
+		-- enter:Connect(function()
+		-- 	ButtonEntered(button)
+		-- end)
+
+		button.MouseEnter:Connect(function()
 			ButtonEntered(button)
 		end)
 

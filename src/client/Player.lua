@@ -155,8 +155,8 @@ local SNAP_DISTANCE = interact.INTERACT_DISTANCE
 
 local OBJECTVIEW_GAMEPAD_SENSITIVITY = 3
 
-local WALK_SPEED = 6.875
-local SPRINT_SPEED = 10 --9 --3.85
+local WALK_SPEED = 7.25
+local SPRINT_SPEED = 11 --9 --3.85
 
 local HUNGER_RATE = 0.75 --0.65 -- 0.5
 local RAM_RECOVERY_RATE = 0.035
@@ -168,15 +168,15 @@ local function checkEquippedStem(healthPercent: number)
 
 	healthPercent *= 100
 
-	if not currentStimEquipped or not currentStimEquipped.InUse then
+	if not currentStimEquipped or not currentStimEquipped.State.InUse then
 		return
 	end
 
-	if healthPercent > currentStimEquipped.Value.ActivateValue then
+	if healthPercent > currentStimEquipped.Config.ActivateValue then
 		return
 	end
 
-	currentStimEquipped.InUse = false
+	currentStimEquipped.State.InUse = false
 	module.ConsumeItem(currentStimEquipped, "Heal")
 end
 
@@ -288,7 +288,7 @@ local function placePlayerBody(character)
 end
 
 local function playerDied(character)
-	if currentStimEquipped and currentStimEquipped.Value.ActivateValue == 0 then
+	if currentStimEquipped and currentStimEquipped.Config.ActivateValue == 0 then
 		return
 	end
 
@@ -401,12 +401,12 @@ function module.ConsumeItem(item, use)
 		return
 	end
 
-	local addedHunger = item.State.HungerRestoration
+	local addedHunger = item.Config.HungerRestoration
 	if addedHunger then
 		player.Character:SetAttribute("Hunger", player.Character:GetAttribute("Hunger") + addedHunger)
 	end
 
-	local addedHealth = item.State.HealthRestoration
+	local addedHealth = item.Config.HealthRestoration
 	if addedHealth then
 		module:ChangePlayerHealth(addedHealth, "Add")
 	end

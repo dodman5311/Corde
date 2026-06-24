@@ -32,7 +32,7 @@ function NpcService.new(npcName: string): Npc?
 	stateValue.Name = "State"
 
 	local obstacleParams = RaycastParams.new()
-	obstacleParams.CollisionGroup = "Enemy"
+	--obstacleParams.CollisionGroup = "Enemy"
 
 	local Npc: Npc = {
 		Name = npcName,

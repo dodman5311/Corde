@@ -55,7 +55,7 @@ local Items: { [string]: Types.Item } = {
 	Battle_Rifle = {
 		ItemType = "Weapon",
 		Name = "SGM-600",
-		IconId = 0,
+		IconId = 133771746645077,
 		Desc = "Heavy Battle Rifle designed to combat UAE's. Fires 2 rounds each shot.",
 
 		UseAction = "EquipWeapon",
@@ -76,7 +76,7 @@ local Items: { [string]: Types.Item } = {
 			StoppingPower = 0.75,
 
 			Recoil = 70,
-			DisplayImage = "rbxassetid://133886120497836",
+			DisplayImage = "rbxassetid://84974769590129",
 		},
 		State = {
 			InUse = false,
@@ -765,6 +765,19 @@ A Bio Module that connects the user to nearby devices.]],
 				Action = "AddItem",
 			},
 		},
+	},
+
+	Wrist_Band = {
+		ItemType = "Item",
+		Name = "Wrist Band",
+		IconId = 77793554789189,
+		Desc = [[A wrist band with the name, <font color="rgb(255,125,0)">Kaia Parlow</font> written on it.]],
+
+		UseAction = "",
+		CanDrop = true,
+
+		Config = {},
+		State = {},
 	},
 }
 return Items

@@ -1,11 +1,10 @@
-local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
 local NpcStats = {
 	BloodType = "Black",
 	Health = 100,
-	Walkspeed = 60,
-	Debug = true,
+	Walkspeed = 15,
+	Debug = false,
 }
 
 local ATTACK_DISTANCE = 8.75
@@ -20,11 +19,13 @@ local module: Types.npcPersonality = {
 
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
+		--{ Function = "CheckForDirectPath", Parameters = {} },
+		--{ Function = "RunPath" },
+		{ Function = "MoveTowardsTarget", Parameters = { 0.025 } },
 		{ Function = "MoveAlongPath", Parameters = { 0.05 } },
 
 		--{ Function = "LookAtTarget", Parameters = { true, 0.05 } },
 
-		--{ Function = "RunPath" },
 		-- {
 		-- 	Function = "LookAtPath",
 		-- 	Parameters = { 0.05 },
@@ -88,9 +89,10 @@ local module: Types.npcPersonality = {
 	},
 
 	OnTargetLost = {
-		{ Function = "SwitchToState", Parameters = { "Idle" } },
+		--{ Function = "SwitchToState", Parameters = { "Idle" } },
 		--{ Function = "LookAtPath" },
-		{ Function = "MoveForwards", Parameters = { 0.05 } },
+		--{ Function = "MoveForwards", Parameters = { 0.05 } },
+		{ Function = "RunPath", Parameters = { true } },
 	},
 
 	OnStateChanged = {

@@ -19,6 +19,9 @@ local util = require(client.Util)
 local assets = ReplicatedStorage.Assets
 local sounds = assets.Sounds
 local models = assets.Models
+local heartbeatDelta = 0
+
+local MELEE_PUSH_POWER = 75
 
 type Npc = types.Npc
 
@@ -103,7 +106,7 @@ local function lookAtPostition(npc: Npc, position: Vector3, doLerp: boolean, ler
 	Align.Attachment0 = getObject("Attachment", subject.PrimaryPart)
 
 	if doLerp then
-		Align.CFrame = Align.CFrame:Lerp(goal, lerpAlpha)
+		Align.CFrame = Align.CFrame:Lerp(goal, lerpAlpha * (heartbeatDelta * 100))
 	else
 		Align.CFrame = goal
 	end
@@ -121,7 +124,7 @@ local function visualizeHitbox(cframe: CFrame, size: Vector3)
 	Debris:AddItem(newPart, 1)
 end
 
-local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType)
+local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType: string?)
 	local npcCFrame = npc.Instance:GetPivot()
 
 	local hitboxCFrame = npcCFrame * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2))
@@ -145,6 +148,12 @@ local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damag
 			bloodEffects.createSplatter(model:GetPivot())
 
 			bloodEffects.bloodSploof(npcCFrame, model:GetPivot().Position)
+
+			if damageType == "Melee" then
+				local vel = (model:GetPivot().Position - npcCFrame.Position).Unit * MELEE_PUSH_POWER
+				model.WalkVelocity.VectorVelocity = model.WalkVelocity.VectorVelocity:Lerp(vel, 0.5)
+			end
+
 			break
 		end
 	end
@@ -230,10 +239,11 @@ module.events = {
 
 	OnMoved = function(npc: Npc, actions)
 		local lastVelocity = Vector3.zero
-		npc.Heartbeat["OnMoved"] = function()
-			local velocity = npc.Instance.PrimaryPart.AssemblyLinearVelocity
 
-			if velocity ~= lastVelocity and velocity.Magnitude >= 0.05 then
+		npc.Heartbeat["OnMoved"] = function()
+			local velocity = npc.Instance.WalkVelocity.VectorVelocity --PrimaryPart.AssemblyLinearVelocity
+
+			if velocity ~= lastVelocity and velocity.Magnitude >= 0.025 then
 				module.doActions(npc, actions)
 			end
 
@@ -243,10 +253,11 @@ module.events = {
 
 	OnStopped = function(npc: Npc, actions)
 		local lastVelocity = Vector3.zero
-		npc.Heartbeat["OnStopped"] = function()
-			local velocity = npc.Instance.PrimaryPart.AssemblyLinearVelocity
 
-			if velocity ~= lastVelocity and velocity.Magnitude < 0.05 then
+		npc.Heartbeat["OnStopped"] = function()
+			local velocity = npc.Instance.WalkVelocity.VectorVelocity
+
+			if velocity ~= lastVelocity and velocity.Magnitude < 0.025 then
 				module.doActions(npc, actions)
 			end
 
@@ -348,6 +359,10 @@ module.events = {
 }
 
 module.actions = {
+	Print = function(npc: Npc, ...)
+		print(...)
+	end,
+
 	SetStats = function(npc: Npc, stats: { [string]: any })
 		for attribute, value in pairs(stats) do
 			if npc.Instance:GetAttribute(attribute) then
@@ -489,7 +504,12 @@ module.actions = {
 		end
 
 		local walkVelocity: LinearVelocity = npc.Instance.WalkVelocity
-		walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(goal, lerpAlpha or 1)
+
+		if lerpAlpha then
+			walkVelocity.VectorVelocity = walkVelocity.VectorVelocity:Lerp(goal, lerpAlpha * (heartbeatDelta * 100))
+		else
+			walkVelocity.VectorVelocity = goal
+		end
 	end,
 
 	MoveTowardsPoint = function(npc: Npc, position: Vector3, lerpAlpha: number?)
@@ -516,6 +536,23 @@ module.actions = {
 		)
 	end,
 
+	MoveTowardsTarget = function(npc: Npc, lerpAlpha: number?)
+		local doLerp = lerpAlpha and true or false
+		local target = npc:GetTarget()
+
+		if not target then
+			return
+		end
+
+		local targetPos = target:GetPivot().Position
+		local position2D = Vector3.new(targetPos.X, -3.3, targetPos.Z)
+
+		lookAtPostition(npc, position2D, doLerp, lerpAlpha)
+		module.actions.MoveForwards(npc, lerpAlpha)
+
+		npc.MindData.PathGoal = nil
+	end,
+
 	StopMoving = function(npc: Npc, lerpAlpha: number?)
 		module.actions.ChangeWalkVelocity(npc, Vector3.zero, lerpAlpha)
 	end,
@@ -538,42 +575,65 @@ module.actions = {
 		lookAtPostition(npc, npcPosition + direction, doLerp, lerpAlpha)
 	end,
 
-	RunPath = function(npc: Npc)
+	RunPath = function(npc: Npc, UseLastTarget: boolean?)
 		local target = npc:GetTarget()
+
+		if UseLastTarget then
+			target = npc.MindData["LastTarget"]
+		end
+
 		if target then
 			local targetPos = target:GetPivot().Position
-			local Position2D = Vector3.new(targetPos.X, -1.2, targetPos.Z)
+			local Position2D = Vector3.new(targetPos.X, -3.3, targetPos.Z)
 			npc.MindData.PathGoal = Position2D
 		end
 
 		local npcPosition = npc.Instance:GetPivot().Position
-		local npcPosition2D = Vector3.new(npcPosition.X, -1.2, npcPosition.Z)
+		local npcPosition2D = Vector3.new(npcPosition.X, -3.3, npcPosition.Z)
 
 		if npc.MindData.PathGoal then
 			Pathfinder.Update(npc.Path, npcPosition2D, npc.MindData.PathGoal)
 		end
 	end,
 
-	MoveAlongPath = function(npc: Npc, lerpAlpha)
-		module.actions.RunPath(npc)
-		module.actions.LookAtPath(npc, lerpAlpha)
+	MoveAlongPath = function(npc: Npc, lerpAlpha: number?)
+		--module.actions.RunPath(npc)
 
 		if npc.MindData.PathGoal then
 			local npcPosition = npc.Instance:GetPivot().Position
-			local npcPosition2D = Vector3.new(npcPosition.X, 0.25, npcPosition.Z)
+			local npcPosition2D = Vector3.new(npcPosition.X, -3.3, npcPosition.Z)
 
 			local direction = Pathfinder.GetDirection(npc.Path, npcPosition2D, npc.MindData.PathGoal)
-			if direction:FuzzyEq(Vector3.zero) then
+			if npc.Path.path.Status == Enum.PathStatus.NoPath or direction:FuzzyEq(Vector3.zero) then
 				module.actions.StopMoving(npc)
+				return
 			end
 
+			module.actions.LookAtPath(npc, lerpAlpha)
 			module.actions.MoveForwards(npc)
-		else
-			module.actions.StopMoving(npc)
-		end
 
-		if npc.Path.path.Status == Enum.PathStatus.NoPath then
-			module.actions.StopMoving(npc)
+			local waypoints = npc.Path.waypoints
+
+			if #waypoints > 0 then
+				local currentWaypoint = waypoints[npc.Path.waypointIndex]
+
+				local distance = (npcPosition2D - Vector3.new(
+					currentWaypoint.Position.X,
+					-3.3,
+					currentWaypoint.Position.Z
+				)).Magnitude
+
+				if distance <= 0.75 then
+					npc.Path.waypointIndex += 1
+				end
+
+				if npc.Path.waypointIndex > #waypoints then -- if the path has ended, clear the goal.
+					npc.MindData.PathGoal = nil
+					module.actions.StopMoving(npc)
+				end
+			end
+
+			--Pathfinder.Update(npc.Path, npcPosition2D, npc.MindData.PathGoal)
 		end
 	end,
 
@@ -663,10 +723,11 @@ function module.RunNpc(Npc: Npc)
 	end
 end
 
-RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function(delta)
 	if acts:checkAct("Paused") then
 		return
 	end
+	heartbeatDelta = delta
 
 	local inCombat = false
 

@@ -66,7 +66,7 @@ local gameSettings = {
 		{
 			Name = "Music Volume",
 			Type = "Slider",
-			Value = 100,
+			Value = 0,
 			Values = NumberRange.new(0, 100),
 			OnChanged = function(self: Types.Setting)
 				game:GetService("SoundService").Music.Volume = self.Value / 100
@@ -325,5 +325,6 @@ for _, category in ipairs(gameSettings) do
 		setting["Default"] = setting.Value
 	end
 end
+--TEMPORARY
 
 return gameSettings

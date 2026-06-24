@@ -191,6 +191,7 @@ function Path.Update(state: State, currentPosition: Vector3, targetPosition: Vec
 
 	local hasDirectPath = Path.CheckDirectPath(state, currentPosition, targetPosition)
 	state.hasDirectPath = hasDirectPath
+
 	if hasDirectPath then
 		return
 	end
