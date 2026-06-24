@@ -812,6 +812,7 @@ module.pageFunctions = {
 
 			menu.Enabled = true
 			menu.Background.BackgroundColor3 = Color3.new()
+			menu.Background.BackgroundTransparency = 0
 			menu.Background.Visible = true
 
 			task.spawn(function()

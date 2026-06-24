@@ -28,9 +28,13 @@ local currentSelectedSlot
 
 --// Modules
 local Achievements = require(script.Parent.Achievements)
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
+local GameData = require(ReplicatedStorage.Shared.Data.GameData)
 local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
+local Hints = require(script.Parent.Hints)
 local Types = require(ReplicatedStorage.Shared.Types)
 local UIAnimationService = require(client.UIAnimationService)
+local Util = require(script.Parent.Util)
 local acts = require(client.Acts)
 local cameraService = require(client.Camera)
 local globalInputService = require(client.GlobalInputService)
@@ -186,7 +190,7 @@ local combineActions = {
 			return
 		end
 
-		for _ = itemToCombine.State.Value, combineData.Config.MaxValue - 1 do
+		for _ = itemToCombine.State.Value, itemToCombine.Config.MaxValue - 1 do
 			if item.State.Value == 0 then
 				break
 			end
@@ -294,8 +298,6 @@ function Inventory:AddItem(itemReference: Types.ItemReference)
 	return newItem, slotToAddTo
 end
 
-function Inventory:AddRawItem(Item: item) end
-
 function Inventory:RemoveItem(ItemNameOrSlot)
 	if not ItemNameOrSlot then
 		return
@@ -342,6 +344,8 @@ function Inventory:DropItem(index) -- index can be an item table, item name, or 
 
 	self:RemoveItem(slot)
 
+	CareerData.Items_Dropped += 1
+
 	local droppedItem = models.DroppedItem:Clone()
 	local character = player.Character
 
@@ -370,6 +374,13 @@ function Inventory:pickupFromContainer(object)
 
 	for _, itemReference: Types.ItemReference in ipairs(containerData) do
 		local newItem, slot = self:AddItem(itemReference)
+		CareerData.Items_Picked_Up += 1
+
+		if not GameData.HasPickedUpItem then
+			Hints:DisplayPresetHint("OpenInventory")
+			GameData.HasPickedUpItem = true
+		end
+
 		if not newItem then
 			util.PlaySound(sounds.InventoryFull)
 			break
@@ -900,7 +911,7 @@ local function holdSlot(slotUi: Frame, action: "Move" | "Combine")
 end
 
 function Inventory:UseItem(slotUi)
-	if getSlotIndexFromUi(slotUi) > InventorySize then
+	if getSlotIndexFromUi(slotUi) > InventorySize or acts:checkAct("Reloading") then
 		util.PlaySound(sounds.Deny)
 		return
 	end
@@ -911,7 +922,7 @@ function Inventory:UseItem(slotUi)
 	end
 	local item: item = Inventory[slotUi.Name]
 
-	if not item or acts:checkAct("Reloading") then
+	if not item then
 		return
 	end
 
@@ -919,7 +930,7 @@ function Inventory:UseItem(slotUi)
 		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
 	elseif item.UseAction == "Read" then
 		openNote(item)
-	else
+	elseif item.UseAction then
 		Inventory.ItemUsed:Fire(item.UseAction, item, slotUi.Name)
 	end
 

@@ -115,6 +115,37 @@ function util.getNearestEnemy(position, maxDistance, list)
 	return enemy, closest, enemyPosition
 end
 
+function util.DeepCompare(dict1: {}, dict2: {}): boolean
+	-- Check if they point to the exact same reference
+	if dict1 == dict2 then
+		return true
+	end
+
+	-- Check all keys in the first dictionary
+	for key, value1 in pairs(dict1) do
+		local value2 = dict2[key]
+
+		-- If the value is a nested table, compare recursively
+		if type(value1) == "table" and type(value2) == "table" then
+			if not deepCompare(value1, value2) then
+				return false
+			end
+		-- Otherwise, do a direct value comparison
+		elseif value1 ~= value2 then
+			return false
+		end
+	end
+
+	-- Check for extra keys in dict2 that don't exist in dict1
+	for key, _ in pairs(dict2) do
+		if dict1[key] == nil then
+			return false
+		end
+	end
+
+	return true
+end
+
 function util.ShuffleTable(tabl)
 	for i = 1, #tabl - 1 do
 		local ran = math.random(i, #tabl)
@@ -410,13 +441,6 @@ function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, s
 	end
 
 	-- local camera = workspace.CurrentCamera -- DIRECTIONAL AUDIO: Simply doesn't sound good.
-	-- local newObject = Instance.new("Part")
-	-- newObject.Parent = workspace
-	-- newObject.Anchored = true
-	-- newObject.Transparency = 0
-	-- newObject.CanQuery = false
-	-- newObject.Size = Vector3.one * 0.1
-	-- newObject.Material = Enum.Material.Neon
 
 	-- local step = RunService.RenderStepped:Connect(function()
 	-- 	local cn = camera.CFrame * CFrame.Angles(math.rad(90), 0, 0) * CFrame.new(0, -camera.CFrame.Position.Y, 0)
@@ -429,7 +453,6 @@ function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, s
 	local soundClone: Sound? = util.PlaySound(sound, range, stopTime) --, newObject)
 	-- soundClone.RollOffMode = Enum.RollOffMode.Inverse
 	-- soundClone.RollOffMinDistance = 1000
-	-- soundClone.RollOffMaxDistance = 1000
 
 	if not soundClone then
 		return
@@ -438,8 +461,6 @@ function util.PlayFrom(object: Model | BasePart, sound: Sound, range: number?, s
 	if soundClone.SoundGroup == SoundService.SoundEffects then
 		soundClone.Destroying:Once(function()
 			util.PlayingSounds[soundClone] = nil
-			--step:Disconnect()
-			--deb:AddItem(newObject, 0.1)
 		end)
 		util.PlayingSounds[soundClone] = object
 	end

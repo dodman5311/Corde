@@ -1,3 +1,5 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local modules = {}
 local orderedCall = {
 	"Spawners",
@@ -39,5 +41,9 @@ end
 callModuleAction("Init")
 
 modules.Menu.StartEvent:Connect(function(gameSave)
+	if not gameSave then
+		CareerData.Campaigns_Begun += 1
+	end
+
 	callModuleAction("StartGame", gameSave, modules["Player"].spawnCharacter(gameSave))
 end)

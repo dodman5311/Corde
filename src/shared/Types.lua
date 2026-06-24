@@ -42,6 +42,7 @@ export type GameState = {
 	},
 
 	Layers: { LayerData },
+	GameData: { [string]: any },
 }
 
 export type npcPersonality = {

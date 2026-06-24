@@ -5,6 +5,7 @@ local module = {
 }
 
 local CollectionService = game:GetService("CollectionService")
+local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -26,6 +27,7 @@ local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 local weapons = require(Client.WeaponSystem)
 local lastHeartbeat = os.clock()
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Types = require(ReplicatedStorage.Shared.Types)
 local areas = require(Client.Areas)
@@ -59,6 +61,8 @@ local thumbstick1Pos = Vector3.zero
 local thumbstick2Pos = Vector3.zero
 local thumbstickLookPos = Vector2.zero
 local thumbCursorGoal = Vector2.zero
+
+local lastPlayerPosition = Vector3.zero
 
 local WalkingToPoint
 
@@ -195,6 +199,8 @@ local function showHealthAmountFeedback(timeScale, healthPercent)
 end
 
 local function playerDamaged(character, healthPercent, damageDealt)
+	CareerData.Damage_Taken += damageDealt
+
 	local damageUi = HUD.DamageEffects
 	local invertedHealthPercent = math.abs(healthPercent - 1)
 
@@ -252,10 +258,12 @@ local function playerDamaged(character, healthPercent, damageDealt)
 	checkEquippedStem(healthPercent)
 end
 
-local function playerHealed(character, healthPercent)
+local function playerHealed(character, healthPercent, damageHealed)
 	if not character.Parent then
 		return
 	end
+
+	CareerData.Damage_Healed += damageHealed
 
 	local healUi = HUD.HealEffect
 	local damageUi = HUD.DamageEffects
@@ -292,6 +300,8 @@ local function playerDied(character)
 		return
 	end
 
+	CareerData.Deaths += 1
+
 	globalInputService.actionGroups.PlayerControl:Disable()
 	Achievements:AwardAchievement(Achievements.Ids.SeriousExceptionError)
 
@@ -323,11 +333,14 @@ function module.spawnCharacter(saveData: Types.GameState?)
 	local presetCharacter = models.Character
 	local character: Model = presetCharacter:Clone()
 
-	player.Character = character
 	if saveData then
 		character:PivotTo(CFrame.new(saveData.PlayerStats.Position))
 		character:SetAttribute("Health", saveData.PlayerStats.Health)
 	end
+
+	lastPlayerPosition = character:GetPivot().Position
+
+	player.Character = character
 	character.Parent = workspace
 	showHealthAmountFeedback(0, character:GetAttribute("Health") / character:GetAttribute("MaxHealth"))
 
@@ -341,7 +354,7 @@ function module.spawnCharacter(saveData: Types.GameState?)
 		if health < logHealth then
 			playerDamaged(character, healthPercent, change)
 		elseif health > logHealth then
-			playerHealed(character, healthPercent)
+			playerHealed(character, healthPercent, math.abs(change))
 		end
 
 		if health <= 0 then
@@ -410,6 +423,8 @@ function module.ConsumeItem(item, use)
 	if addedHealth then
 		module:ChangePlayerHealth(addedHealth, "Add")
 	end
+
+	CareerData.Items_Consumed += 1
 
 	util.PlaySound(sounds[use], 0.05)
 	inventory:RemoveItem(item.Name)
@@ -585,6 +600,7 @@ local function updateDirection(vector)
 	else
 		util.PlayingSounds[sounds.Steps] = nil
 		sounds.Steps:Pause()
+
 		uiAnimationService.StopAnimation(frame)
 
 		if weapons.weaponUnequipped then
@@ -685,6 +701,15 @@ local function updatePlayerMovement()
 		return
 	end
 
+	local distanceTraveled = math.floor((character:GetPivot().Position - lastPlayerPosition).Magnitude * 100) / 100
+	lastPlayerPosition = character:GetPivot().Position
+
+	if checkIsSprinting() then
+		CareerData.Distance_Sprinted += distanceTraveled
+	else
+		CareerData.Distance_Walked += distanceTraveled
+	end
+
 	module.moveUnit = moveDirection.Magnitude > 0 and Vector3.new(moveDirection.X, 0, moveDirection.Y).Unit
 		or Vector3.zero
 
@@ -695,9 +720,6 @@ local function updatePlayerMovement()
 end
 
 local function updateMovementInput()
-	updatePlayerMovement()
-	updatePlayerDirection()
-
 	local moveVector = Vector3.zero
 
 	if globalInputService:GetInputSource().Type == "Touch" then
@@ -737,7 +759,7 @@ local function updateStats()
 
 		if not checkIsSprinting() then
 			if workspace:GetAttribute("Difficulty") == 2 then -- @Difficulty hunger goes down over time
-				modifiedHungerRate = HUNGER_RATE / 3.5
+				modifiedHungerRate = HUNGER_RATE / 5
 			else
 				modifiedHungerRate = 0
 			end
@@ -804,6 +826,8 @@ sprintInputAction:SetImage("rbxassetid://137872272618939")
 sprintInputAction:SetPosition(UDim2.fromScale(-0.25, 0.385))
 
 RunService.Heartbeat:Connect(function()
+	updatePlayerMovement()
+	updatePlayerDirection()
 	updateMovementInput()
 	updateStats()
 end)

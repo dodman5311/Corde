@@ -12,6 +12,7 @@ local sounds = assets.Sounds
 local models = assets.Models
 
 --// Modules
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local acts = require(script.Parent.Acts)
 local signal = require(ReplicatedStorage.Packages.Signal)
 local util = require(script.Parent.Util)
@@ -171,6 +172,7 @@ function module.projectileHit(raycast, projectile)
 		if health then
 			local currentHealth = health - projectile.Damage
 			model:SetAttribute("Health", currentHealth)
+			CareerData.Damage_Delt += projectile.Damage
 			projectile.HitEvent:Fire(raycast, currentHealth)
 		else
 			createWallHitEffect(raycast)

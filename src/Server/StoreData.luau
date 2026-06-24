@@ -1,7 +1,9 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local storeData = {}
+local playerCareers = {}
 
 local Types = require(ReplicatedStorage.Shared.Types)
 
@@ -14,7 +16,7 @@ local function deserializeVector3(tbl: { x: number, y: number, z: number }): Vec
 	return Vector3.new(tbl.X, tbl.Y, tbl.Z)
 end
 
-local function LoadData(player: Player, dataStore: DataStore): Types.GameState -- load data
+local function LoadData(player: Player, dataStore: DataStore): Types.GameState? -- load data
 	local foundData
 
 	local success, errorMessage = pcall(function()
@@ -22,6 +24,7 @@ local function LoadData(player: Player, dataStore: DataStore): Types.GameState -
 	end)
 	if not success then
 		warn("Failed to load " .. dataStore.Name, errorMessage)
+		return
 	else
 		return foundData
 	end
@@ -45,9 +48,40 @@ local function saveGameState(player: Player, saveSlot: number, gameState: Types.
 	SaveData(player, dataStore, gameState)
 end
 
-local function getSavedGame(player: Player, saveSlot: number): Types.GameState
+local function savePlayerSettings(player: Player, SettingsData)
+	local settingsDataStore = DataStoreService:GetDataStore("Settings")
+	SaveData(player, settingsDataStore, SettingsData)
+end
+
+local function savePlayerCareer(player: Player)
+	local career = playerCareers[player] or {}
+
+	local careerDataStore = DataStoreService:GetDataStore("Career")
+	SaveData(player, careerDataStore, career)
+end
+
+local function syncPlayerCareer(player: Player, CareerData)
+	playerCareers[player] = CareerData
+end
+
+local function getPlayerCareer(player: Player)
+	local dataStore = DataStoreService:GetDataStore("Career")
+	local career = LoadData(player, dataStore)
+
+	if not career then
+		return
+	end
+
+	syncPlayerCareer(player, career)
+end
+
+local function loadPlayerCareer(player: Player)
+	return playerCareers[player]
+end
+
+local function getSavedGame(player: Player, saveSlot: number): Types.GameState?
 	local dataStore = DataStoreService:GetDataStore("Slot_" .. saveSlot)
-	local data: Types.GameState = LoadData(player, dataStore)
+	local data: Types.GameState? = LoadData(player, dataStore)
 
 	if not data or not data.Date then
 		return
@@ -84,6 +118,11 @@ end
 
 Net:Handle("GetSavedGame", getSavedGame)
 Net:Handle("SaveGameState", saveGameState)
+Net:Handle("LoadCareer", loadPlayerCareer)
+Net:Connect("SyncCareer", syncPlayerCareer)
 Net:Connect("ClearAllData", clear)
+
+Players.PlayerRemoving:Connect(savePlayerCareer) -- save player career when leaving
+Players.PlayerAdded:Connect(getPlayerCareer) -- load player career when joining
 
 return storeData

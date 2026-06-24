@@ -12,6 +12,8 @@ local Layers = ReplicatedStorage.Layers
 
 --// Modules
 local Areas = require(script.Parent.Areas)
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
+local GameData = require(ReplicatedStorage.Shared.Data.GameData)
 local Inventory = require(script.Parent.Inventory)
 local Net = require(ReplicatedStorage.Packages.Net)
 local NpcFunctions = require(script.Parent.NpcFunctions)
@@ -148,6 +150,7 @@ function getGameState(): Types.GameState
 		},
 
 		Layers = layersData,
+		GameData = GameData,
 	}
 
 	return gameState
@@ -155,6 +158,8 @@ end
 
 function saveLoad:SaveGame(saveSlot: number)
 	local gameState = getGameState()
+
+	CareerData.Campaigns_Saved += 1
 
 	Net:Invoke("SaveGameState", saveSlot, gameState)
 
@@ -174,6 +179,12 @@ function saveLoad:LoadGame(saveSlot: number)
 	local gameState: Types.GameState = self:GetSaveData(saveSlot)
 	layersData = gameState and gameState.Layers or {}
 	-- CHANGE SECTION
+
+	if gameState then
+		for dataKey, dataValue in pairs(gameState.GameData) do
+			GameData[dataKey] = dataValue
+		end
+	end
 
 	getInteractables()
 

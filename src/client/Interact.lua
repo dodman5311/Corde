@@ -22,6 +22,7 @@ local cursorUi
 local objectPlacedAt
 
 local Client = player.PlayerScripts.Client
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
 local Hints = require(script.Parent.Hints)
 local actionPrompt = require(Client.ActionPrompt)
@@ -228,12 +229,20 @@ mouseTarget.Changed:Connect(checkMouseTargetInteractable)
 function module.UseObject(object: Instance, load: boolean?)
 	if object:FindFirstChild("Module") then
 		local objectModule = require(object.Module)
+
+		if not load then
+			CareerData.Objects_Used += 1
+		end
 		return objectModule.Use()
 	end
 
 	local use = object:GetAttribute("Use")
 	if not use then
 		return
+	end
+
+	if not load then
+		CareerData.Objects_Used += 1
 	end
 
 	return objectFunctions[use](object, load)

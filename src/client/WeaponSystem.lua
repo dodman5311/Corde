@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local Client = player.PlayerScripts.Client
 local camera = workspace.CurrentCamera
 
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local Timer = require(script.Parent.Timer)
 local Types = require(ReplicatedStorage.Shared.Types)
 local actionPrompt = require(Client.ActionPrompt)
@@ -451,6 +452,10 @@ local function registerShot(result, health)
 		return
 	end
 
+	if health <= 0 then
+		CareerData.Enemies_Killed += 1
+	end
+
 	if health > 0 then
 		inflictPower(hitModel)
 	elseif not module.hasKilled and hitModel:HasTag("Friendly") then
@@ -510,6 +515,14 @@ local function createShell()
 	util.tween(shell.SurfaceGui.Frame, ti, { BackgroundTransparency = 1 })
 end
 
+local function addShotsToCareer()
+	CareerData.Weapon_Shots += 1
+
+	if currentWeapon and currentWeapon.Key then
+		CareerData[currentWeapon.Key .. "_Shots"] += 1
+	end
+end
+
 local function fireWeapon(input)
 	if acts:checkAct("Firing") then
 		return
@@ -539,6 +552,7 @@ local function fireWeapon(input)
 	local torso = character.Torso_F
 
 	acts:createAct("Firing")
+	addShotsToCareer()
 
 	for _ = 1, weaponData.BulletCount do
 		createBullet(weaponData)

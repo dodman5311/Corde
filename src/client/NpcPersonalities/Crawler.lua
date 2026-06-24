@@ -3,7 +3,7 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local NpcStats = {
 	BloodType = "Black",
 	Health = 100,
-	Walkspeed = 15,
+	Walkspeed = 14,
 	Debug = false,
 }
 
@@ -18,7 +18,7 @@ local module: Types.npcPersonality = {
 	},
 
 	OnStep = {
-		{ Function = "SearchForTarget", Parameters = { 25, 135 } },
+		{ Function = "SearchForTarget", Parameters = { 25, 120 } },
 		--{ Function = "CheckForDirectPath", Parameters = {} },
 		--{ Function = "RunPath" },
 		{ Function = "MoveTowardsTarget", Parameters = { 0.025 } },

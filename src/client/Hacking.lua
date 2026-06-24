@@ -20,6 +20,9 @@ local UI = StarterGui.NET
 UI.Parent = player.PlayerGui
 
 local Client = player.PlayerScripts.Client
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
+local GameData = require(ReplicatedStorage.Shared.Data.GameData)
+local Hints = require(script.Parent.Hints)
 local actionPrompt = require(Client.ActionPrompt)
 local acts = require(Client.Acts)
 local globalInputService = require(Client.GlobalInputService)
@@ -28,7 +31,7 @@ local inventory = require(Client.Inventory)
 local uiAnimationService = require(Client.UIAnimationService)
 local util = require(Client.Util)
 
-local ti = TweenInfo.new(0.25)
+local gTi = TweenInfo.new(0.25)
 
 local currentInputIndex = 1
 local currentInput = ""
@@ -66,6 +69,7 @@ local function completePoint(point)
 	local ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart)
 
 	util.PlaySound(sounds.HackSuccess)
+	CareerData.Objects_Hacked += 1
 
 	deregisterPoint(point)
 
@@ -204,6 +208,11 @@ local function scanObject(object: Instance)
 	newHighlight.OutlineTransparency = 1
 	newHighlight.DepthMode = Enum.HighlightDepthMode.Occluded
 	newHighlight.Enabled = util.getSetting("Gameplay", "Hints")
+
+	if not GameData.HackableHintShown then
+		Hints:DisplayPresetHint("HackDiscovery")
+		GameData.HackableHintShown = true
+	end
 
 	newHighlight:AddTag("ScannedHighlight")
 	newHighlight.Parent = object
@@ -497,7 +506,7 @@ function module:EnterNetMode()
 
 	util.PlaySound(sounds.NetOpen)
 
-	util.tween(Lighting.NETColor, ti, {
+	util.tween(Lighting.NETColor, gTi, {
 		TintColor = Color3.fromRGB(185, 255, 250),
 		Brightness = 0.35,
 		Contrast = 1,
@@ -518,7 +527,7 @@ function module:ExitNetMode()
 
 	util.PlaySound(sounds.NetClose, 0, 0.25)
 
-	util.tween(Lighting.NETColor, ti, {
+	util.tween(Lighting.NETColor, gTi, {
 		TintColor = Color3.new(1, 1, 1),
 		Brightness = 0,
 		Contrast = 0,

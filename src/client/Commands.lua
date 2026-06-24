@@ -1,6 +1,7 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CareerData = require(ReplicatedStorage.Shared.Data.CareerData)
 local Net = require(ReplicatedStorage.Packages.Net)
 local items = require(ReplicatedStorage.Shared.Items)
 
@@ -108,7 +109,7 @@ local commands = {
 				print(require(script.Parent.SaveLoad):SaveGame(slot))
 			end,
 		},
-		ClearAllData = {
+		ClearSaves = {
 			Parameters = function()
 				return {
 					{ Name = "Confirm?", Options = { true, false } },
@@ -121,6 +122,25 @@ local commands = {
 				end
 
 				Net:RemoteEvent("ClearAllData"):FireServer()
+			end,
+		},
+		ClearCareer = {
+			Parameters = function()
+				return {
+					{ Name = "Confirm?", Options = { true, false } },
+				}
+			end,
+
+			Execute = function(_, confirm)
+				if not confirm then
+					return
+				end
+
+				for index, _ in pairs(CareerData) do
+					CareerData[index] = 0
+				end
+
+				Net:RemoteEvent("SyncCareer"):FireServer(CareerData)
 			end,
 		},
 	},

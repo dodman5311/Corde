@@ -53,7 +53,7 @@ function NpcService.new(npcName: string): Npc?
 			AgentStepHeight = 0.75,
 			AgentCanJump = false,
 			AgentCanClimb = false,
-		}, Vector3.zero, obstacleParams, nil, true),
+		}, Vector3.zero, obstacleParams, nil, false),
 		Timer = timer:newQueue(),
 		Timers = {},
 		Acts = acts:new(),

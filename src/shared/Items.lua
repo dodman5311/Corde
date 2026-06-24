@@ -21,7 +21,7 @@ local Items: { [string]: Types.Item } = {
 	},
 
 	--// Weapons
-	Assault_Rifle = {
+	Rifle = {
 		ItemType = "Weapon",
 		Name = "SG550",
 		IconId = 74163431732494,
@@ -52,7 +52,7 @@ local Items: { [string]: Types.Item } = {
 		},
 	},
 
-	Battle_Rifle = {
+	Heavy_Rifle = {
 		ItemType = "Weapon",
 		Name = "SGM-600",
 		IconId = 133771746645077,
@@ -241,7 +241,7 @@ local Items: { [string]: Types.Item } = {
 			InUse = false,
 		},
 		CombineData = {
-			["Rifle Mag"] = {
+			["Pistol Mag"] = {
 				Action = "AddValue",
 			},
 		},

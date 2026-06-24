@@ -66,10 +66,11 @@ local function checkEarshot(npc)
 	for sound: Sound, object in pairs(util.PlayingSounds) do
 		local distance = (object:GetPivot().Position - npc.Instance:GetPivot().Position).Magnitude
 
-		if distance <= sound.RollOffMaxDistance and object and checkSightLine(npc, object, 400) then
+		if distance <= sound.RollOffMaxDistance * 2.5 and object and checkSightLine(npc, object, 400) then
 			return object
 		end
 	end
+	return
 end
 
 local function getObject(class, parent)
@@ -446,6 +447,11 @@ module.actions = {
 	end,
 
 	SearchForTarget = function(npc: Npc, maxDistance: number, maxSightAngle: number?)
+		if npc:GetState() == "Dead" then
+			npc.MindTarget.Value = nil
+			return nil, 0
+		end
+
 		local target = Players.LocalPlayer.Character
 		local distance = 0
 
@@ -456,11 +462,16 @@ module.actions = {
 		-- npc.MindTarget.Value = target
 		-- return target, distance
 
-		if npc:GetState() == "Dead" or (distance > maxDistance or not checkSightLine(npc, target, maxSightAngle)) then
+		if distance > maxDistance or not checkSightLine(npc, target, maxSightAngle) then
 			target = nil
 		end
 
-		target = checkEarshot(npc) or target
+		local heardTarget = checkEarshot(npc)
+		if heardTarget then
+			target = heardTarget
+			print("HEARD PLAYER")
+		end
+
 		npc.MindTarget.Value = target
 
 		if target ~= nil then
