@@ -469,7 +469,6 @@ module.actions = {
 		local heardTarget = checkEarshot(npc)
 		if heardTarget then
 			target = heardTarget
-			print("HEARD PLAYER")
 		end
 
 		npc.MindTarget.Value = target

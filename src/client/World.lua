@@ -12,6 +12,7 @@ local Client = player.PlayerScripts.Client
 local Layers = ReplicatedStorage.Layers
 
 local GlobalEvents = require(ReplicatedStorage.Shared.GlobalEvents)
+local LayerData = require(ReplicatedStorage.Shared.Data.LayerData)
 local NpcService = require(script.Parent.NpcService)
 local Spawners = require(script.Parent.Spawners)
 local Types = require(ReplicatedStorage.Shared.Types)
@@ -222,6 +223,10 @@ end)
 
 GlobalEvents.Control.GoToLayer:Connect(function(layerKey)
 	module.LoadLayer(layerKey)
+	local layerInformation = LayerData[layerKey]
+
+	player.Character:PivotTo(CFrame.new(layerInformation.EnterPosition.X, 0.25, layerInformation.EnterPosition.Y))
+	workspace.Elevator:SetAttribute("MoveToPoint", layerInformation.ExitPosition)
 end)
 
 -- globalInputService.CreateInputAction("PauseGame", function(state)
