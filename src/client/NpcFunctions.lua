@@ -36,7 +36,7 @@ local function checkSightLine(npc, target: Instance, maxSightAngle)
 	local rp = RaycastParams.new()
 
 	rp.FilterType = Enum.RaycastFilterType.Include
-	rp.FilterDescendantsInstances = { workspace.Map }
+	rp.FilterDescendantsInstances = { workspace.Map } -- MAKE COLLISION GROUP ig...
 
 	local npcCFrame = npc.Instance:GetPivot()
 	local targetCFrame = target:GetPivot()

@@ -3,7 +3,7 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local NpcStats = {
 	BloodType = "Black",
 	Health = 100,
-	Walkspeed = 14,
+	Walkspeed = 16,
 	Debug = false,
 }
 

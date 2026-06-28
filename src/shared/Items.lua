@@ -300,7 +300,7 @@ local Items: { [string]: Types.Item } = {
 		IconId = 125543981396297,
 		Desc = [[Can of assorted nuts.
 		
-<b>+8 Hunger</b>]],
+<b>+8% Hunger</b>]],
 
 		UseAction = "Eat",
 		CanDrop = true,
@@ -326,6 +326,78 @@ local Items: { [string]: Types.Item } = {
 		Config = {
 			HungerRestoration = 20,
 			HealthRestoration = 5,
+		},
+		State = {},
+		CombineData = {
+			["Canned_Soup"] = {
+				Action = "RemoveAll",
+				Result = "AddItem",
+				Item = "Spam_Of_Stew",
+			},
+		},
+	},
+
+	MRE = {
+		ItemType = "Resource",
+		Name = "M.R.E",
+		IconId = 125543981396297,
+		Desc = [[Meal, ready to eat.
+Prepackaged meal ration for appropriate neutriant sustenance.
+		
+<b>+25% Hunger</b>
+<b>+6% Health</b>]],
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 25,
+			HealthRestoration = 6,
+		},
+		State = {},
+	},
+
+	Canned_Soup = {
+		ItemType = "Resource",
+		Name = "Canned Soup",
+		IconId = 125543981396297,
+		Desc = [[A can of premade soup. 
+The contents of which have been scratched off the can.
+		
+<b>+35% Hunger</b>]],
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 35,
+		},
+		State = {},
+
+		CombineData = {
+			["Spam"] = {
+				Action = "RemoveAll",
+				Result = "AddItem",
+				Item = "Spam_Of_Stew",
+			},
+		},
+	},
+
+	Spam_Of_Stew = {
+		ItemType = "Resource",
+		Name = "Stewed Spam",
+		IconId = 125543981396297,
+		Desc = [[Enjoy, I guess...
+		
+<b>+50% Hunger</b>
+<b>-1% Health</b>]],
+
+		UseAction = "Eat",
+		CanDrop = true,
+
+		Config = {
+			HungerRestoration = 50,
+			HealthRestoration = -1,
 		},
 		State = {},
 	},
@@ -531,6 +603,19 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		Name = "Console Room Key",
 		IconId = 77384355406607,
 		Desc = "Key for the console room",
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
+	},
+
+	Hallway_Key = {
+		ItemType = "Item",
+		Name = "Entry Hall_1 Key",
+		IconId = 77384355406607,
+		Desc = "Key for the hallway",
 
 		UseAction = "",
 		CanDrop = false,
