@@ -45,7 +45,7 @@ local HUD
 
 local fireSound = Instance.new("Sound")
 fireSound.Parent = script
-fireSound.RollOffMaxDistance = 15
+fireSound.RollOffMaxDistance = 35
 fireSound.SoundGroup = SoundService.SoundEffects
 
 local reloadSound = Instance.new("Sound")
@@ -563,7 +563,10 @@ local function fireWeapon(input)
 		torso.UI.Reload.Visible = true
 	end)
 
-	util.PlayFrom(player.Character, fireSound, 0.1)
+	local newSound = util.PlayFrom(player.Character, fireSound, 0.1)
+	if currentWeapon.Config.IsSuppressed then
+		newSound.RollOffMaxDistance = 15
+	end
 
 	torso.Muzzle.Flash.Enabled = true
 	task.delay(0.04, function()

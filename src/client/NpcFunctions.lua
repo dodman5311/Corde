@@ -59,7 +59,7 @@ local function checkSightLine(npc, target: Instance, maxSightAngle)
 
 	local result = workspace:Raycast(position, targetPosition - position, rp)
 
-	return not result or target:IsDescendantOf(result.Instance)
+	return (not result) or result.Instance == target or result.Instance:IsDescendantOf(target)
 end
 
 local function checkEarshot(npc)

@@ -120,8 +120,8 @@ function Inventory:ShowNotification(itemName: string, notificationMessage: strin
 	util.tween(newNotification, ti, { TextTransparency = 1 })
 end
 
-function Inventory:SearchForItem(itemName: string)
-	if not itemName then
+function Inventory:SearchForItem(itemKey: string)
+	if not itemKey then
 		return
 	end
 
@@ -130,7 +130,7 @@ function Inventory:SearchForItem(itemName: string)
 			continue
 		end
 
-		if item.Name ~= itemName then
+		if item.Key ~= itemKey then
 			continue
 		end
 
@@ -212,16 +212,16 @@ local combineActions = {
 		util.PlaySound(sounds.LoadBullets, 0.1, 0.9)
 	end,
 	Remove = function(item: item)
-		Inventory:RemoveItem(item.Name)
+		Inventory:RemoveItem(item.Key)
 	end,
 	RemoveOnEmpty = function(item: item)
 		if item.State.Value <= 0 then
-			Inventory:RemoveItem(item.Name)
+			Inventory:RemoveItem(item.Key)
 		end
 	end,
 	RemoveAll = function(item: item, itemToCombine: item)
-		Inventory:RemoveItem(item.Name)
-		Inventory:RemoveItem(itemToCombine.Name)
+		Inventory:RemoveItem(item.Key)
+		Inventory:RemoveItem(itemToCombine.Key)
 	end,
 }
 
@@ -233,10 +233,10 @@ function Inventory:CombineSlots(slot, slotToCombineWith)
 		return
 	end
 
-	local combineData = item["CombineData"] and item.CombineData[itemToCombine.Name]
+	local combineData = item["CombineData"] and item.CombineData[itemToCombine.Key]
 
 	if not combineData then
-		combineData = itemToCombine["CombineData"] and itemToCombine.CombineData[item.Name]
+		combineData = itemToCombine["CombineData"] and itemToCombine.CombineData[item.Key]
 
 		local preItem = item -- switch primary and secondary items
 		item = itemToCombine
@@ -298,18 +298,18 @@ function Inventory:AddItem(itemReference: Types.ItemReference)
 	return newItem, slotToAddTo
 end
 
-function Inventory:RemoveItem(ItemNameOrSlot)
-	if not ItemNameOrSlot then
+function Inventory:RemoveItem(ItemKeyOrSlot)
+	if not ItemKeyOrSlot then
 		return
 	end
 
 	local item: item, slot
 
-	if Inventory[ItemNameOrSlot] then
-		item = Inventory[ItemNameOrSlot]
-		slot = ItemNameOrSlot
+	if Inventory[ItemKeyOrSlot] then
+		item = Inventory[ItemKeyOrSlot]
+		slot = ItemKeyOrSlot
 	else
-		item, slot = self:SearchForItem(ItemNameOrSlot)
+		item, slot = self:SearchForItem(ItemKeyOrSlot)
 	end
 
 	if not item then

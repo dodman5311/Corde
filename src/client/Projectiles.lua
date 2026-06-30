@@ -156,6 +156,7 @@ local function createWallHitEffect(rayResult)
 	newHitEffect.CFrame *= CFrame.Angles(0, math.rad(-180), 0)
 
 	newHitEffect.Particle:Emit(6)
+	util.PlayFrom(newHitEffect, util.getRandomChild(sounds.Ricochet), 0.25)
 
 	return newHitEffect
 end

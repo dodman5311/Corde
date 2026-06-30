@@ -118,7 +118,7 @@ local Items: { [string]: Types.Item } = {
 	Pistol = {
 		ItemType = "Weapon",
 		Name = "M45A1",
-		IconId = 94406546559401,
+		IconId = 114178515311412, --94406546559401,
 		Desc = "Basic 45. Pistol.",
 
 		UseAction = "EquipWeapon",
@@ -139,6 +139,38 @@ local Items: { [string]: Types.Item } = {
 
 			Recoil = 60,
 			DisplayImage = "rbxassetid://79496777132333",
+		},
+		State = {
+			InUse = false,
+			CurrentMag = nil,
+		},
+	},
+
+	Suppressed_Pistol = {
+		ItemType = "Weapon",
+		Name = "M45A1",
+		IconId = 135737430812549,
+		Desc = "Basic 45. Pistol with a suppressor attached.",
+
+		UseAction = "EquipWeapon",
+		CanDrop = false,
+
+		Config = {
+			Type = 2,
+			RateOfFire = 400,
+			FireSound = "rbxassetid://116826905160732",
+			Volume = 0.5,
+			ReloadSound = "rbxassetid://8989486210",
+			ReloadTime = 2,
+			Damage = 16.75,
+			BulletCount = 1,
+			FireMode = 1,
+			Spread = 7.5,
+			StoppingPower = 0.25,
+			IsSuppressed = true,
+
+			Recoil = 50,
+			DisplayImage = "rbxassetid://114334200007827",
 		},
 		State = {
 			InUse = false,
@@ -195,7 +227,7 @@ local Items: { [string]: Types.Item } = {
 			InUse = false,
 		},
 		CombineData = {
-			["Shotgun Mag"] = {
+			["Shotgun_Mag"] = {
 				Action = "AddValue",
 			},
 		},
@@ -218,7 +250,7 @@ local Items: { [string]: Types.Item } = {
 			InUse = false,
 		},
 		CombineData = {
-			["Rifle Mag"] = {
+			["Rifle_Mag"] = {
 				Action = "AddValue",
 			},
 		},
@@ -241,7 +273,7 @@ local Items: { [string]: Types.Item } = {
 			InUse = false,
 		},
 		CombineData = {
-			["Pistol Mag"] = {
+			["Pistol_Mag"] = {
 				Action = "AddValue",
 			},
 		},
@@ -264,12 +296,12 @@ local Items: { [string]: Types.Item } = {
 			InUse = false,
 		},
 		CombineData = {
-			["Pistol Mag"] = {
+			["Pistol_Mag"] = {
 				Action = "AddValue",
 				Result = "RemoveOnEmpty",
 			},
 
-			["Pistol Bullets"] = {
+			["Pistol_Bullets"] = {
 				Action = "AddValue",
 				Result = "RemoveOnEmpty",
 			},
@@ -422,7 +454,7 @@ The contents of which have been scratched off the can.
 		},
 		State = {},
 		CombineData = {
-			["S.T.E.M.C"] = {
+			["Stemc"] = {
 				Action = "RemoveAll",
 				Result = "AddItem",
 				Item = "Stemb",
@@ -472,7 +504,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		},
 		State = {},
 		CombineData = {
-			["S.T.E.M.B"] = {
+			["Stemb"] = {
 				Action = "RemoveAll",
 				Item = "Stema",
 				Result = "AddItem",
@@ -812,19 +844,19 @@ A Bio Module that connects the user to nearby devices.]],
 		Config = {},
 		State = {},
 		CombineData = {
-			["S.T.E.M.C"] = {
+			["Stemc"] = {
 				Action = "RemoveAll",
 				Item = "StemcInjector",
 				Result = "AddItem",
 			},
 
-			["S.T.E.M.B"] = {
+			["Stemb"] = {
 				Action = "RemoveAll",
 				Item = "StembInjector",
 				Result = "AddItem",
 			},
 
-			["S.T.E.M.A"] = {
+			["Stema"] = {
 				Action = "RemoveAll",
 				Item = "StemaInjector",
 				Result = "AddItem",
@@ -847,6 +879,26 @@ A Bio Module that connects the user to nearby devices.]],
 			["Small key"] = {
 				Result = "RemoveAll",
 				Item = "Screwdriver",
+				Action = "AddItem",
+			},
+		},
+	},
+
+	Suppressor = {
+		ItemType = "Item",
+		Name = "45. Suppressor",
+		IconId = 101906011273059,
+		Desc = [[A Silencerco suppressor designed for a pistol chambered in 45 acp.]],
+
+		UseAction = "",
+		CanDrop = false,
+
+		Config = {},
+		State = {},
+		CombineData = {
+			["Pistol"] = {
+				Result = "RemoveAll",
+				Item = "Suppressed_Pistol",
 				Action = "AddItem",
 			},
 		},

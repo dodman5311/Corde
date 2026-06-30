@@ -11,6 +11,7 @@ local PlayerCareer = {
 	Heavy_Rifle_Shots = 0,
 	Pistol_Shots = 0,
 	Heavy_Pistol_Shots = 0,
+	Suppressed_Pistol_Shots = 0,
 	Shotgun_Shots = 0,
 
 	Damage_Taken = 0,
