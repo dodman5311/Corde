@@ -687,6 +687,21 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		},
 	},
 
+	Gas_Mask = {
+		ItemType = "Equipment",
+		Name = "Gas Mask",
+		IconId = 125778243412139,
+		Desc = [[A mask designed to filter out harmful gases.]],
+
+		UseAction = "ToggleGasMask",
+		CanDrop = false,
+
+		Config = {},
+		State = {
+			IsUse = false,
+		},
+	},
+
 	--// Notes
 	Old_Phone = {
 		ItemType = "Note",
@@ -876,7 +891,7 @@ A Bio Module that connects the user to nearby devices.]],
 		Config = {},
 		State = {},
 		CombineData = {
-			["Small key"] = {
+			["Toolbox_Key"] = {
 				Result = "RemoveAll",
 				Item = "Screwdriver",
 				Action = "AddItem",

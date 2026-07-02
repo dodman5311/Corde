@@ -21,6 +21,7 @@ local camera = workspace.CurrentCamera
 local Client = player.PlayerScripts.Client
 
 local Achievements = require(script.Parent.Achievements)
+local Timer = require(script.Parent.Timer)
 local acts = require(Client.Acts)
 local inventory = require(Client.Inventory)
 local uiAnimationService = require(Client.UIAnimationService)
@@ -164,6 +165,9 @@ local SPRINT_SPEED = 11 --9 --3.85
 
 local HUNGER_RATE = 0.75 --0.65 -- 0.5
 local RAM_RECOVERY_RATE = 0.035
+
+local TOXIC_DAMAGE = 3
+local toxicDamageTimer = Timer:new("ToxicDamage", 1)
 
 local function checkEquippedStem(healthPercent: number)
 	if not healthPercent then
@@ -364,6 +368,12 @@ function module.spawnCharacter(saveData: Types.GameState?)
 		logHealth = health
 	end)
 
+	local shadowBox = character.ShadowBox
+	shadowBox.Parent = workspace
+	character.Destroying:Connect(function()
+		shadowBox:Destroy()
+	end)
+
 	return character
 end
 
@@ -427,7 +437,7 @@ function module.ConsumeItem(item, use)
 	CareerData.Items_Consumed += 1
 
 	util.PlaySound(sounds[use], 0.05)
-	inventory:RemoveItem(item.Name)
+	inventory:RemoveItem(item.Key)
 end
 
 local function updateCursorUi(cursorLocation)
@@ -650,7 +660,7 @@ function module.toggleSprint(value)
 	if value then
 		if character:GetAttribute("Hunger") <= 0 then
 			module.IsSprinting = false
-			character.ShadowBox.Sprint.Enabled = false
+			character.SprintParticles.Sprint.Enabled = false
 			return
 		end
 
@@ -662,7 +672,7 @@ function module.toggleSprint(value)
 		sounds.Steps.Volume = 0.5
 		sounds.Steps.RollOffMaxDistance = 2.5
 		sounds.Steps.PlaybackSpeed = 1.15
-		character.ShadowBox.Sprint.Enabled = false
+		character.SprintParticles.Sprint.Enabled = false
 	end
 
 	module.IsSprinting = value
@@ -682,7 +692,7 @@ local function checkIsSprinting()
 	local sprinting = module.IsSprinting
 		and moveDirection.Magnitude > 0
 		and character.PrimaryPart.AssemblyLinearVelocity.Magnitude > 3
-	character.ShadowBox.Sprint.Enabled = sprinting
+	character.SprintParticles.Sprint.Enabled = sprinting
 
 	return sprinting
 end
@@ -793,6 +803,16 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
 		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
 	end
+
+	character:GetAttributeChangedSignal("InToxicArea"):Connect(function()
+		local value = character:GetAttribute("InToxicArea")
+
+		if value then
+			toxicDamageTimer:Run()
+		else
+			toxicDamageTimer:Cancel()
+		end
+	end)
 end
 
 function module.Init()
@@ -832,6 +852,19 @@ RunService.Heartbeat:Connect(function()
 	updateStats()
 end)
 
+toxicDamageTimer.Function = function()
+	local character = player.Character
+	if not character then
+		return
+	end
+
+	if not character:GetAttribute("HasGasMask") then
+		module:DamagePlayer(TOXIC_DAMAGE, "Toxic")
+	end
+
+	toxicDamageTimer:Run()
+end
+
 local itemFunctions = {
 	Eat = module.ConsumeItem,
 	Heal = module.ConsumeItem,
@@ -846,10 +879,22 @@ local itemFunctions = {
 
 		player.Character:FindFirstChild("Flashlight", true).Enabled = item.State.InUse
 	end,
+	ToggleGasMask = function(item)
+		item.State.InUse = not item.State.InUse
+
+		if item.State.InUse then
+			util.PlaySound(sounds.MaskEquip)
+			util.PlaySound(sounds.MaskBreath)
+		else
+			util.PlaySound(sounds.MaskUnequip)
+		end
+
+		player.Character:SetAttribute("HasGasMask", item.State.InUse)
+	end,
 	InstallNet = function(item)
 		if areas.currentArea and areas.currentArea.Name == "MirrorArea" then
 			module:EnableHacking()
-			inventory:RemoveItem(item.Name)
+			inventory:RemoveItem(item.Key)
 			sequences:beginSequence("InstallModule")
 		else
 			dialogue:SayFromPlayer("I need a *mirror to install this correctly.")

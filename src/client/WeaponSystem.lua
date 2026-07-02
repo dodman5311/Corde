@@ -40,6 +40,7 @@ local sounds = assets.Sounds
 local models = assets.Models
 
 local UNHOLSTER_TIME = 0.2
+local SUPPRESSED_VOLUME = 8
 
 local HUD
 
@@ -565,7 +566,7 @@ local function fireWeapon(input)
 
 	local newSound = util.PlayFrom(player.Character, fireSound, 0.1)
 	if currentWeapon.Config.IsSuppressed then
-		newSound.RollOffMaxDistance = 15
+		newSound.RollOffMaxDistance = SUPPRESSED_VOLUME
 	end
 
 	torso.Muzzle.Flash.Enabled = true
@@ -761,9 +762,16 @@ globalInputService.inputActions["Fire Weapon"]:SetImage("rbxassetid://7864230838
 globalInputService.inputActions["Fire Weapon"]:Disable()
 
 RunService.Heartbeat:Connect(function()
+	if player.Character and currentWeapon and currentWeapon.Config.Type ~= 3 then
+		local playerVelocity = player.Character.PrimaryPart.AssemblyLinearVelocity.Magnitude
+
+		accuracyReduction.Target = ((playerVelocity / 7.25) - 1) * 5
+	end
+
 	if not currentWeapon or not fireKeyDown or acts:checkAct("Paused") then
 		return
 	end
+
 	local weaponData = currentWeapon.Config
 
 	if weaponData.FireMode ~= 2 then

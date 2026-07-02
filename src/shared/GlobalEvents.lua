@@ -10,6 +10,7 @@ local Events = {
 	},
 	React = {
 		AreaEntered = Signal.new() :: Signal.Signal<Part>,
+		AreaLeft = Signal.new() :: Signal.Signal<Part>,
 	},
 }
 

@@ -583,43 +583,23 @@ end
 
 local deathDialogue = {
 	{
-		"You feel your bones crush.",
-		"I feel my bones crush.",
+		"You are broken.",
+		"It's not my fault.",
 	},
 
 	{
-		"You watch your flesh tear.",
-		"I watch my flesh tear.",
+		"My poor Kaia.",
+		"I don't want to go again.",
 	},
 
 	{
-		"You regret this.",
-		"I regret this.",
+		"Are you scared?",
+		"Always.",
 	},
 
 	{
-		"Maybe this time",
-		"I'll know.",
-	},
-
-	{
-		"Do you see it now?",
-		"Not yet.",
-	},
-
-	{
-		"You see your light fade.",
-		"I see my light fade.",
-	},
-
-	{
-		"Let him go.",
-		"Let him go.",
-	},
-
-	{
-		"Your mind begins to fade",
-		"My mind begins to fade",
+		"You let it happen.",
+		"There was no choice.",
 	},
 }
 
@@ -679,7 +659,10 @@ local function deathScreenUi()
 
 	task.wait(2)
 
-	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { TextColor3 = Color3.new(1), Text = "Witness" })
+	changePropertyForTable(
+		sequenceFrame.ScreenText:GetChildren(),
+		{ TextColor3 = Color3.new(1), Text = "It's alright." }
+	)
 
 	util.PlaySound(soundsFolder.Death.Hit, 0.075)
 	sequenceFrame.Background.Visible = true
@@ -688,7 +671,7 @@ local function deathScreenUi()
 	task.wait(1.25)
 	sequenceFrame.ScreenText.Visible = false
 
-	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "Eternity" })
+	changePropertyForTable(sequenceFrame.ScreenText:GetChildren(), { Text = "I'll put you back together." })
 
 	sequenceFrame.Eye.Visible = true
 	local animation = uiAnimationService.PlayAnimation(sequenceFrame.Eye, 0.1)

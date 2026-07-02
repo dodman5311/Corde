@@ -215,6 +215,7 @@ local combineActions = {
 		Inventory:RemoveItem(item.Key)
 	end,
 	RemoveOnEmpty = function(item: item)
+		print(item.State.Value)
 		if item.State.Value <= 0 then
 			Inventory:RemoveItem(item.Key)
 		end
@@ -324,7 +325,7 @@ function Inventory:RemoveItem(ItemKeyOrSlot)
 	return item, slot
 end
 
-function Inventory:DropItem(index) -- index can be an item table, item name, or slot index
+function Inventory:DropItem(index) -- index can be an item table, item key, or slot index
 	if not index then
 		return
 	end
@@ -434,6 +435,7 @@ local function setUpSlots(slotParent, isOpening)
 			slotUi:SetAttribute("ImageId", "rbxassetid://" .. item.IconId)
 			slotUi.ItemName.Text = item.Name
 			slotUi.ItemName.TextTransparency = 0
+			slotUi:SetAttribute("Key", item.Key)
 
 			if item.State.Value and typeof(item.State.Value) == "number" then
 				slotUi.Value.Text = item.State.Value
@@ -448,6 +450,7 @@ local function setUpSlots(slotParent, isOpening)
 			assignItemColor(slotUi, item)
 		else
 			slotUi:SetAttribute("ImageId", "")
+			slotUi:SetAttribute("Key", "")
 			slotUi.ItemName.Text = "Vacant"
 			slotUi.ItemName.TextTransparency = 0.7
 			slotUi.Value.Text = ""
@@ -930,8 +933,10 @@ function Inventory:UseItem(slotUi)
 		Inventory:ChangeSlot(slotUi.Name, "Weapon_Slot")
 	elseif item.UseAction == "Read" then
 		openNote(item)
-	elseif item.UseAction then
+	elseif item.UseAction ~= "" then
 		Inventory.ItemUsed:Fire(item.UseAction, item, slotUi.Name)
+	else
+		return
 	end
 
 	slotUiExited(slotUi)
@@ -943,7 +948,7 @@ local optionFunctions = {
 		Inventory:UseItem(slotUi)
 	end,
 	Drop = function(slotUi)
-		Inventory:DropItem(slotUi.ItemName.Text)
+		Inventory:DropItem(slotUi:GetAttribute("Key"))
 		refreshGui()
 	end,
 	Move = function(slotUi)
@@ -1128,7 +1133,7 @@ local function connectSlotButton(slotUi)
 		end
 
 		if input.KeyCode == Enum.KeyCode.Q then
-			Inventory:DropItem(slotUi.ItemName.Text)
+			Inventory:DropItem(slotUi:GetAttribute("Key"))
 			refreshGui()
 		end
 
@@ -1327,6 +1332,10 @@ local function inventoryInteract(state, input)
 		return
 	end
 
+	if acts:checkAct("Reloading") then
+		return
+	end
+
 	if input.KeyCode == Enum.KeyCode.ButtonB then
 		Inventory:DropItem(GuiService.SelectedObject.Parent.Name)
 		refreshGui()
@@ -1336,10 +1345,6 @@ local function inventoryInteract(state, input)
 	if input.KeyCode == Enum.KeyCode.ButtonX then
 		Inventory:UseItem(GuiService.SelectedObject.Parent)
 		closeOptionsMenu()
-	end
-
-	if acts:checkAct("Reloading") then
-		return
 	end
 
 	refreshGui()

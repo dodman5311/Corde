@@ -90,12 +90,12 @@ local actionsFunctions = {
 		util.PlaySound(sounds[soundName])
 	end,
 
-	RemoveItem = function(itemName)
-		return inventory:RemoveItem(itemName)
+	RemoveItem = function(itemKey)
+		return inventory:RemoveItem(itemKey)
 	end,
 
-	AddItem = function(itemName: string)
-		inventory:AddItem { Key = itemName }
+	AddItem = function(itemKey: string)
+		inventory:AddItem { Key = itemKey }
 	end,
 
 	DisableInteract = function()
@@ -111,8 +111,8 @@ local actionsFunctions = {
 		Hints:DisplayPresetHint(index)
 	end,
 
-	CheckForItem = function(itemName)
-		return inventory:SearchForItem(itemName)
+	CheckForItem = function(itemKey)
+		return inventory:SearchForItem(itemKey)
 	end,
 
 	HasNet = function()

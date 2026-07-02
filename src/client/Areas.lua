@@ -39,6 +39,10 @@ local function onAreaEntered(areaPart: Part)
 	CheckForEchoAchievement(areaPart)
 end
 
+local function onAreaLeft(areaPart: Part)
+	GlobalEvents.React.AreaLeft:Fire(areaPart)
+end
+
 local function setUpAreaParts()
 	for _, part: Part in ipairs(areas) do
 		part.Transparency = 1
@@ -71,6 +75,7 @@ local function onHeartbeat()
 	end
 
 	if module.currentArea ~= module.lastArea then
+		onAreaLeft(module.lastArea)
 		onAreaEntered(module.currentArea)
 	end
 

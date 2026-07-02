@@ -95,6 +95,12 @@ function NpcService.new(npcName: string): Npc?
 			parent = parent or workspace.Map
 			self.Instance.Parent = parent
 
+			local shadowBox = self.Instance.ShadowBox
+			shadowBox.Parent = parent
+			self.Instance.Destroying:Connect(function()
+				shadowBox:Destroy()
+			end)
+
 			if typeof(position) == "Vector3" then
 				self.Instance:PivotTo(CFrame.new(position + Vector3.new(0, 2.5, 0)))
 			else

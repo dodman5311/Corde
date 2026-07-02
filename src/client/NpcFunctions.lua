@@ -126,6 +126,8 @@ local function visualizeHitbox(cframe: CFrame, size: Vector3)
 end
 
 local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damageType: string?)
+	damageType = damageType or "Misc"
+
 	local npcCFrame = npc.Instance:GetPivot()
 
 	local hitboxCFrame = npcCFrame * CFrame.new(0, 0, (-npc.Instance.PrimaryPart.Size.Z / 2) + (-size.Y / 2))
