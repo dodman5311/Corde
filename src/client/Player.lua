@@ -333,9 +333,32 @@ local function getHealthPercentage(character)
 	return character:GetAttribute("Health") / character:GetAttribute("MaxHealth")
 end
 
+local function seperateShadowbox(character)
+	local shadowBox = character.ShadowBox
+	shadowBox.Parent = workspace
+	character.Destroying:Connect(function()
+		shadowBox:Destroy()
+	end)
+end
+
 function module.spawnCharacter(saveData: Types.GameState?)
 	local presetCharacter = models.Character
 	local character: Model = presetCharacter:Clone()
+
+	character:GetAttributeChangedSignal("HasGasMask"):Connect(function()
+		local gasMaskImage = character.Head_F.UI.Frame.GasMask
+		gasMaskImage.Visible = character:GetAttribute("HasGasMask")
+	end)
+
+	character:GetAttributeChangedSignal("InToxicArea"):Connect(function()
+		local value = character:GetAttribute("InToxicArea")
+
+		if value then
+			toxicDamageTimer:Run()
+		else
+			toxicDamageTimer:Cancel()
+		end
+	end)
 
 	if saveData then
 		character:PivotTo(CFrame.new(saveData.PlayerStats.Position))
@@ -368,11 +391,7 @@ function module.spawnCharacter(saveData: Types.GameState?)
 		logHealth = health
 	end)
 
-	local shadowBox = character.ShadowBox
-	shadowBox.Parent = workspace
-	character.Destroying:Connect(function()
-		shadowBox:Destroy()
-	end)
+	seperateShadowbox(character)
 
 	return character
 end
@@ -803,16 +822,6 @@ function module.StartGame(saveData: Types.GameState?, character: Model)
 		character:SetAttribute("Hunger", saveData.PlayerStats.Hunger)
 		character:SetAttribute("HasNet", saveData.PlayerStats.HasNet)
 	end
-
-	character:GetAttributeChangedSignal("InToxicArea"):Connect(function()
-		local value = character:GetAttribute("InToxicArea")
-
-		if value then
-			toxicDamageTimer:Run()
-		else
-			toxicDamageTimer:Cancel()
-		end
-	end)
 end
 
 function module.Init()

@@ -690,7 +690,7 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 	Gas_Mask = {
 		ItemType = "Equipment",
 		Name = "Gas Mask",
-		IconId = 125778243412139,
+		IconId = 117729740404639,
 		Desc = [[A mask designed to filter out harmful gases.]],
 
 		UseAction = "ToggleGasMask",
@@ -892,9 +892,9 @@ A Bio Module that connects the user to nearby devices.]],
 		State = {},
 		CombineData = {
 			["Toolbox_Key"] = {
-				Result = "RemoveAll",
+				Result = "AddItem",
 				Item = "Screwdriver",
-				Action = "AddItem",
+				Action = "RemoveAll",
 			},
 		},
 	},
@@ -912,9 +912,9 @@ A Bio Module that connects the user to nearby devices.]],
 		State = {},
 		CombineData = {
 			["Pistol"] = {
-				Result = "RemoveAll",
+				Result = "AddItem",
 				Item = "Suppressed_Pistol",
-				Action = "AddItem",
+				Action = "RemoveAll",
 			},
 		},
 	},

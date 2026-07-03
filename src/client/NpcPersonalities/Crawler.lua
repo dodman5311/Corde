@@ -64,14 +64,14 @@ local module: Types.npcPersonality = {
 		{ Function = "SearchForTarget", Parameters = { 0 } },
 
 		{ Function = "PlayAnimation", Parameters = { "Animation_Death", 0.05, false, true } },
-		{
-			Function = "Custom",
-			Parameters = {
-				function(npc)
-					npc.Instance.Shadowbox.Transparency = 1
-				end,
-			},
-		},
+		-- {
+		-- 	Function = "Custom",
+		-- 	Parameters = {
+		-- 		function(npc)
+		-- 			npc.Instance.Shadowbox.Transparency = 1
+		-- 		end,
+		-- 	},
+		-- },
 		{ Function = "Emit", Parameters = { "Dust", 25 } },
 		{ Function = "Destroy", Parameters = { 2 } },
 	},
