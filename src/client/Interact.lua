@@ -203,7 +203,14 @@ local function checkMouseTargetInteractable(value)
 	local interactUi = cursorFrame.Interact
 	local interestUi = cursorFrame.Interest
 
-	if value and value:HasTag("Interactable") and checkSightline(value) then
+	local canSee = true
+
+	local character = player.Character
+	if character and character:GetAttribute("InDarkArea") and not character:GetAttribute("FlashlightOn") then
+		canSee = false
+	end
+
+	if value and value:HasTag("Interactable") and checkSightline(value) and canSee then
 		objectPlacedAt = value:GetAttribute("DroppedAt")
 
 		if objectPlacedAt then

@@ -1404,6 +1404,9 @@ function Inventory.PlayerDied()
 end
 
 local function checkForPrepperAchievement(item)
+	if workspace:GetAttribute("CurrentLayerKey") ~= "Living Quarters" then
+		return
+	end
 	local door = workspace:FindFirstChild("KeyholeDoor", true)
 	if not door:GetAttribute("Used") and item.Name == "M45A1" then
 		Achievements:AwardAchievement(Achievements.Ids.PreppersInstinct)

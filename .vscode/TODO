@@ -1,10 +1,6 @@
 Security robots ()
 Change dialogue box input type ()
 
-fix enemy turning / aiming -- ACTIVE
-
-Add dead bodies
-
 draw photo
 
 Settings to add:
@@ -15,10 +11,12 @@ screen shake
 
 make settings save
 
+Combining two bullets, sets them to 0
+
+Melee system (Number of enemies that can be killed before breaking. Can be fixed at some station somehow.)
+(Hard drive conversion. Convert physical information into a hard drive at a station)
+
 --------------------------------------------------
 
-Add auto load after death
-
-FIX PREPPER ACHIEVEMENT *
-
-LOOOORE HAHAHAHAAAA
+Hide item interaction prompt in dark rooms
+Disable controller interaction assist in dark rooms

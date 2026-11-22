@@ -44,6 +44,7 @@ attributeEffects.Effects = {
 	Reverb = function(reverbName)
 		SoundService.AmbientReverb = Enum.ReverbType[reverbName]
 	end,
+
 	ToxicArea = function(value: boolean)
 		local player = Players.LocalPlayer
 		local character = player.Character
@@ -52,6 +53,16 @@ attributeEffects.Effects = {
 		end
 
 		character:SetAttribute("InToxicArea", value)
+	end,
+
+	DarkArea = function(value: boolean)
+		local player = Players.LocalPlayer
+		local character = player.Character
+		if not character then
+			return
+		end
+
+		character:SetAttribute("InDarkArea", value)
 	end,
 }
 

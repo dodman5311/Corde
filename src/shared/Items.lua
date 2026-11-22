@@ -489,7 +489,7 @@ When equipped, will use the loaded S.T.E.M.C automatically <b>when below 50% hea
 		Name = "S.T.E.M.B",
 		IconId = 98624220766754,
 		Desc = [[<b>S</b>.T.E.M.C. 
-<b>T</b>atcial
+<b>T</b>atcial 
 <b>E</b>dition for
 <b>M</b>ilitary
 <b>B</b>iomechanics

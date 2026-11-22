@@ -507,10 +507,18 @@ local function getClosestInteractable()
 end
 
 local function processGamepadCursorSnap()
+	local canSee = true
+
+	local character = player.Character
+	if character and character:GetAttribute("InDarkArea") and not character:GetAttribute("FlashlightOn") then
+		canSee = false
+	end
+
 	if
 		thumbstick2Pos.Magnitude >= THUMBSTICK_THRESHOLD
 		or thumbstick1Pos.Magnitude >= THUMBSTICK_THRESHOLD
 		or acts:checkAct("InNet")
+		or not canSee
 	then
 		return
 	end
@@ -887,6 +895,7 @@ local itemFunctions = {
 		end
 
 		player.Character:FindFirstChild("Flashlight", true).Enabled = item.State.InUse
+		player.Character:SetAttribute("FlashlightOn", item.State.InUse)
 	end,
 	ToggleGasMask = function(item)
 		item.State.InUse = not item.State.InUse
