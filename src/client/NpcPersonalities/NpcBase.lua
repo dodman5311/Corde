@@ -4,11 +4,11 @@ local Types = require(ReplicatedStorage.Shared.Types)
 local module: Types.npcPersonality = {
 	OnStep = {
 		{ Function = "SearchForTarget", Parameters = { 20, 90 } },
-		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, Conditions = { IsState = "Looking" } },
+		{ Function = "LookAtTarget", Parameters = { true, 0.05 }, Conditions = { GetState = "Looking" } },
 		{
 			Function = "LookRandom",
 			Parameters = { true, 0.05, NumberRange.new(3, 6) },
-			Conditions = { IsState = "Idle" },
+			Conditions = { GetState = "Idle" },
 		},
 	},
 

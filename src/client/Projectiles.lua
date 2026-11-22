@@ -36,6 +36,7 @@ module.Presets = {
 		LifeTime = 5,
 		Info = {},
 		Damage = 1,
+		Model = "Projectile",
 	},
 }
 
@@ -61,7 +62,7 @@ local function checkPlayer(subject)
 	return model
 end
 
-function module.createFromPreset(cframe, spread, presetName, DamageOverride, infoAddition)
+function module.createFromPreset(cframe, spread, presetName, DamageOverride, infoAddition, sender)
 	local getPreset = module.Presets[presetName]
 	if not getPreset then
 		warn("There is no such projectile preset by the name of: ", presetName)
@@ -77,13 +78,23 @@ function module.createFromPreset(cframe, spread, presetName, DamageOverride, inf
 		end
 	end
 
-	return module.createProjectile(getPreset.Speed, cframe, spread, damage, getPreset.LifeTime, info, getPreset.Model)
+	return module.createProjectile(
+		getPreset.Speed,
+		cframe,
+		spread,
+		damage,
+		getPreset.LifeTime,
+		info,
+		sender,
+		getPreset.Model
+	)
 end
 
 function module.createProjectile(speed, cframe, spread, dmg, LifeTime, extraInfo, sender, model)
 	local offset = CFrame.Angles(0, util.randomAngle(spread), 0)
 
-	local newInstance = model and ReplicatedStorage:FindFirstChild(model):Clone() or models.Projectile:Clone()
+	local newInstance = model and ReplicatedStorage.Assets.Models:FindFirstChild(model):Clone()
+		or models.Projectile:Clone()
 	newInstance.Parent = workspace
 	newInstance.CFrame = cframe * offset
 
@@ -167,13 +178,18 @@ function module.projectileHit(raycast, projectile)
 	end
 
 	local model = raycast.Instance:FindFirstAncestorOfClass("Model")
+
 	if model then
 		local health = model:GetAttribute("Health")
 
 		if health then
 			local currentHealth = health - projectile.Damage
 			model:SetAttribute("Health", currentHealth)
-			CareerData.Damage_Delt += projectile.Damage
+
+			if projectile.Sender == Players.LocalPlayer then
+				CareerData.Damage_Delt += projectile.Damage
+			end
+
 			projectile.HitEvent:Fire(raycast, currentHealth)
 		else
 			createWallHitEffect(raycast)

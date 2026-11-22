@@ -21,7 +21,7 @@ local commands = {
 		Play_Sequence = {
 			Parameters = function()
 				return {
-					{ Name = "Sequence", Options = { "InstallModule" } },
+					{ Name = "Sequence", Options = { "InstallModule", "crowBoss" } },
 				}
 			end,
 

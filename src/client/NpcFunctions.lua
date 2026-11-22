@@ -9,6 +9,9 @@ local PathfindingService = game:GetService("PathfindingService")
 
 local client = script.Parent
 local Pathfinder = require(ReplicatedStorage.Shared.Pathfinder)
+local Projectiles = require(script.Parent.Projectiles)
+local Types = require(ReplicatedStorage.Shared.Types)
+local WeaponSystem = require(script.Parent.WeaponSystem)
 local acts = require(client.Acts)
 local animationService = require(client.UIAnimationService)
 local bloodEffects = require(client.BloodEffects)
@@ -162,6 +165,8 @@ local function createDamageHitbox(npc: Npc, size: Vector2, damage: number, damag
 	end
 end
 
+local function registerNpcShot() end
+
 local function doAction(npc, action, ...)
 	local result = module.actions[action.Function](npc, ...)
 	if not action.ReturnAction then
@@ -171,7 +176,7 @@ local function doAction(npc, action, ...)
 	module.actions[action.ReturnAction.Function](npc, table.unpack(action.ReturnAction.Parameters), result)
 end
 
-function module.doActions(npc, actions, ...)
+function module.doActions(npc: Npc, actions, ...)
 	if npc:IsState("Dead") then
 		return
 	end
@@ -685,6 +690,193 @@ module.actions = {
 				npc.MindData["CantMove"] = false
 			end
 		end)
+	end,
+
+	UnequipWeapon = function(npc: Npc)
+		if not npc.MindData.CurrentWeapon then
+			return
+		end
+
+		local character = npc.Instance
+		if not character then
+			return
+		end
+
+		local torso = character.Torso_F
+		local reload = torso.UI.Reload
+
+		animationService.StopAnimation(reload)
+		WeaponSystem.showWeapon(0, character)
+
+		npc.MindData.CurrentWeapon = nil
+	end,
+
+	EquipWeapon = function(npc: Npc, weapon: Types.Item)
+		if not weapon then
+			return
+		end
+
+		local character = npc.Instance
+		if not character then
+			return
+		end
+
+		module.actions.UnequipWeapon(npc)
+
+		local weaponData = weapon.Config
+
+		local fireSound = npc.Instance:FindFirstChild("FireSound")
+		local reloadSound = npc.Instance:FindFirstChild("ReloadSound")
+
+		fireSound.SoundId = weaponData.FireSound
+		fireSound.Volume = weaponData.Volume
+		reloadSound.SoundId = weaponData.ReloadSound
+
+		npc.MindData.CurrentWeapon = weapon
+
+		util.PlaySound(sounds.GunEquip, 0.15)
+
+		WeaponSystem.showWeapon(weaponData.Type, character)
+	end,
+
+	CreateBullet = function(npc: Npc, weaponData)
+		local character = npc.Instance
+		local weapon = npc.MindData.CurrentWeapon
+		if not character or not weapon then
+			return
+		end
+
+		local torso = character.Torso_F
+
+		local damage = weapon.Config.Damage
+
+		local projectileSpread = weaponData.Spread
+		local newProjectile =
+			Projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", damage, nil, npc)
+		newProjectile.HitEvent:Once(function(result, health)
+			local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+
+			if not health or health <= 0 then
+				return
+			end
+			WeaponSystem.inflictPower(hitModel)
+		end)
+
+		local rp = RaycastParams.new()
+		rp.FilterType = Enum.RaycastFilterType.Exclude
+		rp.CollisionGroup = "Bullet"
+		rp.FilterDescendantsInstances = { character, workspace.Ignore }
+
+		local hit = workspace:Raycast(
+			(torso.Muzzle.WorldCFrame * CFrame.new(0, 0, 2)).Position,
+			torso.Muzzle.WorldCFrame.LookVector * 3,
+			rp
+		)
+
+		if hit then
+			Projectiles.projectileHit(hit, newProjectile)
+		end
+	end,
+
+	ReloadWeapon = function(npc: Npc)
+		local character = npc.Instance
+		local weapon = npc.MindData.CurrentWeapon
+		local ammo = npc.MindData.Ammo
+		if npc.MindData.FiringWeapon or npc.MindData.Reloading or not weapon or not character or not ammo then
+			return
+		end
+
+		local weaponData = weapon.Config
+		local reloadSound = npc.Instance:FindFirstChild("ReloadSound")
+		local foundMag = ammo[weapon.Name]
+
+		if not foundMag then
+			return
+		end
+
+		local reloadTime = weaponData.ReloadTime
+		local torso = character.Torso_F
+
+		npc.MindData.Reloading = true
+
+		util.PlaySound(reloadSound)
+
+		local frames = 24
+		if weaponData.Type == 2 then
+			frames = 16
+		end
+
+		torso.UI.Fire.Visible = false
+		animationService.PlayAnimation(torso.UI.Reload, reloadTime / frames).OnEnded:Once(function()
+			torso.UI.Fire.Visible = true
+		end)
+
+		task.wait(reloadTime)
+
+		foundMag.Current = foundMag.Max
+		npc.MindData.Reloading = false
+	end,
+
+	FireWeapon = function(npc: Npc)
+		local character = npc.Instance
+		local weapon = npc.MindData.CurrentWeapon
+		if npc.MindData.FiringWeapon or npc.MindData.Reloading or not weapon then
+			return
+		end
+
+		local ammo = npc.MindData.Ammo
+		if not ammo or not ammo[weapon.Name] or ammo[weapon.Name].Current <= 0 then
+			return
+		end
+
+		npc.MindData.Ammo[weapon.Name].Current -= 1
+
+		local weaponData = weapon.Config
+		local torso = character.Torso_F
+		local fireSound = npc.Instance:FindFirstChild("FireSound")
+
+		npc.MindData.FiringWeapon = true
+
+		for _ = 1, weaponData.BulletCount do
+			module.actions.CreateBullet(npc, weaponData)
+		end
+
+		torso.UI.Reload.Visible = false
+		animationService.PlayAnimation(torso.UI.Fire, 0.045).OnEnded:Once(function()
+			torso.UI.Reload.Visible = true
+		end)
+
+		util.PlaySound(fireSound, 0.1)
+		torso.Muzzle.Flash.Enabled = true
+		task.delay(0.04, function()
+			torso.Muzzle.Flash.Enabled = false
+		end)
+		WeaponSystem.createShell(character)
+
+		task.delay(60 / weaponData.RateOfFire, function()
+			npc.MindData.FiringWeapon = false
+			if npc.MindData.Ammo[weapon.Name].Current <= 0 then
+				module.actions.ReloadWeapon(npc)
+			end
+		end)
+	end,
+
+	FireInBursts = function(npc: Npc, holdLength, restLength)
+		if npc.MindData.TriggerState == "Rest" then
+			npc.MindData.TriggerState = "Resting"
+			task.delay(restLength, function()
+				npc.MindData.TriggerState = "Pull"
+			end)
+		elseif npc.MindData.TriggerState == "Pull" then
+			npc.MindData.TriggerState = "Pulling"
+			task.delay(holdLength, function()
+				npc.MindData.TriggerState = "Rest"
+			end)
+		elseif npc.MindData.TriggerState == "Pulling" then
+			module.actions.FireWeapon(npc)
+		elseif not npc.MindData.TriggerState then
+			npc.MindData.TriggerState = "Rest"
+		end
 	end,
 
 	Emit = function(npc: Npc, particleName: string, count: number, useEnable: boolean?)

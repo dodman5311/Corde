@@ -736,4 +736,31 @@ function module.deathScreen()
 	util.tween(breath, ti_3, { Volume = 0 })
 end
 
+function module.crowBoss()
+	local sequenceFrame = loadSequence("CrowBoss")
+
+	local ti = TweenInfo.new(2)
+
+	util.tween(UI.Fade, ti, { BackgroundTransparency = 0 }, true)
+	task.wait(1)
+
+	sequenceFrame.Visible = true
+	task.wait(2)
+	local animation = uiAnimationService.PlayAnimation(sequenceFrame.CrowAnimation, 0.02, false)
+	animation:OnFrameReached(5):Once(function()
+		animation:Pause()
+		task.wait(0.2)
+		animation:SetToFrame(6)
+		sequenceFrame.CrowAnimation.UIStroke.Thickness = 2
+		task.wait(0.06)
+		animation:SetToFrame(7)
+		sequenceFrame.CrowAnimation.UIStroke.Enabled = false
+		task.wait(0.06)
+		animation:Stop()
+		sequenceFrame:Destroy()
+		task.wait(1)
+		util.tween(UI.Fade, ti, { BackgroundTransparency = 1 })
+	end)
+end
+
 return module

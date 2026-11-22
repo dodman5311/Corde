@@ -350,6 +350,11 @@ function module.spawnCharacter(saveData: Types.GameState?)
 		gasMaskImage.Visible = character:GetAttribute("HasGasMask")
 	end)
 
+	character:GetAttributeChangedSignal("HasCrowMask"):Connect(function()
+		local crowMaskImage = character.Head_F.UI.Frame.CrowMask
+		crowMaskImage.Visible = character:GetAttribute("HasCrowMask")
+	end)
+
 	character:GetAttributeChangedSignal("InToxicArea"):Connect(function()
 		local value = character:GetAttribute("InToxicArea")
 
@@ -900,6 +905,12 @@ local itemFunctions = {
 	ToggleGasMask = function(item)
 		item.State.InUse = not item.State.InUse
 
+		local crowMask = inventory:SearchForItem("Crow_Mask")
+		if crowMask and crowMask.State.InUse then
+			crowMask.State.InUse = false
+			player.Character:SetAttribute("HasCrowMask", false)
+		end
+
 		if item.State.InUse then
 			util.PlaySound(sounds.MaskEquip)
 			util.PlaySound(sounds.MaskBreath)
@@ -909,6 +920,26 @@ local itemFunctions = {
 
 		player.Character:SetAttribute("HasGasMask", item.State.InUse)
 	end,
+
+	ToggleCrowMask = function(item)
+		item.State.InUse = not item.State.InUse
+
+		local gasMask = inventory:SearchForItem("Gas_Mask")
+		if gasMask and gasMask.State.InUse then
+			gasMask.State.InUse = false
+			player.Character:SetAttribute("HasGasMask", false)
+		end
+
+		if item.State.InUse then
+			util.PlaySound(sounds.MaskEquip)
+			util.PlaySound(sounds.MaskBreath)
+		else
+			util.PlaySound(sounds.MaskUnequip)
+		end
+
+		player.Character:SetAttribute("HasCrowMask", item.State.InUse)
+	end,
+
 	InstallNet = function(item)
 		if areas.currentArea and areas.currentArea.Name == "MirrorArea" then
 			module:EnableHacking()

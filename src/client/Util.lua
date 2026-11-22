@@ -52,6 +52,22 @@ function util.SearchDictionary(dictionary, value)
 	return foundValue
 end
 
+function util.DeepClone(original)
+	-- Define the new table for the copy
+	local clone = table.clone(original)
+
+	-- Loop through the original table to check for table values
+	-- If a table is found as a value, deep clone it to the key (index)
+	for key, value in original do
+		if type(value) == "table" then
+			clone[key] = util.DeepClone(value)
+		end
+	end
+
+	-- Return the finalized copy of the deep cloned table
+	return clone
+end
+
 function util.flickerUi(frame, speed, amnt, nonSync)
 	if nonSync then
 		task.spawn(flicker, frame, speed, amnt)

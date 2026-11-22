@@ -120,7 +120,7 @@ function Inventory:ShowNotification(itemName: string, notificationMessage: strin
 	util.tween(newNotification, ti, { TextTransparency = 1 })
 end
 
-function Inventory:SearchForItem(itemKey: string)
+function Inventory:SearchForItem(itemKey: string): item?
 	if not itemKey then
 		return
 	end

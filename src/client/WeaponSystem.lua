@@ -66,13 +66,13 @@ local checkChamberTimer = Timer:new("checkChamberInput", 0.5)
 module.onWeaponToggled = signal.new() :: signal.Signal<number>
 local rp = RaycastParams.new()
 
-local function showWeapon(weaponType)
-	local character = player.Character
+function module.showWeapon(weaponType, character: Model?) -- so npcs can show guns
+	character = character or player.Character
 	if not character then
 		return
 	end
 
-	local torso = character.Torso_F
+	local torso = character:FindFirstChild("Torso_F")
 	local reload = torso.UI.Reload
 	local fire = torso.UI.Fire
 
@@ -98,27 +98,22 @@ local function showWeapon(weaponType)
 		module.weaponUnequipped = false
 
 		uiAnimationService.StopAnimation(reload)
-	elseif weaponType == 3 then
-		fire.Image.Image = "rbxassetid://17514692550"
-		reload.Image.Image = "rbxassetid://17514696043"
-		reload.Image.Size = UDim2.fromScale(16, 2)
-		reload.Image:SetAttribute("Frames", 24)
-
-		torso.Muzzle.Position = Vector3.new(-2.2, 0, -0.35)
-
-		module.weaponUnequipped = false
-
-		uiAnimationService.StopAnimation(reload)
+		--elseif weaponType == 3 then
+		-- shotgun I think
 	else
 		fire.Image.Image = ""
 		reload.Image.Image = "rbxassetid://17569341211"
 		reload.Image.Size = UDim2.fromScale(8, 1)
 		reload.Image:SetAttribute("Frames", 8)
 
-		module.weaponUnequipped = true
+		if character == player.Character then
+			module.weaponUnequipped = true
+		end
 	end
 
-	module.onWeaponToggled:Fire(weaponType)
+	if character == player.Character then
+		module.onWeaponToggled:Fire(weaponType)
+	end
 end
 
 function module.toggleHolstered(value)
@@ -132,7 +127,7 @@ function module.toggleHolstered(value)
 			return
 		end
 
-		showWeapon(currentWeapon.Config.Type)
+		module.showWeapon(currentWeapon.Config.Type)
 
 		globalInputService.inputActions["Fire Weapon"]:Enable()
 		util.PlayFrom(character, sounds.Unholster, 0.075)
@@ -141,7 +136,7 @@ function module.toggleHolstered(value)
 			task.wait(UNHOLSTER_TIME)
 		end)
 	elseif not readyKeyDown and not module.weaponUnequipped then
-		showWeapon(0)
+		module.showWeapon(0)
 
 		globalInputService.inputActions["Fire Weapon"]:Disable()
 		util.PlayFrom(character, sounds.Holster, 0.075)
@@ -171,7 +166,7 @@ function module.unequipWeapon()
 	local reload = torso.UI.Reload
 
 	uiAnimationService.StopAnimation(reload)
-	showWeapon(0)
+	module.showWeapon(0)
 
 	currentWeapon = nil
 	acts:removeAct("Firing")
@@ -416,7 +411,7 @@ local function checkChamber() -- @TODO Make compatable with rifle and shotgun
 	acts:removeAct("CheckingChamber", "Interacting")
 end
 
-local function inflictPower(model: Model)
+function module.inflictPower(model: Model)
 	if not currentWeapon then
 		return
 	end
@@ -458,7 +453,7 @@ local function registerShot(result, health)
 	end
 
 	if health > 0 then
-		inflictPower(hitModel)
+		module.inflictPower(hitModel)
 	elseif not module.hasKilled and hitModel:HasTag("Friendly") then
 		module.hasKilled = true
 		sequences:beginSequence("noMercy")
@@ -467,7 +462,7 @@ end
 
 local function createBullet(weaponData)
 	local character = player.Character
-	if not player.Character or not currentWeapon then
+	if not character or not currentWeapon then
 		return
 	end
 
@@ -479,7 +474,8 @@ local function createBullet(weaponData)
 	end
 
 	local projectileSpread = weaponData.Spread + accuracyReduction.Position
-	local newProjectile = projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", damage)
+	local newProjectile =
+		projectiles.createFromPreset(torso.Muzzle.WorldCFrame, projectileSpread, "Bullet", damage, nil, player)
 	newProjectile.HitEvent:Once(registerShot)
 
 	rp.FilterType = Enum.RaycastFilterType.Exclude
@@ -497,8 +493,11 @@ local function createBullet(weaponData)
 	end
 end
 
-local function createShell()
-	local character = player.Character
+function module.createShell(character)
+	character = character or player.Character
+	if not character then
+		return
+	end
 	local torso = character.Torso_F
 	local shell: Part = models.Shell:Clone()
 
@@ -564,7 +563,7 @@ local function fireWeapon(input)
 		torso.UI.Reload.Visible = true
 	end)
 
-	local newSound = util.PlayFrom(player.Character, fireSound, 0.1)
+	local newSound = util.PlayFrom(character, fireSound, 0.1)
 	if currentWeapon.Config.IsSuppressed then
 		newSound.RollOffMaxDistance = SUPPRESSED_VOLUME
 	end
@@ -574,7 +573,7 @@ local function fireWeapon(input)
 		torso.Muzzle.Flash.Enabled = false
 	end)
 
-	createShell()
+	module.createShell()
 
 	--accuracyReduction.Speed = weaponData.RecoilSpeed
 	--accuracyReduction.Target = weaponData.Recoil

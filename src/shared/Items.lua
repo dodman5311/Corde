@@ -702,6 +702,21 @@ When equipped, will use the loaded S.T.E.M.A automatically <b>just before death<
 		},
 	},
 
+	Crow_Mask = {
+		ItemType = "Equipment",
+		Name = "Crow Mask",
+		IconId = 117729740404639,
+		Desc = [[A mask designed to filter out harmful intentions.]],
+
+		UseAction = "ToggleCrowMask",
+		CanDrop = false,
+
+		Config = {},
+		State = {
+			IsUse = false,
+		},
+	},
+
 	--// Notes
 	Old_Phone = {
 		ItemType = "Note",
